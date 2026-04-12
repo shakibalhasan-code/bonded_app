@@ -38,10 +38,33 @@ class ProfileController extends BaseController {
   // Connection Type State
   var selectedConnectionType = 'One-on-One Friendship'.obs;
 
+  // Verification & KYC State
+  var verificationImagePath = ''.obs;
+  var kycFrontPath = ''.obs;
+  var kycBackPath = ''.obs;
+
   Future<void> pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       profileImagePath.value = image.path;
+    }
+  }
+
+  Future<void> captureSelfie() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+    if (image != null) {
+      verificationImagePath.value = image.path;
+    }
+  }
+
+  Future<void> pickKycImage(bool isFront) async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      if (isFront) {
+        kycFrontPath.value = image.path;
+      } else {
+        kycBackPath.value = image.path;
+      }
     }
   }
 

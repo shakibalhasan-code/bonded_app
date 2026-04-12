@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../controllers/profile_controller.dart';
+import 'picture_verification_screen.dart';
 
 class ConnectionTypeScreen extends StatelessWidget {
   const ConnectionTypeScreen({Key? key}) : super(key: key);
@@ -110,8 +111,7 @@ class ConnectionTypeScreen extends StatelessWidget {
             // Continue Button
             GestureDetector(
               onTap: () {
-                Get.snackbar("Success", "Profile building completed!");
-                // Final navigation or action here
+                Get.to(() => const PictureVerificationScreen());
               },
               child: Container(
                 height: 56.h,
