@@ -8,6 +8,8 @@ import '../../core/constants/app_assets.dart';
 import '../../core/theme/app_colors.dart';
 import '../../widgets/onboarding/onboarding_widgets.dart';
 import '../../widgets/auth/social_auth_button.dart';
+import 'signup_screen.dart';
+
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({Key? key}) : super(key: key);
@@ -88,8 +90,9 @@ class WelcomeScreen extends StatelessWidget {
               OnboardingButton(
                 text: "Sign Up",
                 isPrimary: false,
-                onPressed: () {},
+                onPressed: () => Get.to(() => const SignupScreen()),
               ),
+
 
               const Spacer(flex: 2),
 
