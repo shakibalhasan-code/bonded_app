@@ -9,6 +9,9 @@ class AuthTextField extends StatefulWidget {
   final IconData prefixIcon;
   final bool isPassword;
   final TextEditingController? controller;
+  final String? errorText;
+  final TextInputType? keyboardType;
+  final int? maxLines;
 
   const AuthTextField({
     Key? key,
@@ -17,7 +20,11 @@ class AuthTextField extends StatefulWidget {
     required this.prefixIcon,
     this.isPassword = false,
     this.controller,
+    this.errorText,
+    this.keyboardType,
+    this.maxLines = 1,
   }) : super(key: key);
+
 
   @override
   State<AuthTextField> createState() => _AuthTextFieldState();
@@ -49,16 +56,20 @@ class _AuthTextFieldState extends State<AuthTextField> {
         TextField(
           controller: widget.controller,
           obscureText: _obscureText,
+          keyboardType: widget.keyboardType,
+          maxLines: widget.maxLines,
           style: GoogleFonts.inter(
             fontSize: 14.sp,
             color: AppColors.textPrimary,
           ),
           decoration: InputDecoration(
             hintText: widget.hintText,
+            errorText: widget.errorText,
             hintStyle: GoogleFonts.inter(
               fontSize: 14.sp,
               color: Colors.grey[400],
             ),
+
             prefixIcon: Icon(
               widget.prefixIcon,
               color: Colors.grey[600],

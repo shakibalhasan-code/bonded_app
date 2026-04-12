@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
+import '../../screens/profile/profile_building_screen.dart';
+
 
 class SignupSuccessDialog extends StatelessWidget {
   const SignupSuccessDialog({Key? key}) : super(key: key);
@@ -62,7 +65,7 @@ class SignupSuccessDialog extends StatelessWidget {
             GestureDetector(
               onTap: () {
                 Navigator.pop(context);
-                // Here you would navigate to Profile Creation screen
+                Get.to(() => const ProfileBuildingScreen());
               },
               child: Container(
                 height: 56.h,
@@ -97,3 +100,4 @@ void showSignupSuccessDialog(BuildContext context) {
     builder: (context) => const SignupSuccessDialog(),
   );
 }
+
