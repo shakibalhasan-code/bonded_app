@@ -1,11 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
+import 'package:apple_maps_flutter/apple_maps_flutter.dart' as amaps;
 
 import '../../core/theme/app_colors.dart';
-import '../../controllers/profile_controller.dart';
 
 class MapSelectionScreen extends StatefulWidget {
   const MapSelectionScreen({Key? key}) : super(key: key);
@@ -15,125 +16,149 @@ class MapSelectionScreen extends StatefulWidget {
 }
 
 class _MapSelectionScreenState extends State<MapSelectionScreen> {
-  late GoogleMapController mapController;
-  final LatLng _center = const LatLng(40.7128, -74.0060); // New York
+  gmaps.GoogleMapController? googleMapController;
+  amaps.AppleMapController? appleMapController;
 
-  void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
+  // Shared center coordinates
+  final double _lat = 40.7128;
+  final double _lng = -74.0060;
+
+  void _onGoogleMapCreated(gmaps.GoogleMapController controller) {
+    googleMapController = controller;
+  }
+
+  void _onAppleMapCreated(amaps.AppleMapController controller) {
+    appleMapController = controller;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Padding(
-          padding: EdgeInsets.all(8.w),
-          child: CircleAvatar(
-            backgroundColor: Colors.white,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: AppColors.textHeading),
-              onPressed: () => Get.back(),
-            ),
-          ),
-        ),
-      ),
       body: Stack(
         children: [
-          GoogleMap(
-            onMapCreated: _onMapCreated,
-            initialCameraPosition: CameraPosition(
-              target: _center,
-              zoom: 11.0,
-            ),
-            myLocationEnabled: true,
-            myLocationButtonEnabled: false,
-            zoomControlsEnabled: false,
-          ),
-          
-          // Search Bar
+          // Map Background
+          _buildMap(),
+
+          // Back Button (Optimized)
           Positioned(
-            top: 60.h,
+            top: 50.h,
+            left: 20.w,
+            child: GestureDetector(
+              onTap: () => Get.back(),
+              child: Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.arrow_back_ios_new,
+                  color: AppColors.textHeading,
+                  size: 20.sp,
+                ),
+              ),
+            ),
+          ),
+
+          // Search Bar (Optimized)
+          Positioned(
+            top: 110.h,
             left: 24.w,
             right: 24.w,
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              height: 56.h,
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              height: 58.h,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(20.r),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
                   ),
                 ],
               ),
               child: Row(
                 children: [
-                  Icon(Icons.search, color: Colors.grey[400]),
-                  SizedBox(width: 12.w),
+                  Icon(Icons.search, color: AppColors.primary, size: 22.sp),
+                  SizedBox(width: 14.w),
                   Expanded(
                     child: TextField(
+                      style: GoogleFonts.inter(
+                        fontSize: 15.sp,
+                        color: AppColors.textPrimary,
+                      ),
                       decoration: InputDecoration(
-                        hintText: "New York |",
-                        hintStyle: GoogleFonts.inter(color: Colors.grey[400]),
+                        hintText: "Search your location...",
+                        hintStyle: GoogleFonts.inter(
+                          color: Colors.grey[400],
+                          fontSize: 14.sp,
+                        ),
                         border: InputBorder.none,
                       ),
                     ),
                   ),
+                  Icon(Icons.mic_none, color: Colors.grey[400], size: 22.sp),
                 ],
               ),
             ),
           ),
 
-          // Central Pin Mockup (Purple Circle)
+          // Central Pin (Optimized)
           Center(
-            child: Container(
-              height: 150.w,
-              width: 150.w,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.2),
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary, width: 2),
-              ),
-              child: Center(
-                child: Container(
-                  height: 20.w,
-                  width: 20.w,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  height: 120.w,
+                  width: 120.w,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
                     shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.primary.withOpacity(0.3),
+                      width: 1.5,
+                    ),
                   ),
                 ),
-              ),
+                Container(
+                  height: 24.w,
+                  width: 24.w,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.4),
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
 
-          // Action Buttons
+          // Action Buttons (Optimized)
           Positioned(
-            bottom: 120.h,
+            bottom: 130.h,
             right: 24.w,
             child: Column(
               children: [
-                FloatingActionButton(
-                  heroTag: 'layers',
-                  onPressed: () {},
-                  backgroundColor: Colors.white,
-                  mini: true,
-                  child: const Icon(Icons.layers, color: AppColors.primary),
-                ),
-                SizedBox(height: 12.h),
-                FloatingActionButton(
-                  heroTag: 'my_location',
-                  onPressed: () {},
-                  backgroundColor: Colors.white,
-                  mini: true,
-                  child: const Icon(Icons.gps_fixed, color: AppColors.primary),
-                ),
+                _buildActionButton(Icons.layers_outlined, () {}),
+                SizedBox(height: 16.h),
+                _buildActionButton(Icons.my_location, () {}),
               ],
             ),
           ),
@@ -148,22 +173,79 @@ class _MapSelectionScreenState extends State<MapSelectionScreen> {
               child: Container(
                 height: 56.h,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  gradient: const LinearGradient(
+                    colors: [AppColors.primary, Color(0xFF8E2DE2)],
+                  ),
                   borderRadius: BorderRadius.circular(28.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
                 alignment: Alignment.center,
                 child: Text(
-                  "Continue",
+                  "Confirm Location",
                   style: GoogleFonts.inter(
                     fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: Colors.white,
+                    letterSpacing: 0.5,
                   ),
                 ),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMap() {
+    if (Platform.isAndroid) {
+      return gmaps.GoogleMap(
+        onMapCreated: _onGoogleMapCreated,
+        initialCameraPosition: gmaps.CameraPosition(
+          target: gmaps.LatLng(_lat, _lng),
+          zoom: 13.0,
+        ),
+        myLocationEnabled: true,
+        myLocationButtonEnabled: false,
+        zoomControlsEnabled: false,
+      );
+    } else {
+      return amaps.AppleMap(
+        onMapCreated: _onAppleMapCreated,
+        initialCameraPosition: amaps.CameraPosition(
+          target: amaps.LatLng(_lat, _lng),
+          zoom: 13.0,
+        ),
+        myLocationEnabled: true,
+        myLocationButtonEnabled: false,
+      );
+    }
+  }
+
+  Widget _buildActionButton(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 48.w,
+        width: 48.w,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: AppColors.primary, size: 22.sp),
       ),
     );
   }

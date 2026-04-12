@@ -99,7 +99,7 @@ class ProfileBuildingScreen extends StatelessWidget {
               controller: controller.fullNameController,
               errorText: controller.fullNameError.value.isEmpty ? null : controller.fullNameError.value,
             )),
-            SizedBox(height: 20.h),
+            SizedBox(height: 24.h),
 
             Obx(() => AuthTextField(
               label: "Username",
@@ -108,132 +108,90 @@ class ProfileBuildingScreen extends StatelessWidget {
               controller: controller.usernameController,
               errorText: controller.usernameError.value.isEmpty ? null : controller.usernameError.value,
             )),
-            SizedBox(height: 20.h),
+            SizedBox(height: 24.h),
 
             AuthTextField(
               label: "Short Bio",
-              hintText: "Bio",
+              hintText: "Tell us about yourself...",
               prefixIcon: Icons.info_outline,
               controller: controller.bioController,
               maxLines: 3,
             ),
-            SizedBox(height: 20.h),
+            SizedBox(height: 24.h),
 
-            // Phone Number
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Phone Number",
-                  style: GoogleFonts.inter(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textHeading,
+            // Phone Number - Unified Style
+            Obx(() => AuthTextField(
+              label: "Phone Number",
+              hintText: "5xxxxxxx",
+              prefixIcon: Icons.phone_android_outlined,
+              controller: controller.phoneController,
+              keyboardType: TextInputType.phone,
+              errorText: controller.phoneError.value.isEmpty ? null : controller.phoneError.value,
+              prefix: GestureDetector(
+                onTap: () {
+                  showCountryPicker(
+                    context: context,
+                    showPhoneCode: true,
+                    onSelect: (Country country) {
+                      controller.selectedCountryCode.value = "+${country.phoneCode}";
+                    },
+                  );
+                },
+                child: Container(
+                  width: 75.w,
+                  margin: EdgeInsets.only(right: 12.w),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    border: Border(right: BorderSide(color: Colors.grey[300]!, width: 1)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        controller.selectedCountryCode.value,
+                        style: GoogleFonts.inter(fontSize: 14.sp, fontWeight: FontWeight.w600),
+                      ),
+                      Icon(Icons.keyboard_arrow_down, size: 18.sp),
+                    ],
                   ),
                 ),
-                SizedBox(height: 8.h),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        showCountryPicker(
-                          context: context,
-                          showPhoneCode: true,
-                          onSelect: (Country country) {
-                            controller.selectedCountryCode.value = "+${country.phoneCode}";
-                          },
-                        );
-                      },
-                      child: Container(
-                        height: 56.h,
-                        padding: EdgeInsets.symmetric(horizontal: 12.w),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF9F9FF),
-                          borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(color: Colors.grey[200]!),
-                        ),
-                        child: Row(
-                          children: [
-                            Obx(() => Text(
-                              controller.selectedCountryCode.value,
-                              style: GoogleFonts.inter(fontSize: 14.sp),
-                            )),
-                            Icon(Icons.keyboard_arrow_down, size: 20.sp),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: Obx(() => AuthTextField(
-                        label: "", // Label is handled above
-                        hintText: "5xxxxxxx",
-                        prefixIcon: Icons.phone_android_outlined,
-                        controller: controller.phoneController,
-                        keyboardType: TextInputType.phone,
-                        errorText: controller.phoneError.value.isEmpty ? null : controller.phoneError.value,
-                      )),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            SizedBox(height: 20.h),
+              ),
+            )),
+            SizedBox(height: 24.h),
 
-            // Date of Birth
-            GestureDetector(
+            // Date of Birth - Unified Style
+            Obx(() => AuthTextField(
+              label: "Date of Birth",
+              hintText: controller.dateOfBirth.value.isEmpty ? "DD/MM/YYYY" : controller.dateOfBirth.value,
+              prefixIcon: Icons.calendar_today_outlined,
+              readOnly: true,
               onTap: () async {
                 DateTime? pickedDate = await showDatePicker(
                   context: context,
                   initialDate: DateTime.now().subtract(const Duration(days: 365 * 18)),
                   firstDate: DateTime(1900),
                   lastDate: DateTime.now(),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: const ColorScheme.light(
+                          primary: AppColors.primary,
+                          onPrimary: Colors.white,
+                          onSurface: AppColors.textHeading,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
                 );
                 if (pickedDate != null) {
                   controller.dateOfBirth.value = DateFormat('dd/MM/yyyy').format(pickedDate);
                 }
               },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Date of Birth",
-                    style: GoogleFonts.inter(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textHeading,
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Container(
-                    height: 56.h,
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF9F9FF),
-                      borderRadius: BorderRadius.circular(12.r),
-                      border: Border.all(color: Colors.grey[200]!),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Obx(() => Text(
-                          controller.dateOfBirth.value.isEmpty ? "DD/MM/YYYY" : controller.dateOfBirth.value,
-                          style: GoogleFonts.inter(
-                            fontSize: 14.sp,
-                            color: controller.dateOfBirth.value.isEmpty ? Colors.grey[400] : AppColors.textPrimary,
-                          ),
-                        )),
-                        Icon(Icons.calendar_today_outlined, color: AppColors.primary, size: 20.sp),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 20.h),
+            )),
+            SizedBox(height: 24.h),
 
-            // Gender
+            // Gender - Unified Style
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -247,27 +205,37 @@ class ProfileBuildingScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 8.h),
                 Container(
+                  height: 58.h,
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF9F9FF),
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: Colors.grey[200]!),
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(color: Colors.grey[100]!),
                   ),
-                  child: Obx(() => DropdownButton<String>(
-                    value: controller.selectedGender.value.isEmpty ? null : controller.selectedGender.value,
-                    hint: Text("Dropdown to select", style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[400])),
-                    isExpanded: true,
-                    underline: const SizedBox(),
-                    items: ["Male", "Female", "Other"].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value, style: GoogleFonts.inter(fontSize: 14.sp)),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) controller.selectedGender.value = value;
-                    },
-                  )),
+                  child: Row(
+                    children: [
+                      Icon(Icons.person_outline, color: Colors.grey[600], size: 20.sp),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Obx(() => DropdownButton<String>(
+                          value: controller.selectedGender.value.isEmpty ? null : controller.selectedGender.value,
+                          hint: Text("Select Gender", style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[400])),
+                          isExpanded: true,
+                          underline: const SizedBox(),
+                          icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[400]),
+                          items: ["Male", "Female", "Other"].map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value, style: GoogleFonts.inter(fontSize: 14.sp, color: AppColors.textPrimary)),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            if (value != null) controller.selectedGender.value = value;
+                          },
+                        )),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

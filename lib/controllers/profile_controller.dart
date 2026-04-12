@@ -50,7 +50,13 @@ class ProfileController extends BaseController {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        Get.snackbar('Error', 'Location services are disabled.');
+        Get.snackbar(
+          'Location Disabled', 
+          'Please enable location services in your device settings.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
         isLoadingLocation.value = false;
         return;
       }
@@ -59,13 +65,34 @@ class ProfileController extends BaseController {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          Get.snackbar('Error', 'Location permissions are denied');
+          Get.snackbar(
+            'Permission Denied', 
+            'Location permissions are required to fetch your address.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.redAccent,
+            colorText: Colors.white,
+          );
           isLoadingLocation.value = false;
           return;
         }
       }
+      
+      if (permission == LocationPermission.deniedForever) {
+        Get.snackbar(
+          'Permission Restricted', 
+          'Location permissions are permanently denied. Please enable them in settings.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
+        isLoadingLocation.value = false;
+        return;
+      }
 
-      Position position = await Geolocator.getCurrentPosition();
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
@@ -73,12 +100,17 @@ class ProfileController extends BaseController {
 
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
-        currentAddress.value = "${place.street}, ${place.locality}, ${place.administrativeArea} ${place.postalCode}";
+        currentAddress.value = "${place.street ?? ''}, ${place.locality ?? ''}, ${place.administrativeArea ?? ''} ${place.postalCode ?? ''}".trim().replaceAll(RegExp(r'^, |, $'), '');
         selectedCountry.value = place.country ?? selectedCountry.value;
         selectedCity.value = place.locality ?? selectedCity.value;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Could not fetch location: $e');
+      debugPrint("Error fetching location: $e");
+      Get.snackbar(
+        'Error', 
+        'Could not fetch location. Please try manual entry.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoadingLocation.value = false;
     }

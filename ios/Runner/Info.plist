@@ -66,5 +66,12 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need your location to show it on the map and help you find nearby connections.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>We need your location to help you find nearby connections even when the app is in the background.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We need your location to show it on the map and help you find nearby connections.</string>
 </dict>
+
 </plist>

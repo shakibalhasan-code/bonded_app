@@ -1,5 +1,5 @@
-# Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+platform :ios, '14.0'
+
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -39,5 +39,19 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
+    end
+  end
+
+  # Fix for apostrophe in path (CocoaPods script bug)
+  # This patches the generated frameworks script to handle paths containing single quotes
+  script_path = File.join(installer.sandbox.root, 'Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh')
+  if File.exist?(script_path)
+    content = File.read(script_path)
+    content.gsub!("'$1'", '"$1"')
+    File.open(script_path, "w") { |file| file.puts content }
   end
 end
+
+
