@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../controllers/profile_controller.dart';
-import 'connection_type_screen.dart';
+import '../../core/routes/app_routes.dart';
 
 class ChooseInterestScreen extends StatelessWidget {
   const ChooseInterestScreen({Key? key}) : super(key: key);
@@ -113,7 +113,7 @@ class ChooseInterestScreen extends StatelessWidget {
           Padding(
             padding: EdgeInsets.fromLTRB(24.w, 0, 24.w, 40.h),
             child: GestureDetector(
-              onTap: () => Get.to(() => const ConnectionTypeScreen()),
+              onTap: () => Get.toNamed(AppRoutes.CONNECTION_TYPE),
               child: Container(
                 height: 56.h,
                 width: double.infinity,

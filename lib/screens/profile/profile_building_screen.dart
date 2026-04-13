@@ -9,7 +9,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../controllers/profile_controller.dart';
 import '../../widgets/auth/auth_text_field.dart';
-import 'add_location_screen.dart';
+import '../../core/routes/app_routes.dart';
 
 class ProfileBuildingScreen extends StatelessWidget {
   const ProfileBuildingScreen({Key? key}) : super(key: key);
@@ -246,7 +246,7 @@ class ProfileBuildingScreen extends StatelessWidget {
             GestureDetector(
               onTap: () {
                 if (controller.validateProfileFields()) {
-                  Get.to(() => const AddLocationScreen());
+                  Get.toNamed(AppRoutes.ADD_LOCATION);
                 }
               },
               child: Container(

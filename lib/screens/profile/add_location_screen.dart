@@ -5,8 +5,8 @@ import 'package:get/get.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../controllers/profile_controller.dart';
+import '../../core/routes/app_routes.dart';
 import 'map_selection_screen.dart';
-import 'choose_interest_screen.dart';
 
 class AddLocationScreen extends StatelessWidget {
   const AddLocationScreen({Key? key}) : super(key: key);
@@ -173,7 +173,7 @@ class AddLocationScreen extends StatelessWidget {
 
             // Continue Button
             GestureDetector(
-              onTap: () => Get.to(() => const ChooseInterestScreen()),
+              onTap: () => Get.toNamed(AppRoutes.CHOOSE_INTEREST),
               child: Container(
                 height: 56.h,
                 width: double.infinity,

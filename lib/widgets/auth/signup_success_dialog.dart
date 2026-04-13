@@ -3,7 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
-import '../../screens/profile/profile_building_screen.dart';
+import '../../core/routes/app_routes.dart';
 
 
 class SignupSuccessDialog extends StatelessWidget {
@@ -65,7 +65,7 @@ class SignupSuccessDialog extends StatelessWidget {
             GestureDetector(
               onTap: () {
                 Navigator.pop(context);
-                Get.to(() => const ProfileBuildingScreen());
+                Get.toNamed(AppRoutes.PROFILE_BUILDING);
               },
               child: Container(
                 height: 56.h,

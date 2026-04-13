@@ -1,3 +1,4 @@
+import 'package:bonded_app/widgets/auth/social_auth_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -6,10 +7,8 @@ import 'package:get/get.dart';
 
 import '../../core/constants/app_assets.dart';
 import '../../core/theme/app_colors.dart';
-import '../../widgets/onboarding/onboarding_widgets.dart';
-import '../../widgets/auth/social_auth_button.dart';
-import 'signup_screen.dart';
-
+import '../../core/routes/app_routes.dart';
+import '../../widgets/app_button.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({Key? key}) : super(key: key);
@@ -30,6 +29,10 @@ class WelcomeScreen extends StatelessWidget {
                 AppAssets.appLogo,
                 height: 140.h,
                 width: 140.w,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.primary,
+                  BlendMode.srcIn,
+                ),
               ),
 
               const Spacer(),
@@ -79,20 +82,19 @@ class WelcomeScreen extends StatelessWidget {
               const Spacer(flex: 2),
 
               // Email Login Button
-              OnboardingButton(
+              AppButton(
                 text: "Login with Email",
                 isPrimary: true,
-                onPressed: () {},
+                onPressed: () => Get.toNamed(AppRoutes.LOGIN),
               ),
               SizedBox(height: 16.h),
 
               // Sign Up Button
-              OnboardingButton(
+              AppButton(
                 text: "Sign Up",
                 isPrimary: false,
-                onPressed: () => Get.to(() => const SignupScreen()),
+                onPressed: () => Get.toNamed(AppRoutes.SIGNUP),
               ),
-
 
               const Spacer(flex: 2),
 

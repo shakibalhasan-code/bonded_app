@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:get/get.dart';
-import '../screens/onboarding/onboarding_screen.dart';
+import '../core/routes/app_routes.dart';
 
 class SplashController extends GetxController {
   // Observables for animation state if needed
@@ -21,7 +21,7 @@ class SplashController extends GetxController {
 
     // Navigate to next screen after delay
     Timer(const Duration(seconds: 3), () {
-      Get.off(() => const OnboardingScreen());
+      Get.offNamed(AppRoutes.ONBOARDING);
     });
   }
 }

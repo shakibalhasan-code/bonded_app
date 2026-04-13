@@ -2,13 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'core/theme/app_theme.dart';
-import 'screens/splash/splash_screen.dart';
-import 'screens/home/home_screen.dart';
-import 'screens/subscription/subscription_plan_screen.dart';
-import 'screens/subscription/payment_method_screen.dart';
-import 'screens/subscription/add_card_screen.dart';
-import 'screens/profile/profile_ready_screen.dart';
-import 'screens/main_wrapper.dart';
+import 'core/routes/app_pages.dart';
 
 void main() {
   runApp(const MyApp());
@@ -28,17 +22,9 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           title: 'Bonded App',
           theme: AppTheme.lightTheme,
-          initialRoute: '/',
-          getPages: [
-            GetPage(name: '/', page: () => const SplashScreen()),
-            GetPage(name: '/home', page: () => const HomeScreen()),
-            GetPage(name: '/subscription_plan', page: () => const SubscriptionPlanScreen()),
-            GetPage(name: '/payment_method', page: () => const PaymentMethodScreen()),
-            GetPage(name: '/add_card', page: () => const AddCardScreen()),
-            GetPage(name: '/profile_ready', page: () => const ProfileReadyScreen()),
-            GetPage(name: '/main', page: () => const MainWrapper()),
-          ],
-          unknownRoute: GetPage(name: '/notfound', page: () => const HomeScreen()),
+          initialRoute: AppPages.INITIAL,
+          getPages: AppPages.routes,
+          unknownRoute: AppPages.routes.firstWhere((p) => p.name == '/main'),
         );
       },
     );

@@ -7,7 +7,8 @@ import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../controllers/profile_controller.dart';
 import '../../widgets/profile/verification_success_dialog.dart';
-import '../subscription/subscription_plan_screen.dart';
+import '../../core/routes/app_routes.dart';
+import '../../widgets/app_button.dart';
 
 class KYCDocumentScreen extends StatelessWidget {
   const KYCDocumentScreen({Key? key}) : super(key: key);
@@ -85,25 +86,10 @@ class KYCDocumentScreen extends StatelessWidget {
             SizedBox(height: 48.h),
             
             // Continue Button
-            GestureDetector(
-              onTap: () => _showCompletionDialog(),
-              child: Container(
-                height: 56.h,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(28.r),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  "Continue",
-                  style: GoogleFonts.inter(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+            AppButton(
+              text: "Continue",
+              isPrimary: true,
+              onPressed: () => _showCompletionDialog(),
             ),
             SizedBox(height: 40.h),
           ],
@@ -187,7 +173,7 @@ class KYCDocumentScreen extends StatelessWidget {
         title: "Profile Created Successfully!",
         description: "Your profile is all set! Start exploring, connect with others, and join communities that match your interests.",
         onPressed: () {
-          Get.to(() => const SubscriptionPlanScreen());
+          Get.toNamed(AppRoutes.SUBSCRIPTION_PLAN);
         },
       ),
       barrierDismissible: false,

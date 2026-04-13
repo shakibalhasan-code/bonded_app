@@ -3,7 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
-import '../main_wrapper.dart';
+import '../../core/routes/app_routes.dart';
+import '../../widgets/app_button.dart';
 
 class ProfileReadyScreen extends StatelessWidget {
   const ProfileReadyScreen({Key? key}) : super(key: key);
@@ -97,25 +98,10 @@ class ProfileReadyScreen extends StatelessWidget {
               SizedBox(height: 16.h),
               
               // Go to Homepage Button
-              GestureDetector(
-                onTap: () => Get.offAll(() => const MainWrapper()),
-                child: Container(
-                  height: 56.h,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(28.r),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    "Go to Homepage",
-                    style: GoogleFonts.inter(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+              AppButton(
+                text: "Go to Homepage",
+                isPrimary: true,
+                onPressed: () => Get.offAllNamed(AppRoutes.MAIN),
               ),
               
               SizedBox(height: 32.h),

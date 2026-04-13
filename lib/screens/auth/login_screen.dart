@@ -10,8 +10,8 @@ import '../../core/routes/app_routes.dart';
 import '../../widgets/auth/auth_text_field.dart';
 import '../../widgets/app_button.dart';
 
-class SignupScreen extends StatelessWidget {
-  const SignupScreen({Key? key}) : super(key: key);
+class LoginScreen extends StatelessWidget {
+  const LoginScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +32,7 @@ class SignupScreen extends StatelessWidget {
           children: [
             SizedBox(height: 20.h),
             Text(
-              "Create Your Account",
+              "Login to Your Account",
               style: GoogleFonts.inter(
                 fontSize: 28.sp,
                 fontWeight: FontWeight.w700,
@@ -41,7 +41,7 @@ class SignupScreen extends StatelessWidget {
             ),
             SizedBox(height: 12.h),
             Text(
-              "Elevate your Bonded account with this App.",
+              "Welcome back! Please enter your details.",
               style: GoogleFonts.inter(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w400,
@@ -63,34 +63,43 @@ class SignupScreen extends StatelessWidget {
               prefixIcon: Icons.lock_outline,
               isPassword: true,
             ),
-            SizedBox(height: 20.h),
-            const AuthTextField(
-              label: "Confirm Password",
-              hintText: "Password",
-              prefixIcon: Icons.lock_outline,
-              isPassword: true,
+
+            SizedBox(height: 12.h),
+
+            // Forgot Password
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {},
+                child: Text(
+                  "Forgot Password?",
+                  style: GoogleFonts.inter(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
             ),
 
             SizedBox(height: 24.h),
 
-            // Login Link
+            // Signup Link
             Center(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Already have an account? ",
+                    "Don't have an account? ",
                     style: GoogleFonts.inter(
                       fontSize: 14.sp,
                       color: Colors.grey[600],
                     ),
                   ),
                   GestureDetector(
-                    onTap: () {
-                      Get.offNamed(AppRoutes.LOGIN);
-                    },
+                    onTap: () => Get.offNamed(AppRoutes.SIGNUP),
                     child: Text(
-                      "Login",
+                      "Sign Up",
                       style: GoogleFonts.inter(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
@@ -146,11 +155,11 @@ class SignupScreen extends StatelessWidget {
 
             SizedBox(height: 60.h),
 
-            // Signup Button
+            // Login Button
             AppButton(
-              text: "Sign Up",
+              text: "Login",
               isPrimary: true,
-              onPressed: () => Get.toNamed(AppRoutes.VERIFICATION),
+              onPressed: () => Get.offAllNamed(AppRoutes.MAIN),
             ),
             SizedBox(height: 40.h),
           ],

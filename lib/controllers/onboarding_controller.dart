@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/onboarding_model.dart';
+import '../core/routes/app_routes.dart';
 import '../core/constants/app_assets.dart';
 import '../screens/auth/welcome_screen.dart';
 
@@ -47,12 +48,16 @@ class OnboardingController extends GetxController {
         curve: Curves.easeInOut,
       );
     } else {
-      skipOnboarding();
+      finishOnboarding();
     }
   }
 
+  void finishOnboarding() {
+    Get.offAllNamed(AppRoutes.WELCOME);
+  }
+
   void skipOnboarding() {
-    Get.offAll(() => const WelcomeScreen(), transition: Transition.fadeIn);
+    Get.offAllNamed(AppRoutes.WELCOME);
   }
 
   @override

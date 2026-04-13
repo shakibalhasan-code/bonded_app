@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../controllers/profile_controller.dart';
-import 'picture_verification_screen.dart';
+import '../../core/routes/app_routes.dart';
 
 class ConnectionTypeScreen extends StatelessWidget {
   const ConnectionTypeScreen({Key? key}) : super(key: key);
@@ -111,7 +111,7 @@ class ConnectionTypeScreen extends StatelessWidget {
             // Continue Button
             GestureDetector(
               onTap: () {
-                Get.to(() => const PictureVerificationScreen());
+                Get.toNamed(AppRoutes.PICTURE_VERIFICATION);
               },
               child: Container(
                 height: 56.h,

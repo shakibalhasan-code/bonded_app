@@ -1,20 +1,11 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../widgets/profile/verification_success_dialog.dart';
-import '../screens/profile/profile_ready_screen.dart';
-import '../screens/home/home_screen.dart';
+import '../core/routes/app_routes.dart';
 
 class SubscriptionController extends GetxController {
-  final RxString selectedPlan = 'Free Tier'.obs;
-  final RxString selectedPaymentMethod = ''.obs;
-
-  // Plan Prices
-  final Map<String, String> planPrices = {
-    'Free Tier': '0.00',
-    'Pro Tier': '14.99',
-    'Premium Tier': '29.99',
-    'Host Pro': '29.99',
-  };
+  final selectedPlan = 'Pro'.obs;
+  final selectedPaymentMethod = 'Credit Card'.obs;
 
   void selectPlan(String plan) {
     selectedPlan.value = plan;
@@ -30,7 +21,7 @@ class SubscriptionController extends GetxController {
         title: "Subscription Purchased Successfully!",
         description: "Your subscription is active! Enjoy all the premium features and make the most of your experience.",
         onPressed: () {
-          Get.offAll(() => const ProfileReadyScreen());
+          Get.offAllNamed(AppRoutes.PROFILE_READY);
         },
       ),
       barrierDismissible: false,

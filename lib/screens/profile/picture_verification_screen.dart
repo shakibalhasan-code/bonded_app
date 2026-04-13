@@ -7,8 +7,8 @@ import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../controllers/profile_controller.dart';
 import '../../widgets/profile/verification_success_dialog.dart';
+import '../../core/routes/app_routes.dart';
 import 'package:image_picker/image_picker.dart';
-import 'kyc_document_screen.dart';
 
 class PictureVerificationScreen extends StatelessWidget {
   const PictureVerificationScreen({Key? key}) : super(key: key);
@@ -217,7 +217,7 @@ class PictureVerificationScreen extends StatelessWidget {
           description: "Your picture is verified—thanks for keeping your profile secure.",
           onPressed: () {
             Get.back(); // Close dialog
-            Get.to(() => const KYCDocumentScreen());
+            Get.toNamed(AppRoutes.KYC_DOCUMENT);
           },
         ),
         barrierDismissible: false,
