@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../controllers/profile_controller.dart';
 import '../../widgets/profile/verification_success_dialog.dart';
+import '../subscription/subscription_plan_screen.dart';
 
 class KYCDocumentScreen extends StatelessWidget {
   const KYCDocumentScreen({Key? key}) : super(key: key);
@@ -186,7 +187,7 @@ class KYCDocumentScreen extends StatelessWidget {
         title: "Profile Created Successfully!",
         description: "Your profile is all set! Start exploring, connect with others, and join communities that match your interests.",
         onPressed: () {
-          Get.offAllNamed('/home'); // Or whatever the home route is
+          Get.to(() => const SubscriptionPlanScreen());
         },
       ),
       barrierDismissible: false,

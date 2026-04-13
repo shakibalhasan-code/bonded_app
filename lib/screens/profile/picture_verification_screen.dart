@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../controllers/profile_controller.dart';
 import '../../widgets/profile/verification_success_dialog.dart';
+import 'package:image_picker/image_picker.dart';
 import 'kyc_document_screen.dart';
 
 class PictureVerificationScreen extends StatelessWidget {
@@ -100,22 +101,7 @@ class PictureVerificationScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 GestureDetector(
-                  onTap: () async {
-                    await controller.captureSelfie();
-                    if (controller.verificationImagePath.value.isNotEmpty) {
-                      Get.dialog(
-                        VerificationSuccessDialog(
-                          title: "Picture Verified Successfully!",
-                          description: "Your picture is verified—thanks for keeping your profile secure.",
-                          onPressed: () {
-                            Get.back(); // Close dialog
-                            Get.to(() => const KYCDocumentScreen());
-                          },
-                        ),
-                        barrierDismissible: false,
-                      );
-                    }
-                  },
+                  onTap: () => _showImageSourceSelector(context, controller),
                   child: Container(
                     height: 64.w,
                     width: 64.w,
@@ -141,5 +127,101 @@ class PictureVerificationScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _showImageSourceSelector(BuildContext context, ProfileController controller) {
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.all(24.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24.r),
+            topRight: Radius.circular(24.r),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              "Choose Image Source",
+              style: GoogleFonts.inter(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textHeading,
+              ),
+            ),
+            SizedBox(height: 24.h),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildSourceOption(
+                  icon: Icons.camera_alt,
+                  label: "Camera",
+                  onTap: () => _handleImageSelection(controller, ImageSource.camera),
+                ),
+                _buildSourceOption(
+                  icon: Icons.photo_library,
+                  label: "Gallery",
+                  onTap: () => _handleImageSelection(controller, ImageSource.gallery),
+                ),
+              ],
+            ),
+            SizedBox(height: 24.h),
+          ],
+        ),
+      ),
+      backgroundColor: Colors.transparent,
+    );
+  }
+
+  Widget _buildSourceOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            height: 64.w,
+            width: 64.w,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 28.sp),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textHeading,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleImageSelection(ProfileController controller, ImageSource source) async {
+    Get.back(); // Close bottom sheet
+    await controller.pickVerificationImage(source);
+    if (controller.verificationImagePath.value.isNotEmpty) {
+      Get.dialog(
+        VerificationSuccessDialog(
+          title: "Picture Verified Successfully!",
+          description: "Your picture is verified—thanks for keeping your profile secure.",
+          onPressed: () {
+            Get.back(); // Close dialog
+            Get.to(() => const KYCDocumentScreen());
+          },
+        ),
+        barrierDismissible: false,
+      );
+    }
   }
 }

@@ -50,11 +50,15 @@ class ProfileController extends BaseController {
     }
   }
 
-  Future<void> captureSelfie() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+  Future<void> pickVerificationImage(ImageSource source) async {
+    final XFile? image = await _picker.pickImage(source: source);
     if (image != null) {
       verificationImagePath.value = image.path;
     }
+  }
+
+  Future<void> captureSelfie() async {
+    await pickVerificationImage(ImageSource.camera);
   }
 
   Future<void> pickKycImage(bool isFront) async {
