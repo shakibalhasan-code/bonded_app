@@ -10,6 +10,8 @@ abstract class AppRoutes {
   static const SUBSCRIPTION_PLAN = '/subscription_plan';
   static const PAYMENT_METHOD = '/payment_method';
   static const ADD_CARD = '/add_card';
+  static const NOTIFICATION = '/notification';
+
 
   // Profile Flow
   static const PROFILE_BUILDING = '/profile_building';
@@ -18,4 +20,5 @@ abstract class AppRoutes {
   static const CONNECTION_TYPE = '/connection_type';
   static const PICTURE_VERIFICATION = '/picture_verification';
   static const KYC_DOCUMENT = '/kyc_document';
+  static const CIRCLE_DETAILS = '/circle_details';
 }

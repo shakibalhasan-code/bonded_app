@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_assets.dart';
+import '../../core/routes/app_routes.dart';
+import 'package:get/get.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   const HomeAppBar({Key? key}) : super(key: key);
@@ -30,23 +32,29 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       centerTitle: true,
       actions: [
-        _buildActionIcon(Icons.person_outline),
+        _buildActionIcon(Icons.person_outline, onTap: () {}),
         SizedBox(width: 12.w),
-        _buildActionIcon(Icons.notifications_outlined),
+        _buildActionIcon(
+          Icons.notifications_outlined,
+          onTap: () => Get.toNamed(AppRoutes.NOTIFICATION),
+        ),
         SizedBox(width: 20.w),
       ],
     );
   }
 
-  Widget _buildActionIcon(IconData icon) {
-    return Container(
-      padding: EdgeInsets.all(8.w),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9F9FF), // Subtle background
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.grey[100]!),
+  Widget _buildActionIcon(IconData icon, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.all(8.w),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9F9FF), // Subtle background
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.grey[100]!),
+        ),
+        child: Icon(icon, color: AppColors.primary, size: 20.sp),
       ),
-      child: Icon(icon, color: AppColors.primary, size: 20.sp),
     );
   }
 

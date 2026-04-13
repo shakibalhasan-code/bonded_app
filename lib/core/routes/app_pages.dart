@@ -1,3 +1,5 @@
+import 'package:bonded_app/screens/profile/connection_type_screen.dart';
+import 'package:bonded_app/screens/profile/picture_verification_screen.dart';
 import 'package:get/get.dart';
 import '../../screens/splash/splash_screen.dart';
 import '../../screens/onboarding/onboarding_screen.dart';
@@ -13,35 +15,20 @@ import '../../screens/subscription/add_card_screen.dart';
 import '../../screens/profile/profile_building_screen.dart';
 import '../../screens/profile/add_location_screen.dart';
 import '../../screens/profile/choose_interest_screen.dart';
-import '../../screens/profile/connection_type_screen.dart';
-import '../../screens/profile/picture_verification_screen.dart';
 import '../../screens/profile/kyc_document_screen.dart';
+import '../../screens/notification/notification_screen.dart';
+import '../../screens/circles/circle_details_screen.dart';
 import 'app_routes.dart';
 
 class AppPages {
   static const INITIAL = AppRoutes.INITIAL;
 
   static final routes = [
-    GetPage(
-      name: AppRoutes.INITIAL,
-      page: () => const SplashScreen(),
-    ),
-    GetPage(
-      name: AppRoutes.ONBOARDING,
-      page: () => const OnboardingScreen(),
-    ),
-    GetPage(
-      name: AppRoutes.WELCOME,
-      page: () => const WelcomeScreen(),
-    ),
-    GetPage(
-      name: AppRoutes.SIGNUP,
-      page: () => const SignupScreen(),
-    ),
-    GetPage(
-      name: AppRoutes.LOGIN,
-      page: () => const LoginScreen(),
-    ),
+    GetPage(name: AppRoutes.INITIAL, page: () => const SplashScreen()),
+    GetPage(name: AppRoutes.ONBOARDING, page: () => const OnboardingScreen()),
+    GetPage(name: AppRoutes.WELCOME, page: () => const WelcomeScreen()),
+    GetPage(name: AppRoutes.SIGNUP, page: () => const SignupScreen()),
+    GetPage(name: AppRoutes.LOGIN, page: () => const LoginScreen()),
     GetPage(
       name: AppRoutes.VERIFICATION,
       page: () => const OtpVerificationScreen(),
@@ -50,10 +37,7 @@ class AppPages {
       name: AppRoutes.PROFILE_READY,
       page: () => const ProfileReadyScreen(),
     ),
-    GetPage(
-      name: AppRoutes.MAIN,
-      page: () => const MainWrapper(),
-    ),
+    GetPage(name: AppRoutes.MAIN, page: () => const MainWrapper()),
     GetPage(
       name: '/home', // Alias for MAIN
       page: () => const MainWrapper(),
@@ -66,11 +50,8 @@ class AppPages {
       name: AppRoutes.PAYMENT_METHOD,
       page: () => const PaymentMethodScreen(),
     ),
-    GetPage(
-      name: AppRoutes.ADD_CARD,
-      page: () => const AddCardScreen(),
-    ),
-    
+    GetPage(name: AppRoutes.ADD_CARD, page: () => const AddCardScreen()),
+
     // Profile Flow
     GetPage(
       name: AppRoutes.PROFILE_BUILDING,
@@ -95,6 +76,14 @@ class AppPages {
     GetPage(
       name: AppRoutes.KYC_DOCUMENT,
       page: () => const KYCDocumentScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.NOTIFICATION,
+      page: () => const NotificationScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.CIRCLE_DETAILS,
+      page: () => const CircleDetailsScreen(),
     ),
   ];
 }
