@@ -14,4 +14,11 @@ class AppAssets {
   static const String onboarding3 = '$onboardingPath/onboarding_3.png';
   static const String onboarding4 = '$onboardingPath/onboarding_4.png';
   static const String onboarding5 = '$onboardingPath/onboarding_5.png';
+  // Bottom Nav Icons
+  static const String bottomNavPath = '$svgsPath/bottom_nav';
+  static const String homeIcon = '$bottomNavPath/home_icon.svg';
+  static const String circlesIcon = '$bottomNavPath/cricles_icon.svg'; // note the typo in filename
+  static const String bondIcon = '$bottomNavPath/bond_icon.svg';
+  static const String messagesIcon = '$bottomNavPath/messages_icon.svg';
+  static const String eventIcon = '$bottomNavPath/event_icon.svg';
 }

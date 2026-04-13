@@ -7,6 +7,8 @@ import 'screens/home/home_screen.dart';
 import 'screens/subscription/subscription_plan_screen.dart';
 import 'screens/subscription/payment_method_screen.dart';
 import 'screens/subscription/add_card_screen.dart';
+import 'screens/profile/profile_ready_screen.dart';
+import 'screens/main_wrapper.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,6 +35,8 @@ class MyApp extends StatelessWidget {
             GetPage(name: '/subscription_plan', page: () => const SubscriptionPlanScreen()),
             GetPage(name: '/payment_method', page: () => const PaymentMethodScreen()),
             GetPage(name: '/add_card', page: () => const AddCardScreen()),
+            GetPage(name: '/profile_ready', page: () => const ProfileReadyScreen()),
+            GetPage(name: '/main', page: () => const MainWrapper()),
           ],
           unknownRoute: GetPage(name: '/notfound', page: () => const HomeScreen()),
         );

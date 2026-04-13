@@ -73,6 +73,7 @@ flutter:
   assets:
     - assets/svgs/
     - assets/images/onboarding/
+    - assets/svgs/bottom_nav/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

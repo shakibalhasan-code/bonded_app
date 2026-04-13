@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../widgets/profile/verification_success_dialog.dart';
+import '../screens/profile/profile_ready_screen.dart';
 import '../screens/home/home_screen.dart';
 
 class SubscriptionController extends GetxController {
@@ -29,7 +30,7 @@ class SubscriptionController extends GetxController {
         title: "Subscription Purchased Successfully!",
         description: "Your subscription is active! Enjoy all the premium features and make the most of your experience.",
         onPressed: () {
-          Get.offAll(() => const HomeScreen());
+          Get.offAll(() => const ProfileReadyScreen());
         },
       ),
       barrierDismissible: false,
