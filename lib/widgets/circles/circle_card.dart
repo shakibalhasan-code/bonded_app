@@ -1,3 +1,4 @@
+import 'package:bonded_app/controllers/circle_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -215,6 +216,8 @@ class CircleCard extends StatelessWidget {
 
   Widget _buildOwnerMenu() {
     return PopupMenuButton<String>(
+      offset: const Offset(0, 40),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       icon: Container(
         padding: EdgeInsets.all(4.w),
         decoration: BoxDecoration(
@@ -223,24 +226,54 @@ class CircleCard extends StatelessWidget {
         ),
         child: Icon(Icons.more_vert, color: AppColors.primary, size: 18.sp),
       ),
-      onSelected: (value) {},
+      onSelected: (value) {
+        final controller = Get.find<CircleController>();
+        switch (value) {
+          case 'edit':
+            controller.editCircle(circle);
+            break;
+          case 'delete':
+            controller.deleteCircle(circle);
+            break;
+          case 'unlock':
+            controller.lockCircle(circle);
+            break;
+          case 'add_member':
+            Get.toNamed(AppRoutes.ADD_MEMBERS, arguments: circle);
+            break;
+        }
+      },
       itemBuilder: (context) => [
-        _buildMenuItem(Icons.edit_outlined, "Edit Circle"),
-        _buildMenuItem(Icons.delete_outline, "Delete Circle"),
-        _buildMenuItem(Icons.lock_open_outlined, "Unlock Circle"),
-        _buildMenuItem(Icons.person_add_outlined, "Add Member"),
+        _buildMenuItem('edit', Icons.edit_outlined, "Edit Circle"),
+        const PopupMenuDivider(),
+        _buildMenuItem('delete', Icons.delete_outline, "Delete Circle"),
+        const PopupMenuDivider(),
+        _buildMenuItem('unlock', Icons.lock_open_outlined, "Unlock Circle"),
+        const PopupMenuDivider(),
+        _buildMenuItem('add_member', Icons.person_add_outlined, "Add Member"),
       ],
     );
   }
 
-  PopupMenuItem<String> _buildMenuItem(IconData icon, String title) {
-    return PopupMenuItem(
-      value: title,
+  PopupMenuItem<String> _buildMenuItem(
+    String value,
+    IconData icon,
+    String title,
+  ) {
+    return PopupMenuItem<String>(
+      value: value,
       child: Row(
         children: [
-          Icon(icon, size: 20.sp, color: Colors.grey[700]),
+          Icon(icon, size: 20.sp, color: AppColors.textHeading),
           SizedBox(width: 12.w),
-          Text(title, style: GoogleFonts.inter(fontSize: 14.sp)),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textHeading,
+            ),
+          ),
         ],
       ),
     );

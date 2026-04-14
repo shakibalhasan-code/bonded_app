@@ -20,6 +20,7 @@ import '../../screens/notification/notification_screen.dart';
 import '../../screens/circles/circle_details_screen.dart';
 import '../../screens/circles/circle_members_screen.dart';
 import '../../screens/circles/add_members_screen.dart';
+import '../../screens/circles/all_circles_screen.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -94,6 +95,10 @@ class AppPages {
     GetPage(
       name: AppRoutes.ADD_MEMBERS,
       page: () => const AddMembersScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.ALL_CIRCLES,
+      page: () => const AllCirclesScreen(),
     ),
   ];
 }

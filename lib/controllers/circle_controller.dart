@@ -1,4 +1,9 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
+import '../core/theme/app_colors.dart';
+import '../core/routes/app_routes.dart';
 import '../models/circle_model.dart';
 
 class CircleController extends GetxController {
@@ -109,7 +114,7 @@ class CircleController extends GetxController {
   }
 
   void _loadMockData() {
-    final mockedDetailedMembers = availableMembers.take(3).toList();
+    final mockedDetailedMembers = availableMembers;
 
     final sharedAvatars = [
       'https://i.pravatar.cc/150?u=a',
@@ -199,20 +204,73 @@ class CircleController extends GetxController {
     ];
   }
 
-  // Circle Actions
   void editCircle(CircleModel circle) {
-    Get.snackbar("Circle Action", "Edit Circle: ${circle.name}");
+    Get.snackbar(
+      "Action",
+      "Opening edit screen for ${circle.name}",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: AppColors.primary.withOpacity(0.1),
+    );
   }
 
   void deleteCircle(CircleModel circle) {
-    Get.snackbar("Circle Action", "Delete Circle: ${circle.name}");
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        title: Text(
+          "Delete Circle",
+          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          "Are you sure you want to delete '${circle.name}'? This action cannot be undone.",
+          style: GoogleFonts.inter(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text(
+              "Cancel",
+              style: GoogleFonts.inter(color: Colors.grey),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              Get.snackbar(
+                "Deleted",
+                "Circle '${circle.name}' has been deleted",
+                snackPosition: SnackPosition.BOTTOM,
+                backgroundColor: Colors.red.withOpacity(0.1),
+              );
+            },
+            child: Text(
+              "Delete",
+              style: GoogleFonts.inter(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void lockCircle(CircleModel circle) {
-    Get.snackbar("Circle Action", "Circle Locked: ${circle.name}");
+    // Navigate to subscription plan for unlocking/locking logic
+    Get.toNamed(AppRoutes.SUBSCRIPTION_PLAN); 
+    
+    Get.snackbar(
+      "Subscription",
+      "Redirecting to subscription plan to manage circle status",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: AppColors.primary.withOpacity(0.1),
+    );
   }
 
   void addMemberToCircle(CircleModel circle, MemberModel member) {
-    Get.snackbar("Success", "${member.name} has been added to ${circle.name}");
+    Get.snackbar(
+      "Success",
+      "${member.name} has been added to ${circle.name}",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.green.withOpacity(0.1),
+    );
   }
 }

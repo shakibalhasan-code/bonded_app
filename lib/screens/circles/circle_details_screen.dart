@@ -36,7 +36,7 @@ class CircleDetailsScreen extends StatelessWidget {
         actions: [
           if (circle.isOwner)
             Padding(
-              padding: EdgeInsets.only(right: 8.w),
+              padding: EdgeInsets.only(right: 12.w),
               child: PopupMenuButton<String>(
                 onSelected: (value) {
                   final controller = Get.find<CircleController>();
@@ -47,7 +47,7 @@ class CircleDetailsScreen extends StatelessWidget {
                     case 'delete':
                       controller.deleteCircle(circle);
                       break;
-                    case 'lock':
+                    case 'unlock':
                       controller.lockCircle(circle);
                       break;
                     case 'add_member':
@@ -55,28 +55,21 @@ class CircleDetailsScreen extends StatelessWidget {
                       break;
                   }
                 },
-                offset: const Offset(0, 50),
+                offset: const Offset(0, 45),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.r),
                 ),
-                icon: Container(
-                  padding: EdgeInsets.all(4.w),
-                  decoration: const BoxDecoration(
-                    color: Colors.transparent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.info_outline,
-                    color: AppColors.primary,
-                    size: 24.sp,
-                  ),
+                icon: Icon(
+                  Icons.info_outline,
+                  color: AppColors.primary,
+                  size: 26.sp,
                 ),
                 itemBuilder: (BuildContext context) => [
                   _buildPopupMenuItem('edit', Icons.edit_outlined, 'Edit Circle'),
                   const PopupMenuDivider(),
                   _buildPopupMenuItem('delete', Icons.delete_outline, 'Delete Circle'),
                   const PopupMenuDivider(),
-                  _buildPopupMenuItem('lock', Icons.lock_outline, 'Lock Circle'),
+                  _buildPopupMenuItem('unlock', Icons.lock_open_outlined, 'Unlock Circle'),
                   const PopupMenuDivider(),
                   _buildPopupMenuItem('add_member', Icons.person_add_outlined, 'Add Member'),
                 ],
@@ -201,7 +194,7 @@ class CircleDetailsScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 16.h),
                   if (circle.detailedMembers != null)
-                    ...circle.detailedMembers!.map((member) => CircleMemberTile(member: member)).toList()
+                    ...circle.detailedMembers!.take(3).map((member) => CircleMemberTile(member: member)).toList()
                   else
                     const Text("No members available"),
                 ],

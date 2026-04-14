@@ -37,7 +37,7 @@ class CirclesScreen extends StatelessWidget {
                     ? controller.publicCircles
                     : controller.privateCircles;
                 
-                return _buildCircleList(circles);
+                return _buildCircleList(circles, controller);
               }),
             ),
           ],
@@ -51,7 +51,7 @@ class CirclesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCircleList(List circles) {
+  Widget _buildCircleList(List circles, CircleController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -68,12 +68,21 @@ class CirclesScreen extends StatelessWidget {
                   color: AppColors.textHeading,
                 ),
               ),
-              Text(
-                "See All",
-                style: GoogleFonts.inter(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
+              GestureDetector(
+                onTap: () => Get.toNamed(
+                  AppRoutes.ALL_CIRCLES,
+                  arguments: {
+                    'title': controller.selectedTab.value == 0 ? "Public Circles" : "Private Circles",
+                    'circles': circles,
+                  },
+                ),
+                child: Text(
+                  "See All",
+                  style: GoogleFonts.inter(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
             ],
@@ -103,6 +112,41 @@ class CirclesScreen extends StatelessWidget {
           selectedIndex: controller.myCircleSubTab.value,
           tabs: const ["Created Circle", "Joined Circle"],
           onTabChanged: controller.changeMyCircleSubTab,
+        ),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                controller.myCircleSubTab.value == 0 ? "My Created Circles" : "My Joined Circles",
+                style: GoogleFonts.inter(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textHeading,
+                ),
+              ),
+              GestureDetector(
+                onTap: () => Get.toNamed(
+                  AppRoutes.ALL_CIRCLES,
+                  arguments: {
+                    'title': controller.myCircleSubTab.value == 0 ? "Created Circles" : "Joined Circles",
+                    'circles': controller.myCircleSubTab.value == 0
+                        ? controller.myCreatedCircles
+                        : controller.myJoinedCircles,
+                  },
+                ),
+                child: Text(
+                  "See All",
+                  style: GoogleFonts.inter(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         Expanded(
           child: ListView.builder(
