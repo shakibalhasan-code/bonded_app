@@ -21,4 +21,6 @@ abstract class AppRoutes {
   static const PICTURE_VERIFICATION = '/picture_verification';
   static const KYC_DOCUMENT = '/kyc_document';
   static const CIRCLE_DETAILS = '/circle_details';
+  static const CIRCLE_MEMBERS = '/circle_members';
+  static const ADD_MEMBERS = '/add_members';
 }

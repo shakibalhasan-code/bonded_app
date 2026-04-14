@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/routes/app_routes.dart';
+import '../../controllers/circle_controller.dart';
 import '../../models/circle_model.dart';
 import '../../widgets/circles/circle_member_tile.dart';
 
@@ -24,13 +26,63 @@ class CircleDetailsScreen extends StatelessWidget {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          "Circle Details",
+          "My Circle",
           style: GoogleFonts.inter(
             fontSize: 18.sp,
             fontWeight: FontWeight.w700,
             color: AppColors.textHeading,
           ),
         ),
+        actions: [
+          if (circle.isOwner)
+            Padding(
+              padding: EdgeInsets.only(right: 8.w),
+              child: PopupMenuButton<String>(
+                onSelected: (value) {
+                  final controller = Get.find<CircleController>();
+                  switch (value) {
+                    case 'edit':
+                      controller.editCircle(circle);
+                      break;
+                    case 'delete':
+                      controller.deleteCircle(circle);
+                      break;
+                    case 'lock':
+                      controller.lockCircle(circle);
+                      break;
+                    case 'add_member':
+                      Get.toNamed(AppRoutes.ADD_MEMBERS, arguments: circle);
+                      break;
+                  }
+                },
+                offset: const Offset(0, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                icon: Container(
+                  padding: EdgeInsets.all(4.w),
+                  decoration: const BoxDecoration(
+                    color: Colors.transparent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.info_outline,
+                    color: AppColors.primary,
+                    size: 24.sp,
+                  ),
+                ),
+                itemBuilder: (BuildContext context) => [
+                  _buildPopupMenuItem('edit', Icons.edit_outlined, 'Edit Circle'),
+                  const PopupMenuDivider(),
+                  _buildPopupMenuItem('delete', Icons.delete_outline, 'Delete Circle'),
+                  const PopupMenuDivider(),
+                  _buildPopupMenuItem('lock', Icons.lock_outline, 'Lock Circle'),
+                  const PopupMenuDivider(),
+                  _buildPopupMenuItem('add_member', Icons.person_add_outlined, 'Add Member'),
+                ],
+              ),
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -134,12 +186,15 @@ class CircleDetailsScreen extends StatelessWidget {
                           color: AppColors.textHeading,
                         ),
                       ),
-                      Text(
-                        "See All",
-                        style: GoogleFonts.inter(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primary,
+                      GestureDetector(
+                        onTap: () => Get.toNamed(AppRoutes.CIRCLE_MEMBERS, arguments: circle.detailedMembers),
+                        child: Text(
+                          "See All",
+                          style: GoogleFonts.inter(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
                         ),
                       ),
                     ],
@@ -154,6 +209,26 @@ class CircleDetailsScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _buildPopupMenuItem(String value, IconData icon, String title) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.textHeading, size: 20.sp),
+          SizedBox(width: 12.w),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textHeading,
+            ),
+          ),
+        ],
       ),
     );
   }

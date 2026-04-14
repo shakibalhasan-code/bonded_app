@@ -14,7 +14,11 @@ class CircleController extends GetxController {
   void onInit() {
     super.onInit();
     _loadMockData();
+    _loadAvailableMembers();
+    _loadMockData();
   }
+
+  final availableMembers = <MemberModel>[].obs;
 
   void changeTab(int index) {
     selectedTab.value = index;
@@ -24,8 +28,8 @@ class CircleController extends GetxController {
     myCircleSubTab.value = index;
   }
 
-  void _loadMockData() {
-    final mockedDetailedMembers = [
+  void _loadAvailableMembers() {
+    availableMembers.value = [
       MemberModel(
         id: '1',
         name: 'Matthias Huckestein',
@@ -45,7 +49,67 @@ class CircleController extends GetxController {
         image: 'https://i.pravatar.cc/150?u=3',
         role: 'Brunch lover, Wine Nights, Game Nights',
       ),
+      MemberModel(
+        id: '4',
+        name: 'Josephin Stengl',
+        image: 'https://i.pravatar.cc/150?u=4',
+        role:
+            'Brunch lover, Wine Nights, Game Nights, Movie Lovers, Game Nights',
+      ),
+      MemberModel(
+        id: '5',
+        name: 'Azra Stolz',
+        image: 'https://i.pravatar.cc/150?u=5',
+        role:
+            'Brunch lover, Wine Nights, Game Nights, Movie Lovers, Game Nights',
+      ),
+      MemberModel(
+        id: '6',
+        name: 'Betty Günther',
+        image: 'https://i.pravatar.cc/150?u=6',
+        role:
+            'Brunch lover, Wine Nights, Game Nights, Movie Lovers, Game Nights',
+      ),
+      MemberModel(
+        id: '7',
+        name: 'Marie Spelmeyer',
+        image: 'https://i.pravatar.cc/150?u=7',
+        role:
+            'Brunch lover, Wine Nights, Game Nights, Movie Lovers, Game Nights',
+      ),
+      MemberModel(
+        id: '8',
+        name: 'Marten Demut',
+        image: 'https://i.pravatar.cc/150?u=8',
+        role:
+            'Brunch lover, Wine Nights, Game Nights, Movie Lovers, Game Nights',
+      ),
+      MemberModel(
+        id: '9',
+        name: 'Markus Kinzel',
+        image: 'https://i.pravatar.cc/150?u=9',
+        role:
+            'Brunch lover, Wine Nights, Game Nights, Movie Lovers, Game Nights',
+      ),
+      MemberModel(
+        id: '10',
+        name: 'Nevio Zschunke',
+        image: 'https://i.pravatar.cc/150?u=10',
+        role:
+            'Brunch lover, Wine Nights, Game Nights, Movie Lovers, Game Nights',
+      ),
+      MemberModel(
+        id: '11',
+        name: 'Neele Göhler',
+        image: 'https://i.pravatar.cc/150?u=11',
+        role:
+            'Brunch lover, Wine Nights, Game Nights, Movie Lovers, Game Nights',
+      ),
     ];
+  }
+
+  void _loadMockData() {
+    final mockedDetailedMembers = availableMembers.take(3).toList();
 
     final sharedAvatars = [
       'https://i.pravatar.cc/150?u=a',
@@ -61,31 +125,23 @@ class CircleController extends GetxController {
         id: 'pub1',
         name: "Weekend Hangout Circle",
         description:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit...",
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse fermentum, risus pellentesque eleifend pulvinar, tortor mauris dignissim felis, et mattis sapien diam non ex. Sed vitae convallis nulla, sit amet interdum urna. Proin luctus lorem diam, eget finibus nisi commodo ac. Mauris mattis in odio eget interdum. Nunc interdum dui eu mi mollis volutpat.",
         image:
             "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=870&auto=format&fit=crop",
         memberAvatars: sharedAvatars,
         tags: ["Brunch Lovers", "Wine Nights", "Game Nights", "Movie L"],
+        detailedMembers: mockedDetailedMembers,
       ),
       CircleModel(
         id: 'pub2',
         name: "Food Lovers Circle",
         description:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit...",
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse fermentum, risus pellentesque eleifend pulvinar, tortor mauris dignissim felis, et mattis sapien diam non ex. Sed vitae convallis nulla, sit amet interdum urna. Proin luctus lorem diam, eget finibus nisi commodo ac. Mauris mattis in odio eget interdum. Nunc interdum dui eu mi mollis volutpat.",
         image:
             "https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=870&auto=format&fit=crop",
         memberAvatars: sharedAvatars,
         tags: ["Foodies", "Coffee Dates", "Picnic & Outdoor Chill"],
-      ),
-      CircleModel(
-        id: 'pub3',
-        name: "Book & Coffee Circle",
-        description:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit...",
-        image:
-            "https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=387&auto=format&fit=crop",
-        memberAvatars: sharedAvatars,
-        tags: ["Book Clubs", "Coffee Dates"],
+        detailedMembers: mockedDetailedMembers,
       ),
     ];
 
@@ -95,27 +151,13 @@ class CircleController extends GetxController {
         id: 'pri1',
         name: "Weekend Hangout Circle",
         description:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit...",
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse fermentum, risus pellentesque eleifend pulvinar, tortor mauris dignissim felis, et mattis sapien diam non ex. Sed vitae convallis nulla, sit amet interdum urna. Proin luctus lorem diam, eget finibus nisi commodo ac. Mauris mattis in odio eget interdum. Nunc interdum dui eu mi mollis volutpat.",
         image:
             "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=870&auto=format&fit=crop",
         memberAvatars: sharedAvatars,
         tags: ["Hiking", "Sports", "Outdoor Fitness", "Dance", "Game"],
         isLocked: true,
-        price: "${4.99}",
-        address: "Grand city St. 100, New York, United States.",
-        detailedMembers: mockedDetailedMembers,
-      ),
-      CircleModel(
-        id: 'pri2',
-        name: "Book & Coffee Circle",
-        description:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit...",
-        image:
-            "https://images.unsplash.com/photo-1532012197267-da84d127e765?q=80&w=387&auto=format&fit=crop",
-        memberAvatars: sharedAvatars,
-        tags: ["Hiking", "Sports", "Outdoor Fitness", "Dance", "Game"],
-        isLocked: true,
-        price: "${4.99}",
+        price: "${5.00}",
         address: "Grand city St. 100, New York, United States.",
         detailedMembers: mockedDetailedMembers,
       ),
@@ -127,25 +169,16 @@ class CircleController extends GetxController {
         id: 'myc1',
         name: "Weekend Hangout Circle",
         description:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit...",
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse fermentum, risus pellentesque eleifend pulvinar, tortor mauris dignissim felis, et mattis sapien diam non ex. Sed vitae convallis nulla, sit amet interdum urna. Proin luctus lorem diam, eget finibus nisi commodo ac. Mauris mattis in odio eget interdum. Nunc interdum dui eu mi mollis volutpat.",
         image:
             "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=870&auto=format&fit=crop",
         memberAvatars: sharedAvatars,
         tags: ["Hiking", "Sports", "Outdoor Fitness", "Dance", "Game"],
         isLocked: true,
         isOwner: true,
-      ),
-      CircleModel(
-        id: 'myc2',
-        name: "Food Lovers Circle",
-        description:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit...",
-        image:
-            "https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=870&auto=format&fit=crop",
-        memberAvatars: sharedAvatars,
-        tags: ["Hiking", "Sports", "Outdoor Fitness", "Dance", "Game"],
-        isLocked: true,
-        isOwner: true,
+        price: "${5.00}",
+        address: "Grand city St. 100, New York, United States.",
+        detailedMembers: mockedDetailedMembers,
       ),
     ];
 
@@ -153,15 +186,33 @@ class CircleController extends GetxController {
     myJoinedCircles.value = [
       CircleModel(
         id: 'myj1',
-        name: "Weekend Hangout Circle",
+        name: "Beach Volleyball Circle",
         description:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit...",
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse fermentum, risus pellentesque eleifend pulvinar, tortor mauris dignissim felis, et mattis sapien diam non ex. Sed vitae convallis nulla, sit amet interdum urna. Proin luctus lorem diam, eget finibus nisi commodo ac. Mauris mattis in odio eget interdum. Nunc interdum dui eu mi mollis volutpat.",
         image:
-            "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=870&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1550929555-5c2494191fe8?q=80&w=870&auto=format&fit=crop",
         memberAvatars: sharedAvatars,
-        tags: ["Hiking", "Sports", "Outdoor Fitness", "Dance", "Game"],
+        tags: ["Sports", "Fitness"],
         isJoined: true,
+        detailedMembers: mockedDetailedMembers,
       ),
     ];
+  }
+
+  // Circle Actions
+  void editCircle(CircleModel circle) {
+    Get.snackbar("Circle Action", "Edit Circle: ${circle.name}");
+  }
+
+  void deleteCircle(CircleModel circle) {
+    Get.snackbar("Circle Action", "Delete Circle: ${circle.name}");
+  }
+
+  void lockCircle(CircleModel circle) {
+    Get.snackbar("Circle Action", "Circle Locked: ${circle.name}");
+  }
+
+  void addMemberToCircle(CircleModel circle, MemberModel member) {
+    Get.snackbar("Success", "${member.name} has been added to ${circle.name}");
   }
 }

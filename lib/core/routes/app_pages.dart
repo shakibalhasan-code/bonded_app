@@ -18,6 +18,8 @@ import '../../screens/profile/choose_interest_screen.dart';
 import '../../screens/profile/kyc_document_screen.dart';
 import '../../screens/notification/notification_screen.dart';
 import '../../screens/circles/circle_details_screen.dart';
+import '../../screens/circles/circle_members_screen.dart';
+import '../../screens/circles/add_members_screen.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -84,6 +86,14 @@ class AppPages {
     GetPage(
       name: AppRoutes.CIRCLE_DETAILS,
       page: () => const CircleDetailsScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.CIRCLE_MEMBERS,
+      page: () => const CircleMembersScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.ADD_MEMBERS,
+      page: () => const AddMembersScreen(),
     ),
   ];
 }
