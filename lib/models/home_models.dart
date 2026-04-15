@@ -31,9 +31,12 @@ class PostModel {
   final String id;
   final String userName;
   final String userImage;
+  final String? userBio;
   final String postText;
+  final List<String> images;
   final RxInt likesCount;
   final RxInt commentsCount;
+  final RxInt sharesCount;
   final RxBool isLiked;
   final RxBool isCommenting;
   final RxList<CommentModel> comments;
@@ -42,15 +45,20 @@ class PostModel {
     required this.id,
     required this.userName,
     required this.userImage,
+    this.userBio,
     required this.postText,
+    this.images = const [],
     int likesCount = 0,
     int commentsCount = 0,
+    int sharesCount = 0,
     bool isLiked = false,
     bool isCommenting = false,
     List<CommentModel>? comments,
   })  : likesCount = likesCount.obs,
         commentsCount = commentsCount.obs,
+        sharesCount = sharesCount.obs,
         isLiked = isLiked.obs,
         isCommenting = isCommenting.obs,
         comments = (comments ?? <CommentModel>[]).obs;
 }
+

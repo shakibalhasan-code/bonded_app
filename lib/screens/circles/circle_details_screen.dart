@@ -6,14 +6,19 @@ import '../../core/theme/app_colors.dart';
 import '../../core/routes/app_routes.dart';
 import '../../controllers/circle_controller.dart';
 import '../../models/circle_model.dart';
+import '../../widgets/circles/create_post_sheet.dart';
+import '../../widgets/circles/circle_post_item.dart';
 import '../../widgets/circles/circle_member_tile.dart';
 
+
 class CircleDetailsScreen extends StatelessWidget {
+
   const CircleDetailsScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final CircleModel circle = Get.arguments;
+    final CircleController controller = Get.find<CircleController>();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -22,188 +27,121 @@ class CircleDetailsScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textHeading),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF1B0B3B)),
           onPressed: () => Get.back(),
         ),
         title: Text(
-          "My Circle",
+          circle.name,
           style: GoogleFonts.inter(
             fontSize: 18.sp,
             fontWeight: FontWeight.w700,
-            color: AppColors.textHeading,
+            color: const Color(0xFF1B0B3B),
           ),
         ),
         actions: [
-          if (circle.isOwner)
-            Padding(
-              padding: EdgeInsets.only(right: 12.w),
-              child: PopupMenuButton<String>(
-                onSelected: (value) {
-                  final controller = Get.find<CircleController>();
-                  switch (value) {
-                    case 'edit':
-                      controller.editCircle(circle);
-                      break;
-                    case 'delete':
-                      controller.deleteCircle(circle);
-                      break;
-                    case 'unlock':
-                      controller.lockCircle(circle);
-                      break;
-                    case 'add_member':
-                      Get.toNamed(AppRoutes.ADD_MEMBERS, arguments: circle);
-                      break;
-                  }
-                },
-                offset: const Offset(0, 45),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                icon: Icon(
-                  Icons.info_outline,
-                  color: AppColors.primary,
-                  size: 26.sp,
-                ),
-                itemBuilder: (BuildContext context) => [
-                  _buildPopupMenuItem('edit', Icons.edit_outlined, 'Edit Circle'),
-                  const PopupMenuDivider(),
-                  _buildPopupMenuItem('delete', Icons.delete_outline, 'Delete Circle'),
-                  const PopupMenuDivider(),
-                  _buildPopupMenuItem('unlock', Icons.lock_open_outlined, 'Unlock Circle'),
-                  const PopupMenuDivider(),
-                  _buildPopupMenuItem('add_member', Icons.person_add_outlined, 'Add Member'),
-                ],
-              ),
+          PopupMenuButton<String>(
+            offset: const Offset(0, 45),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.r),
             ),
+            icon: Icon(Icons.info_outline, color: AppColors.primary, size: 24.sp),
+            onSelected: (value) {
+              if (value == 'info') {
+                _showCircleInfoBottomSheet(context, circle);
+              } else if (value == 'members') {
+                Get.toNamed(AppRoutes.CIRCLE_MEMBERS, arguments: circle.detailedMembers);
+              }
+            },
+            itemBuilder: (context) => [
+              _buildPopupMenuItem('info', Icons.info_outline, "Group Info"),
+              const PopupMenuDivider(),
+              _buildPopupMenuItem('members', Icons.people_outline, "Group Members"),
+            ],
+          ),
+          SizedBox(width: 8.w),
         ],
+
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 20.w),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20.r),
-                child: Image.network(
-                  circle.image,
-                  height: 250.h,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            SizedBox(height: 20.h),
-
-            // Header Info
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          circle.name,
-                          style: GoogleFonts.inter(
-                            fontSize: 22.sp,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textHeading,
-                          ),
-                        ),
+                   SizedBox(height: 12.h),
+                  // Today Chip
+                  Center(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF9F9FF),
+                        borderRadius: BorderRadius.circular(8.r),
                       ),
-                      Text(
-                        circle.price ?? "\$5.00",
+                      child: Text(
+                        "Today",
                         style: GoogleFonts.inter(
-                          fontSize: 22.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primary,
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[600],
                         ),
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 8.h),
-                  Row(
-                    children: [
-                      Icon(Icons.location_on, color: AppColors.primary, size: 20.sp),
-                      SizedBox(width: 8.w),
-                      Expanded(
-                        child: Text(
-                          circle.address ?? "Grand city St. 100, New York, United States.",
-                          style: GoogleFonts.inter(
-                            fontSize: 14.sp,
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  const Divider(height: 32),
-
-                  // Description
-                  Text(
-                    "Description:",
-                    style: GoogleFonts.inter(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textHeading,
                     ),
-                  ),
-                  SizedBox(height: 12.h),
-                  Text(
-                    circle.description,
-                    style: GoogleFonts.inter(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.grey[600],
-                      height: 1.6,
-                    ),
-                  ),
-
-                  const Divider(height: 32),
-
-                  // Members List
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Members",
-                        style: GoogleFonts.inter(
-                          fontSize: 18.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textHeading,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => Get.toNamed(AppRoutes.CIRCLE_MEMBERS, arguments: circle.detailedMembers),
-                        child: Text(
-                          "See All",
-                          style: GoogleFonts.inter(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                   SizedBox(height: 16.h),
-                  if (circle.detailedMembers != null)
-                    ...circle.detailedMembers!.take(3).map((member) => CircleMemberTile(member: member)).toList()
-                  else
-                    const Text("No members available"),
+
+                  // Post Feed
+                  Obx(() => ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: circle.posts.length,
+                        itemBuilder: (context, index) {
+                          return CirclePostItem(post: circle.posts[index]);
+                        },
+                      )),
                 ],
               ),
             ),
+          ),
+          
+          // Bottom Input Bar
+          _buildBottomInputBar(context, circle),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomInputBar(BuildContext context, CircleModel circle) {
+    return GestureDetector(
+      onTap: () => Get.bottomSheet(
+        CreatePostSheet(circle: circle),
+        isScrollControlled: true,
+      ),
+      child: Container(
+        padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 30.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Colors.grey[100]!)),
+        ),
+        child: Row(
+          children: [
+            _buildInputIcon(Icons.mic_none),
+            SizedBox(width: 12.w),
+            _buildInputIcon(Icons.emoji_emotions_outlined),
+            SizedBox(width: 12.w),
+            _buildInputIcon(Icons.image_outlined),
+            SizedBox(width: 12.w),
+            _buildInputIcon(Icons.videocam_outlined),
+            SizedBox(width: 16.w),
+            const Spacer(),
+            Icon(Icons.send_rounded, color: AppColors.primary, size: 28.sp),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildInputIcon(IconData icon) {
+    return Icon(icon, color: Colors.grey[500], size: 24.sp);
   }
 
   PopupMenuItem<String> _buildPopupMenuItem(String value, IconData icon, String title) {
@@ -211,18 +149,111 @@ class CircleDetailsScreen extends StatelessWidget {
       value: value,
       child: Row(
         children: [
-          Icon(icon, color: AppColors.textHeading, size: 20.sp),
+          Icon(icon, color: const Color(0xFF1B0B3B), size: 20.sp),
           SizedBox(width: 12.w),
           Text(
             title,
             style: GoogleFonts.inter(
               fontSize: 14.sp,
               fontWeight: FontWeight.w500,
-              color: AppColors.textHeading,
+              color: const Color(0xFF1B0B3B),
             ),
           ),
         ],
       ),
     );
   }
+
+  void _showCircleInfoBottomSheet(BuildContext context, CircleModel circle) {
+
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.all(24.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: Container(
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
+                ),
+              ),
+              SizedBox(height: 24.h),
+              Text(
+                "About Circle",
+                style: GoogleFonts.inter(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textHeading,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                circle.description,
+                style: GoogleFonts.inter(
+                  fontSize: 14.sp,
+                  color: Colors.grey[600],
+                  height: 1.6,
+                ),
+              ),
+              if (circle.address != null) ...[
+                SizedBox(height: 20.h),
+                Row(
+                  children: [
+                    Icon(Icons.location_on, color: AppColors.primary, size: 20.sp),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Text(
+                        circle.address!,
+                        style: GoogleFonts.inter(fontSize: 13.sp, color: Colors.grey[600]),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              const Divider(height: 40),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Members",
+                    style: GoogleFonts.inter(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textHeading,
+                    ),
+                  ),
+                  Text(
+                    "See All",
+                    style: GoogleFonts.inter(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16.h),
+              if (circle.detailedMembers != null)
+                ...circle.detailedMembers!.take(3).map((member) => CircleMemberTile(member: member)).toList()
+              else
+                const Text("No members available"),
+              SizedBox(height: 20.h),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
+

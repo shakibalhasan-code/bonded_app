@@ -1,3 +1,4 @@
+import 'package:bonded_app/models/home_models.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -188,6 +189,43 @@ class CircleController extends GetxController {
     ];
 
     // My Joined Circles
+    final mockPosts = [
+      PostModel(
+        id: 'p1',
+        userName: 'anny_wilson',
+        userBio: 'Wine Nights, Game Nights',
+        userImage: 'https://i.pravatar.cc/150?u=anny',
+        postText: 'Wine Nights, Game Nights',
+        images: [
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=500&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=500&auto=format&fit=crop',
+          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=500&auto=format&fit=crop',
+        ],
+        likesCount: 10389,
+        commentsCount: 5,
+        sharesCount: 7,
+        comments: [
+          CommentModel(
+            id: 'c1',
+            userName: 'Aniy Wilson',
+            userImage: 'https://i.pravatar.cc/150?u=aniyw',
+            text: 'Welcome! Really nice to meet you.',
+            timestamp: '1h',
+          ),
+          CommentModel(
+            id: 'c2',
+            userName: 'Robert Fox',
+            userImage: 'https://i.pravatar.cc/150?u=rob',
+            text: 'Can\'t wait to meet you',
+            timestamp: '22 m',
+          ),
+        ],
+      ),
+    ];
+
+    publicCircles.forEach((c) => c.posts.addAll(mockPosts));
+    privateCircles.forEach((c) => c.posts.addAll(mockPosts));
+    myCreatedCircles.forEach((c) => c.posts.addAll(mockPosts));
     myJoinedCircles.value = [
       CircleModel(
         id: 'myj1',
@@ -200,8 +238,69 @@ class CircleController extends GetxController {
         tags: ["Sports", "Fitness"],
         isJoined: true,
         detailedMembers: mockedDetailedMembers,
+        posts: mockPosts,
       ),
     ];
+  }
+
+  // Feed Interaction Methods
+  void toggleLikePost(PostModel post) {
+    if (post.isLiked.value) {
+      post.isLiked.value = false;
+      post.likesCount.value--;
+    } else {
+      post.isLiked.value = true;
+      post.likesCount.value++;
+    }
+  }
+
+  void toggleCommentInput(PostModel post) {
+    post.isCommenting.toggle();
+  }
+
+  void addComment(PostModel post, String text) {
+    if (text.isEmpty) return;
+
+    final newComment = CommentModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      userName: 'Me',
+      userImage: 'https://i.pravatar.cc/150?u=me',
+      text: text,
+      timestamp: 'Just now',
+    );
+
+    post.comments.add(newComment);
+    post.commentsCount.value++;
+    post.isCommenting.value = false;
+  }
+
+  void toggleLikeComment(CommentModel comment) {
+    if (comment.isLiked.value) {
+      comment.isLiked.value = false;
+      comment.likesCount.value--;
+    } else {
+      comment.isLiked.value = true;
+      comment.likesCount.value++;
+    }
+  }
+
+  void toggleReplyInput(CommentModel comment) {
+    comment.showReplyInput.toggle();
+  }
+
+  void addReply(CommentModel comment, String text) {
+    if (text.isEmpty) return;
+
+    final newReply = CommentModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      userName: 'Me',
+      userImage: 'https://i.pravatar.cc/150?u=me',
+      text: text,
+      timestamp: 'Just now',
+    );
+
+    comment.replies.add(newReply);
+    comment.showReplyInput.value = false;
   }
 
   void editCircle(CircleModel circle) {
@@ -216,7 +315,9 @@ class CircleController extends GetxController {
   void deleteCircle(CircleModel circle) {
     Get.dialog(
       AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
         title: Text(
           "Delete Circle",
           style: GoogleFonts.inter(fontWeight: FontWeight.bold),
@@ -228,10 +329,7 @@ class CircleController extends GetxController {
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: Text(
-              "Cancel",
-              style: GoogleFonts.inter(color: Colors.grey),
-            ),
+            child: Text("Cancel", style: GoogleFonts.inter(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () {
@@ -245,7 +343,10 @@ class CircleController extends GetxController {
             },
             child: Text(
               "Delete",
-              style: GoogleFonts.inter(color: Colors.red, fontWeight: FontWeight.bold),
+              style: GoogleFonts.inter(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -255,8 +356,8 @@ class CircleController extends GetxController {
 
   void lockCircle(CircleModel circle) {
     // Navigate to subscription plan for unlocking/locking logic
-    Get.toNamed(AppRoutes.SUBSCRIPTION_PLAN); 
-    
+    Get.toNamed(AppRoutes.SUBSCRIPTION_PLAN);
+
     Get.snackbar(
       "Subscription",
       "Redirecting to subscription plan to manage circle status",
@@ -271,6 +372,35 @@ class CircleController extends GetxController {
       "${member.name} has been added to ${circle.name}",
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: Colors.green.withOpacity(0.1),
+    );
+  }
+
+  void createPost(
+    CircleModel circle,
+    String text, {
+    List<String> images = const [],
+  }) {
+    if (text.isEmpty && images.isEmpty) return;
+
+    final newPost = PostModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      userName: 'Andrew Ainsley', // Matches the screenshot profile
+      userBio: 'Bonded User',
+      userImage: 'https://i.pravatar.cc/150?u=andrew',
+      postText: text,
+      images: images,
+      likesCount: 0,
+      commentsCount: 0,
+      sharesCount: 0,
+    );
+
+    circle.posts.insert(0, newPost);
+    Get.back(); // Close the sheet
+    Get.snackbar(
+      "Post Created",
+      "Your post has been shared in ${circle.name}",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: AppColors.primary.withOpacity(0.1),
     );
   }
 }

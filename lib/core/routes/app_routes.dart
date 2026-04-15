@@ -24,4 +24,6 @@ abstract class AppRoutes {
   static const CIRCLE_MEMBERS = '/circle_members';
   static const ADD_MEMBERS = '/add_members';
   static const ALL_CIRCLES = '/all_circles';
+  static const BOND_PROFILE = '/bond_profile';
 }
+

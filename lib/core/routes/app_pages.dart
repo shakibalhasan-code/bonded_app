@@ -21,7 +21,9 @@ import '../../screens/circles/circle_details_screen.dart';
 import '../../screens/circles/circle_members_screen.dart';
 import '../../screens/circles/add_members_screen.dart';
 import '../../screens/circles/all_circles_screen.dart';
+import '../../screens/bond/bond_profile_screen.dart';
 import 'app_routes.dart';
+
 
 class AppPages {
   static const INITIAL = AppRoutes.INITIAL;
@@ -100,5 +102,10 @@ class AppPages {
       name: AppRoutes.ALL_CIRCLES,
       page: () => const AllCirclesScreen(),
     ),
+    GetPage(
+      name: AppRoutes.BOND_PROFILE,
+      page: () => const BondProfileScreen(),
+    ),
   ];
 }
+

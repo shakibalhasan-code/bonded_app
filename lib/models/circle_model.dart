@@ -1,3 +1,6 @@
+import 'package:get/get.dart';
+import 'home_models.dart';
+
 class MemberModel {
   final String id;
   final String name;
@@ -25,6 +28,7 @@ class CircleModel {
   final bool isJoined;
   final String? address;
   final List<MemberModel>? detailedMembers;
+  final RxList<PostModel> posts;
 
   CircleModel({
     required this.id,
@@ -39,5 +43,7 @@ class CircleModel {
     this.isJoined = false,
     this.address,
     this.detailedMembers,
-  });
+    List<PostModel>? posts,
+  }) : posts = (posts ?? <PostModel>[]).obs;
 }
+

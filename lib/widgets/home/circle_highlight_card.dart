@@ -1,3 +1,5 @@
+import 'package:bonded_app/controllers/circle_controller.dart';
+import 'package:bonded_app/core/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -51,12 +53,14 @@ class CircleHighlightCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              Obx(() => _buildInteractionButton(
-                    post.isLiked.value ? Icons.thumb_up : Icons.thumb_up_outlined,
-                    post.isLiked.value ? "Liked" : "Like",
-                    isActive: post.isLiked.value,
-                    onTap: () => controller.toggleLikePost(post),
-                  )),
+              Obx(
+                () => _buildInteractionButton(
+                  post.isLiked.value ? Icons.thumb_up : Icons.thumb_up_outlined,
+                  post.isLiked.value ? "Liked" : "Like",
+                  isActive: post.isLiked.value,
+                  onTap: () => controller.toggleLikePost(post),
+                ),
+              ),
               _buildInteractionButton(
                 Icons.chat_bubble_outline,
                 "Comment",
@@ -64,26 +68,30 @@ class CircleHighlightCard extends StatelessWidget {
               ),
             ],
           ),
-          
+
           // Comment Input Field
-          Obx(() => post.isCommenting.value
-              ? _buildCommentInput(commentController, (text) {
-                  controller.addComment(post, text);
-                  commentController.clear();
-                })
-              : const SizedBox.shrink()),
-          
+          Obx(
+            () => post.isCommenting.value
+                ? _buildCommentInput(commentController, (text) {
+                    controller.addComment(post, text);
+                    commentController.clear();
+                  })
+                : const SizedBox.shrink(),
+          ),
+
           SizedBox(height: 12.h),
-          
+
           // Comments List
-          Obx(() => ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: post.comments.length,
-                itemBuilder: (context, index) {
-                  return _CommentItem(comment: post.comments[index]);
-                },
-              )),
+          Obx(
+            () => ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: post.comments.length,
+              itemBuilder: (context, index) {
+                return _CommentItem(comment: post.comments[index]);
+              },
+            ),
+          ),
         ],
       ),
     );
@@ -101,12 +109,26 @@ class CircleHighlightCard extends StatelessWidget {
             color: AppColors.textHeading,
           ),
         ),
-        Text(
-          "View Details",
-          style: GoogleFonts.inter(
-            fontSize: 12.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.primary,
+        GestureDetector(
+          onTap: () {
+            // Find the circle from CircleController or create a dummy one
+            final circleController = Get.find<CircleController>();
+            final circle = circleController.publicCircles.firstWhere(
+              (c) => c.name == post.userName,
+              orElse: () => circleController.myJoinedCircles.firstWhere(
+                (c) => c.name == post.userName,
+                orElse: () => circleController.publicCircles.first,
+              ),
+            );
+            Get.toNamed(AppRoutes.CIRCLE_DETAILS, arguments: circle);
+          },
+          child: Text(
+            "View Details",
+            style: GoogleFonts.inter(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary,
+            ),
           ),
         ),
       ],
@@ -118,28 +140,40 @@ class CircleHighlightCard extends StatelessWidget {
       children: [
         Icon(Icons.thumb_up, size: 14.sp, color: Colors.orange),
         SizedBox(width: 4.w),
-        Obx(() => Text(
-              "${post.likesCount.value}",
-              style: GoogleFonts.inter(fontSize: 11.sp, color: Colors.grey[600]),
-            )),
+        Obx(
+          () => Text(
+            "${post.likesCount.value}",
+            style: GoogleFonts.inter(fontSize: 11.sp, color: Colors.grey[600]),
+          ),
+        ),
         const Spacer(),
-        Obx(() => Text(
-              "${post.commentsCount.value} comments",
-              style: GoogleFonts.inter(fontSize: 11.sp, color: Colors.grey[600]),
-            )),
+        Obx(
+          () => Text(
+            "${post.commentsCount.value} comments",
+            style: GoogleFonts.inter(fontSize: 11.sp, color: Colors.grey[600]),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildInteractionButton(IconData icon, String label,
-      {bool isActive = false, VoidCallback? onTap}) {
+  Widget _buildInteractionButton(
+    IconData icon,
+    String label, {
+    bool isActive = false,
+    VoidCallback? onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 8.h),
         child: Row(
           children: [
-            Icon(icon, size: 18.sp, color: isActive ? AppColors.primary : Colors.grey[600]),
+            Icon(
+              icon,
+              size: 18.sp,
+              color: isActive ? AppColors.primary : Colors.grey[600],
+            ),
             SizedBox(width: 6.w),
             Text(
               label,
@@ -155,7 +189,10 @@ class CircleHighlightCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCommentInput(TextEditingController controller, Function(String) onAdd) {
+  Widget _buildCommentInput(
+    TextEditingController controller,
+    Function(String) onAdd,
+  ) {
     return Padding(
       padding: EdgeInsets.only(top: 12.h),
       child: Row(
@@ -167,7 +204,10 @@ class CircleHighlightCard extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: "Write a comment...",
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12.w,
+                  vertical: 10.h,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(20.r),
                   borderSide: BorderSide(color: Colors.grey[200]!),
@@ -239,28 +279,49 @@ class _CommentItem extends StatelessWidget {
                       SizedBox(height: 6.h),
                       Row(
                         children: [
-                          Obx(() => _buildActionText(
-                            comment.isLiked.value ? "Liked" : "Like",
-                            isActive: comment.isLiked.value,
-                            onTap: () => controller.toggleLikeComment(comment),
-                          )),
+                          Obx(
+                            () => _buildActionText(
+                              comment.isLiked.value ? "Liked" : "Like",
+                              isActive: comment.isLiked.value,
+                              onTap: () =>
+                                  controller.toggleLikeComment(comment),
+                            ),
+                          ),
                           SizedBox(width: 12.w),
-                          _buildActionText("Reply", onTap: () => controller.toggleReplyInput(comment)),
+                          _buildActionText(
+                            "Reply",
+                            onTap: () => controller.toggleReplyInput(comment),
+                          ),
                           SizedBox(width: 12.w),
                           Text(
                             comment.timestamp,
-                            style: GoogleFonts.inter(fontSize: 11.sp, color: Colors.grey[400]),
+                            style: GoogleFonts.inter(
+                              fontSize: 11.sp,
+                              color: Colors.grey[400],
+                            ),
                           ),
                           const Spacer(),
-                          Obx(() => comment.likesCount.value > 0 
-                            ? Row(
-                                children: [
-                                  Icon(Icons.thumb_up, size: 10.sp, color: Colors.orange),
-                                  SizedBox(width: 2.w),
-                                  Text("${comment.likesCount.value}", style: TextStyle(fontSize: 10.sp, color: Colors.grey)),
-                                ],
-                              )
-                            : const SizedBox.shrink()),
+                          Obx(
+                            () => comment.likesCount.value > 0
+                                ? Row(
+                                    children: [
+                                      Icon(
+                                        Icons.thumb_up,
+                                        size: 10.sp,
+                                        color: Colors.orange,
+                                      ),
+                                      SizedBox(width: 2.w),
+                                      Text(
+                                        "${comment.likesCount.value}",
+                                        style: TextStyle(
+                                          fontSize: 10.sp,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
                         ],
                       ),
                     ],
@@ -268,53 +329,75 @@ class _CommentItem extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             // Reply Input
-            Obx(() => comment.showReplyInput.value
-                ? Padding(
-                    padding: EdgeInsets.only(top: 8.h, left: 38.w),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: replyController,
-                            style: GoogleFonts.inter(fontSize: 12.sp),
-                            decoration: InputDecoration(
-                              hintText: "Reply...",
-                              isDense: true,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(15.r)),
+            Obx(
+              () => comment.showReplyInput.value
+                  ? Padding(
+                      padding: EdgeInsets.only(top: 8.h, left: 38.w),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: replyController,
+                              style: GoogleFonts.inter(fontSize: 12.sp),
+                              decoration: InputDecoration(
+                                hintText: "Reply...",
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 10.w,
+                                  vertical: 6.h,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(15.r),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                        IconButton(
-                          onPressed: () {
-                            controller.addReply(comment, replyController.text);
-                            replyController.clear();
-                          },
-                          icon: Icon(Icons.send, size: 16.sp, color: AppColors.primary),
-                        ),
-                      ],
-                    ),
-                  )
-                : const SizedBox.shrink()),
+                          IconButton(
+                            onPressed: () {
+                              controller.addReply(
+                                comment,
+                                replyController.text,
+                              );
+                              replyController.clear();
+                            },
+                            icon: Icon(
+                              Icons.send,
+                              size: 16.sp,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
 
             // Replies List
-            Obx(() => comment.replies.isNotEmpty
-                ? Padding(
-                    padding: EdgeInsets.only(top: 8.h, left: 38.w),
-                    child: Column(
-                      children: comment.replies.map((reply) => _ReplyItem(reply: reply)).toList(),
-                    ),
-                  )
-                : const SizedBox.shrink()),
+            Obx(
+              () => comment.replies.isNotEmpty
+                  ? Padding(
+                      padding: EdgeInsets.only(top: 8.h, left: 38.w),
+                      child: Column(
+                        children: comment.replies
+                            .map((reply) => _ReplyItem(reply: reply))
+                            .toList(),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActionText(String label, {bool isActive = false, VoidCallback? onTap}) {
+  Widget _buildActionText(
+    String label, {
+    bool isActive = false,
+    VoidCallback? onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Text(
@@ -341,13 +424,22 @@ class _ReplyItem extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(radius: 10.r, backgroundImage: NetworkImage(reply.userImage)),
+          CircleAvatar(
+            radius: 10.r,
+            backgroundImage: NetworkImage(reply.userImage),
+          ),
           SizedBox(width: 8.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(reply.userName, style: GoogleFonts.inter(fontSize: 11.sp, fontWeight: FontWeight.w700)),
+                Text(
+                  reply.userName,
+                  style: GoogleFonts.inter(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 Text(reply.text, style: GoogleFonts.inter(fontSize: 11.sp)),
               ],
             ),
