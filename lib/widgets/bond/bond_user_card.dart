@@ -87,6 +87,7 @@ class BondUserCard extends StatelessWidget {
     );
   }
 
+
   Widget _buildActionRow(BondController controller) {
     if (user.bondStatus.value == BondStatus.nearby) {
       return Row(
@@ -149,13 +150,17 @@ class BondUserCard extends StatelessWidget {
   }
 
   Widget _buildMessageIcon() {
-    return Container(
-      padding: EdgeInsets.all(10.w),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0EDFF),
-        shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: () => Get.toNamed(AppRoutes.CHAT, arguments: user),
+      child: Container(
+        padding: EdgeInsets.all(10.w),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0EDFF),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(Icons.chat_bubble_outline, color: AppColors.primary, size: 20.sp),
       ),
-      child: Icon(Icons.chat_bubble_outline, color: AppColors.primary, size: 20.sp),
     );
   }
+
 }

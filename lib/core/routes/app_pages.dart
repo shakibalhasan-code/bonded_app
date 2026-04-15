@@ -22,7 +22,9 @@ import '../../screens/circles/circle_members_screen.dart';
 import '../../screens/circles/add_members_screen.dart';
 import '../../screens/circles/all_circles_screen.dart';
 import '../../screens/bond/bond_profile_screen.dart';
+import '../../screens/messages/chat_screen.dart';
 import 'app_routes.dart';
+
 
 
 class AppPages {
@@ -106,6 +108,11 @@ class AppPages {
       name: AppRoutes.BOND_PROFILE,
       page: () => const BondProfileScreen(),
     ),
+    GetPage(
+      name: AppRoutes.CHAT,
+      page: () => const ChatScreen(),
+    ),
   ];
 }
+
 
