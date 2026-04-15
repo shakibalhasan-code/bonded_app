@@ -97,7 +97,7 @@ class BondUserCard extends StatelessWidget {
               onPressed: () => controller.sendBondRequest(user),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.r)),
                 padding: EdgeInsets.symmetric(vertical: 12.h),
               ),
               child: Text(
@@ -119,7 +119,7 @@ class BondUserCard extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFF0EDFF),
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.r)),
                 padding: EdgeInsets.symmetric(vertical: 12.h),
               ),
               child: Text(
@@ -134,7 +134,7 @@ class BondUserCard extends StatelessWidget {
               onPressed: () => controller.acceptBondRequest(user),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.r)),
                 padding: EdgeInsets.symmetric(vertical: 12.h),
               ),
               child: Text(

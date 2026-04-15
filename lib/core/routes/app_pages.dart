@@ -23,7 +23,9 @@ import '../../screens/circles/add_members_screen.dart';
 import '../../screens/circles/all_circles_screen.dart';
 import '../../screens/bond/bond_profile_screen.dart';
 import '../../screens/messages/chat_screen.dart';
+import '../../screens/bond/nearby_people_screen.dart';
 import 'app_routes.dart';
+
 
 
 
@@ -112,7 +114,12 @@ class AppPages {
       name: AppRoutes.CHAT,
       page: () => const ChatScreen(),
     ),
+    GetPage(
+      name: AppRoutes.NEARBY_PEOPLE,
+      page: () => const NearbyPeopleScreen(),
+    ),
   ];
 }
+
 
 

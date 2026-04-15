@@ -1,3 +1,4 @@
+import 'package:bonded_app/core/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -49,8 +50,14 @@ class BondScreen extends StatelessWidget {
             unselectedLabelColor: Colors.grey[500],
             indicatorColor: AppColors.primary,
             indicatorWeight: 3,
-            labelStyle: GoogleFonts.inter(fontSize: 14.sp, fontWeight: FontWeight.w600),
-            unselectedLabelStyle: GoogleFonts.inter(fontSize: 14.sp, fontWeight: FontWeight.w500),
+            labelStyle: GoogleFonts.inter(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+            ),
+            unselectedLabelStyle: GoogleFonts.inter(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+            ),
             tabs: const [
               Tab(text: "Nearby People"),
               Tab(text: "Bond Request"),
@@ -98,24 +105,29 @@ class BondScreen extends StatelessWidget {
                   color: const Color(0xFF1B0B3B),
                 ),
               ),
-              Text(
-                "See All",
-                style: GoogleFonts.inter(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
+              GestureDetector(
+                onTap: () => Get.toNamed(AppRoutes.NEARBY_PEOPLE),
+                child: Text(
+                  "See All",
+                  style: GoogleFonts.inter(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
             ],
           ),
           SizedBox(height: 16.h),
           Expanded(
-            child: Obx(() => ListView.builder(
-                  itemCount: controller.nearbyPeople.length,
-                  itemBuilder: (context, index) {
-                    return BondUserCard(user: controller.nearbyPeople[index]);
-                  },
-                )),
+            child: Obx(
+              () => ListView.builder(
+                itemCount: controller.nearbyPeople.length,
+                itemBuilder: (context, index) {
+                  return BondUserCard(user: controller.nearbyPeople[index]);
+                },
+              ),
+            ),
           ),
         ],
       ),
@@ -138,12 +150,14 @@ class BondScreen extends StatelessWidget {
           ),
           SizedBox(height: 16.h),
           Expanded(
-            child: Obx(() => ListView.builder(
-                  itemCount: controller.bondRequests.length,
-                  itemBuilder: (context, index) {
-                    return BondUserCard(user: controller.bondRequests[index]);
-                  },
-                )),
+            child: Obx(
+              () => ListView.builder(
+                itemCount: controller.bondRequests.length,
+                itemBuilder: (context, index) {
+                  return BondUserCard(user: controller.bondRequests[index]);
+                },
+              ),
+            ),
           ),
         ],
       ),
@@ -166,16 +180,17 @@ class BondScreen extends StatelessWidget {
           ),
           SizedBox(height: 16.h),
           Expanded(
-            child: Obx(() => ListView.builder(
-                  itemCount: controller.myBonds.length,
-                  itemBuilder: (context, index) {
-                    return BondUserCard(user: controller.myBonds[index]);
-                  },
-                )),
+            child: Obx(
+              () => ListView.builder(
+                itemCount: controller.myBonds.length,
+                itemBuilder: (context, index) {
+                  return BondUserCard(user: controller.myBonds[index]);
+                },
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 }
-
