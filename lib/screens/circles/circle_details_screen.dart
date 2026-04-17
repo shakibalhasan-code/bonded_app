@@ -10,9 +10,7 @@ import '../../widgets/circles/create_post_sheet.dart';
 import '../../widgets/circles/circle_post_item.dart';
 import '../../widgets/circles/circle_member_tile.dart';
 
-
 class CircleDetailsScreen extends StatelessWidget {
-
   const CircleDetailsScreen({Key? key}) : super(key: key);
 
   @override
@@ -44,118 +42,143 @@ class CircleDetailsScreen extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16.r),
             ),
-            icon: Icon(Icons.info_outline, color: AppColors.primary, size: 24.sp),
+            icon: Container(
+              padding: EdgeInsets.all(4.w),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.primary, width: 1.5),
+              ),
+              child: Icon(
+                Icons.more_vert,
+                color: AppColors.primary,
+                size: 18.sp,
+              ),
+            ),
             onSelected: (value) {
               if (value == 'info') {
                 _showCircleInfoBottomSheet(context, circle);
               } else if (value == 'members') {
-                Get.toNamed(AppRoutes.CIRCLE_MEMBERS, arguments: circle.detailedMembers);
+                Get.toNamed(
+                  AppRoutes.CIRCLE_MEMBERS,
+                  arguments: circle.detailedMembers,
+                );
+              } else if (value == 'edit') {
+                // Handle edit
+              } else if (value == 'delete') {
+                // Handle delete
+              } else if (value == 'lock') {
+                // Handle lock
               }
             },
-            itemBuilder: (context) => [
-              _buildPopupMenuItem('info', Icons.info_outline, "Group Info"),
-              const PopupMenuDivider(),
-              _buildPopupMenuItem('members', Icons.people_outline, "Group Members"),
-            ],
+            itemBuilder: (context) {
+              if (circle.isOwner) {
+                return [
+                  _buildPopupMenuItem(
+                    'edit',
+                    Icons.edit_outlined,
+                    "Edit Circle",
+                  ),
+                  const PopupMenuDivider(),
+                  _buildPopupMenuItem(
+                    'delete',
+                    Icons.delete_outline,
+                    "Delete Circle",
+                  ),
+                  const PopupMenuDivider(),
+                  _buildPopupMenuItem(
+                    'lock',
+                    Icons.lock_outline,
+                    "Lock Circle",
+                  ),
+                ];
+              }
+              return [
+                _buildPopupMenuItem('info', Icons.info_outline, "Group Info"),
+                const PopupMenuDivider(),
+                _buildPopupMenuItem(
+                  'members',
+                  Icons.people_outline,
+                  "Group Members",
+                ),
+              ];
+            },
           ),
           SizedBox(width: 8.w),
         ],
-
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                   SizedBox(height: 12.h),
-                  // Today Chip
-                  Center(
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF9F9FF),
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                      child: Text(
-                        "Today",
-                        style: GoogleFonts.inter(
-                          fontSize: 12.sp,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            SizedBox(height: 12.h),
+            // Today Chip
+            Center(
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9F9FF),
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Text(
+                  "Today",
+                  style: GoogleFonts.inter(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[600],
                   ),
-                  SizedBox(height: 16.h),
-
-                  // Post Feed
-                  Obx(() => ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: circle.posts.length,
-                        itemBuilder: (context, index) {
-                          return CirclePostItem(post: circle.posts[index]);
-                        },
-                      )),
-                ],
+                ),
               ),
             ),
-          ),
-          
-          // Bottom Input Bar
-          _buildBottomInputBar(context, circle),
-        ],
-      ),
-    );
-  }
+            SizedBox(height: 16.h),
 
-  Widget _buildBottomInputBar(BuildContext context, CircleModel circle) {
-    return GestureDetector(
-      onTap: () => Get.bottomSheet(
-        CreatePostSheet(circle: circle),
-        isScrollControlled: true,
-      ),
-      child: Container(
-        padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 30.h),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Colors.grey[100]!)),
-        ),
-        child: Row(
-          children: [
-            _buildInputIcon(Icons.mic_none),
-            SizedBox(width: 12.w),
-            _buildInputIcon(Icons.emoji_emotions_outlined),
-            SizedBox(width: 12.w),
-            _buildInputIcon(Icons.image_outlined),
-            SizedBox(width: 12.w),
-            _buildInputIcon(Icons.videocam_outlined),
-            SizedBox(width: 16.w),
-            const Spacer(),
-            Icon(Icons.send_rounded, color: AppColors.primary, size: 28.sp),
+            // Post Feed
+            Obx(
+              () => ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: circle.posts.length,
+                itemBuilder: (context, index) {
+                  return CirclePostItem(post: circle.posts[index]);
+                },
+              ),
+            ),
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Get.bottomSheet(
+            CreatePostSheet(circle: circle),
+            isScrollControlled: true,
+          );
+        },
+        backgroundColor: AppColors.primary,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
+      ),
     );
   }
 
-  Widget _buildInputIcon(IconData icon) {
-    return Icon(icon, color: Colors.grey[500], size: 24.sp);
-  }
-
-  PopupMenuItem<String> _buildPopupMenuItem(String value, IconData icon, String title) {
+  PopupMenuItem<String> _buildPopupMenuItem(
+    String value,
+    IconData icon,
+    String title,
+  ) {
     return PopupMenuItem<String>(
       value: value,
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       child: Row(
         children: [
-          Icon(icon, color: const Color(0xFF1B0B3B), size: 20.sp),
-          SizedBox(width: 12.w),
+          Icon(
+            icon,
+            color: const Color(0xFF1B0B3B),
+            size: 22.sp,
+          ),
+          SizedBox(width: 16.w),
           Text(
             title,
             style: GoogleFonts.inter(
-              fontSize: 14.sp,
-              fontWeight: FontWeight.w500,
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
               color: const Color(0xFF1B0B3B),
             ),
           ),
@@ -165,7 +188,6 @@ class CircleDetailsScreen extends StatelessWidget {
   }
 
   void _showCircleInfoBottomSheet(BuildContext context, CircleModel circle) {
-
     Get.bottomSheet(
       Container(
         padding: EdgeInsets.all(24.w),
@@ -210,12 +232,19 @@ class CircleDetailsScreen extends StatelessWidget {
                 SizedBox(height: 20.h),
                 Row(
                   children: [
-                    Icon(Icons.location_on, color: AppColors.primary, size: 20.sp),
+                    Icon(
+                      Icons.location_on,
+                      color: AppColors.primary,
+                      size: 20.sp,
+                    ),
                     SizedBox(width: 8.w),
                     Expanded(
                       child: Text(
                         circle.address!,
-                        style: GoogleFonts.inter(fontSize: 13.sp, color: Colors.grey[600]),
+                        style: GoogleFonts.inter(
+                          fontSize: 13.sp,
+                          color: Colors.grey[600],
+                        ),
                       ),
                     ),
                   ],
@@ -245,7 +274,10 @@ class CircleDetailsScreen extends StatelessWidget {
               ),
               SizedBox(height: 16.h),
               if (circle.detailedMembers != null)
-                ...circle.detailedMembers!.take(3).map((member) => CircleMemberTile(member: member)).toList()
+                ...circle.detailedMembers!
+                    .take(3)
+                    .map((member) => CircleMemberTile(member: member))
+                    .toList()
               else
                 const Text("No members available"),
               SizedBox(height: 20.h),
@@ -256,4 +288,3 @@ class CircleDetailsScreen extends StatelessWidget {
     );
   }
 }
-

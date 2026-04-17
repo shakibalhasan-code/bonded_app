@@ -20,7 +20,9 @@ import '../../screens/notification/notification_screen.dart';
 import '../../screens/circles/circle_details_screen.dart';
 import '../../screens/circles/circle_members_screen.dart';
 import '../../screens/circles/add_members_screen.dart';
+import '../../screens/circles/create_circle_screen.dart';
 import '../../screens/circles/all_circles_screen.dart';
+import '../../screens/events/event_highlight_details_screen.dart';
 import '../../screens/bond/bond_profile_screen.dart';
 import '../../screens/messages/chat_screen.dart';
 import '../../screens/bond/nearby_people_screen.dart';
@@ -103,6 +105,10 @@ class AppPages {
       page: () => const AddMembersScreen(),
     ),
     GetPage(
+      name: AppRoutes.CREATE_CIRCLE,
+      page: () => const CreateCircleScreen(),
+    ),
+    GetPage(
       name: AppRoutes.ALL_CIRCLES,
       page: () => const AllCirclesScreen(),
     ),
@@ -117,6 +123,10 @@ class AppPages {
     GetPage(
       name: AppRoutes.NEARBY_PEOPLE,
       page: () => const NearbyPeopleScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.EVENT_HIGHLIGHT_DETAILS,
+      page: () => const EventHighlightDetailsScreen(),
     ),
   ];
 }

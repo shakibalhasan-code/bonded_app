@@ -23,10 +23,12 @@ abstract class AppRoutes {
   static const CIRCLE_DETAILS = '/circle_details';
   static const CIRCLE_MEMBERS = '/circle_members';
   static const ADD_MEMBERS = '/add_members';
+  static const CREATE_CIRCLE = '/create_circle';
   static const ALL_CIRCLES = '/all_circles';
   static const BOND_PROFILE = '/bond_profile';
   static const CHAT = '/chat';
   static const NEARBY_PEOPLE = '/nearby_people';
+  static const EVENT_HIGHLIGHT_DETAILS = '/event_highlight_details';
 }
 
 
