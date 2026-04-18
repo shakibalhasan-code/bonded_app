@@ -39,9 +39,9 @@ class BondScreen extends StatelessWidget {
             ],
           ),
           actions: [
-            _buildAppBarAction(Icons.person),
+            _buildAppBarAction(Icons.person, onTap: () => Get.toNamed(AppRoutes.PROFILE)),
             SizedBox(width: 12.w),
-            _buildAppBarAction(Icons.notifications),
+            _buildAppBarAction(Icons.notifications, onTap: () => Get.toNamed(AppRoutes.NOTIFICATION)),
             SizedBox(width: 16.w),
           ],
           bottom: TabBar(
@@ -76,15 +76,18 @@ class BondScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAppBarAction(IconData icon) {
-    return Container(
-      width: 40.w,
-      height: 40.w,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9F9FF),
-        shape: BoxShape.circle,
+  Widget _buildAppBarAction(IconData icon, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40.w,
+        height: 40.w,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9F9FF),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: AppColors.primary, size: 20.sp),
       ),
-      child: Icon(icon, color: AppColors.primary, size: 20.sp),
     );
   }
 

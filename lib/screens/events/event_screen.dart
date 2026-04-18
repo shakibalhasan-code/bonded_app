@@ -53,7 +53,7 @@ class EventScreen extends StatelessWidget {
               color: Colors.grey[600],
               size: 28.sp,
             ),
-            onPressed: () {},
+            onPressed: () => Get.toNamed(AppRoutes.NOTIFICATION),
           ),
           SizedBox(width: 20.w),
         ],

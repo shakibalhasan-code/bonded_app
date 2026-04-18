@@ -32,7 +32,7 @@ class CircleHeader extends StatelessWidget {
           ),
           Row(
             children: [
-              _buildIcon(Icons.person_outline, onTap: () {}),
+              _buildIcon(Icons.person_outline, onTap: () => Get.toNamed(AppRoutes.PROFILE)),
               SizedBox(width: 12.w),
               _buildIcon(
                 Icons.notifications_outlined,
