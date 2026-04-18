@@ -46,6 +46,7 @@ class CirclesScreen extends StatelessWidget {
       floatingActionButton: Padding(
         padding: EdgeInsets.only(bottom: 80.h),
         child: FloatingActionButton(
+          heroTag: null,
           onPressed: () => Get.toNamed(AppRoutes.CREATE_CIRCLE),
           backgroundColor: AppColors.primary,
           shape: const CircleBorder(),

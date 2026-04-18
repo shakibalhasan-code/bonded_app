@@ -145,6 +145,7 @@ class CircleDetailsScreen extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: null,
         onPressed: () {
           Get.bottomSheet(
             CreatePostSheet(circle: circle),

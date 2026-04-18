@@ -29,6 +29,16 @@ abstract class AppRoutes {
   static const CHAT = '/chat';
   static const NEARBY_PEOPLE = '/nearby_people';
   static const EVENT_HIGHLIGHT_DETAILS = '/event_highlight_details';
+  static const EVENT_DETAILS = '/event_details';
+  static const REVIEWS = '/reviews';
+  static const WRITE_REVIEW = '/write_review';
+  static const HOST_DETAILS = '/host_details';
+  static const BOOK_EVENT = '/book_event';
+  static const CREATE_EVENT = '/create_event';
+  static const EVENT_KYC = '/event_kyc';
+  static const EVENT_FILTER = '/event_filter';
+  static const PROFILE = '/profile';
+  static const EDIT_PROFILE = '/edit_profile';
 }
 
 

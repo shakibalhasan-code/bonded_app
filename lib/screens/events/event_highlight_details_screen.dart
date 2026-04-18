@@ -1,9 +1,11 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/event_model.dart';
+import '../../widgets/events/media_viewers.dart';
 
 class EventHighlightDetailsScreen extends StatelessWidget {
   const EventHighlightDetailsScreen({Key? key}) : super(key: key);
@@ -11,6 +13,18 @@ class EventHighlightDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final EventModel event = Get.arguments;
+
+    final List<String> videoThumbnails = [
+      'https://images.unsplash.com/photo-1492684223066-81342ee5ff30',
+      'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3',
+      'https://images.unsplash.com/photo-1514525253361-9f93ee74a89a',
+    ];
+
+    final List<String> images = [
+      'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14',
+      'https://images.unsplash.com/photo-1492684223066-81342ee5ff30',
+      'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4',
+    ];
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -52,15 +66,22 @@ class EventHighlightDetailsScreen extends StatelessWidget {
             // Video Highlights Section
             _buildSectionTitle("Video Highlights"),
             SizedBox(height: 12.h),
-            SizedBox(
-              height: 120.h,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: 3,
-                itemBuilder: (context, index) {
-                  return _buildVideoThumbnail();
-                },
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 12.w,
+                mainAxisSpacing: 12.h,
+                childAspectRatio: 0.8,
               ),
+              itemCount: videoThumbnails.length,
+              itemBuilder: (context, index) {
+                return GestureDetector(
+                  onTap: () => Get.to(() => MockVideoPlayer(videoUrl: videoThumbnails[index])),
+                  child: _buildVideoThumbnail(videoThumbnails[index]),
+                );
+              },
             ),
             SizedBox(height: 24.h),
 
@@ -76,9 +97,12 @@ class EventHighlightDetailsScreen extends StatelessWidget {
                 mainAxisSpacing: 12.h,
                 childAspectRatio: 0.8,
               ),
-              itemCount: 3,
+              itemCount: images.length,
               itemBuilder: (context, index) {
-                return _buildImageThumbnail(index);
+                return GestureDetector(
+                  onTap: () => Get.to(() => FullScreenImageViewer(imageUrl: images[index])),
+                  child: _buildImageThumbnail(images[index]),
+                );
               },
             ),
             SizedBox(height: 24.h),
@@ -90,7 +114,7 @@ class EventHighlightDetailsScreen extends StatelessWidget {
               "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
               style: GoogleFonts.inter(
                 fontSize: 14.sp,
-                color: const Color(0xFF1B0B3B).withOpacity(0.8),
+                color: const Color(0xFF1B0B3B),
                 height: 1.6,
               ),
             ),
@@ -111,41 +135,36 @@ class EventHighlightDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildVideoThumbnail() {
+  Widget _buildVideoThumbnail(String url) {
     return Container(
-      width: 100.w,
+      width: 120.w,
       margin: EdgeInsets.only(right: 12.w),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12.r),
-        image: const DecorationImage(
-          image: NetworkImage('https://images.unsplash.com/photo-1501281668745-f7f57925c3b4'),
+        borderRadius: BorderRadius.circular(16.r),
+        image: DecorationImage(
+          image: NetworkImage(url),
           fit: BoxFit.cover,
         ),
       ),
       child: Center(
         child: Container(
-          padding: EdgeInsets.all(8.w),
+          padding: EdgeInsets.all(10.w),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.8),
+            color: const Color(0xFF7128D0).withOpacity(0.8),
             shape: BoxShape.circle,
           ),
-          child: Icon(Icons.play_arrow, color: Colors.white, size: 20.sp),
+          child: Icon(Icons.play_arrow, color: Colors.white, size: 24.sp),
         ),
       ),
     );
   }
 
-  Widget _buildImageThumbnail(int index) {
-    final List<String> images = [
-      'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14',
-      'https://images.unsplash.com/photo-1492684223066-81342ee5ff30',
-      'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4',
-    ];
+  Widget _buildImageThumbnail(String url) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12.r),
+        borderRadius: BorderRadius.circular(16.r),
         image: DecorationImage(
-          image: NetworkImage(images[index]),
+          image: NetworkImage(url),
           fit: BoxFit.cover,
         ),
       ),

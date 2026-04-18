@@ -388,7 +388,7 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
               width: double.infinity,
               height: 56.h,
               child: ElevatedButton(
-                onPressed: () => Get.back(),
+                onPressed: () => _showSuccessDialog(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary.withOpacity(0.08),
                   elevation: 0,
@@ -408,6 +408,88 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
             ),
             SizedBox(height: 30.h),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showSuccessDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24.r),
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(24.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 80.w,
+                  height: 80.w,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check_circle,
+                    color: AppColors.primary,
+                    size: 50.sp,
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                Text(
+                  "Created Successfully",
+                  style: GoogleFonts.inter(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF1B0B3B),
+                  ),
+                ),
+                SizedBox(height: 12.h),
+                Text(
+                  "You have successfully created your private circle. You can now start interacting with members.",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 14.sp,
+                    color: Colors.grey[600],
+                    height: 1.5,
+                  ),
+                ),
+                SizedBox(height: 32.h),
+                SizedBox(
+                  width: double.infinity,
+                  height: 54.h,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Get.back(); // Close dialog
+                      Get.back(); // Go back to previous screen
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(27.r),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      "Go to Home",
+                      style: GoogleFonts.inter(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

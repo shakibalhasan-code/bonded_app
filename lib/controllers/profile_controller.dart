@@ -43,6 +43,15 @@ class ProfileController extends BaseController {
   var kycFrontPath = ''.obs;
   var kycBackPath = ''.obs;
 
+  // New Profile UI States
+  var notificationsEnabled = true.obs;
+  var profileVisibility = 'Public'.obs;
+  var availableInterests = [
+    "Brunch Lovers", "Wine Nights", "Game Nights", "Movie Lovers",
+    "Foodies", "Coffee Dates", "Picnic & Outdoor Chill", "Book Clubs",
+    "Fashion & Style", "Pet Lovers", "Photography"
+  ].obs;
+
   Future<void> pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
