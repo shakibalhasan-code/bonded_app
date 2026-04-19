@@ -28,7 +28,15 @@ class EventScreen extends StatelessWidget {
         elevation: 0,
         leading: Padding(
           padding: EdgeInsets.only(left: 20.w),
-          child: SvgPicture.asset(AppAssets.appLogo, width: 30.w),
+          child: SvgPicture.asset(
+            AppAssets.appLogo,
+            height: 32.h,
+            width: 32.w,
+            colorFilter: const ColorFilter.mode(
+              AppColors.primary,
+              BlendMode.srcIn,
+            ),
+          ),
         ),
         title: Text(
           "Bonded Events",
@@ -66,7 +74,7 @@ class EventScreen extends StatelessWidget {
         }
       }),
       floatingActionButton: Padding(
-        padding: EdgeInsets.only(bottom: 10.h),
+        padding: EdgeInsets.only(bottom: 100.h),
         child: FloatingActionButton(
           heroTag: null,
           onPressed: () {
@@ -77,7 +85,7 @@ class EventScreen extends StatelessWidget {
             } else if (categoryIndex == 2) {
               category = "Highlight";
             }
-            
+
             Get.toNamed(
               AppRoutes.CREATE_EVENT,
               arguments: {
@@ -131,7 +139,11 @@ class EventScreen extends StatelessWidget {
               IconButton(
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
-                icon: Icon(Icons.filter_list, color: AppColors.primary, size: 24.sp),
+                icon: Icon(
+                  Icons.filter_list,
+                  color: AppColors.primary,
+                  size: 24.sp,
+                ),
                 onPressed: () => Get.toNamed(AppRoutes.EVENT_FILTER),
               ),
             ],

@@ -38,7 +38,7 @@ class CircleDetailsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 12.h),
-            
+
             // Circle Image
             ClipRRect(
               borderRadius: BorderRadius.circular(24.r),
@@ -49,7 +49,7 @@ class CircleDetailsScreen extends StatelessWidget {
                 fit: BoxFit.cover,
               ),
             ),
-            
+
             SizedBox(height: 24.h),
 
             // Name and Price
@@ -68,7 +68,7 @@ class CircleDetailsScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  "\$${circle.price ?? "5.00"}",
+                  "\$${circle.price ?? "\$5.00"}",
                   style: GoogleFonts.inter(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w700,
@@ -83,15 +83,12 @@ class CircleDetailsScreen extends StatelessWidget {
             // Location
             Row(
               children: [
-                Icon(
-                  Icons.location_on,
-                  color: AppColors.primary,
-                  size: 20.sp,
-                ),
+                Icon(Icons.location_on, color: AppColors.primary, size: 20.sp),
                 SizedBox(width: 8.w),
                 Expanded(
                   child: Text(
-                    circle.address ?? "Grand city St. 100, New York, United States.",
+                    circle.address ??
+                        "Grand city St. 100, New York, United States.",
                     style: GoogleFonts.inter(
                       fontSize: 14.sp,
                       color: Colors.grey[600],
@@ -155,7 +152,7 @@ class CircleDetailsScreen extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             SizedBox(height: 8.h),
 
             // Members List
@@ -165,7 +162,9 @@ class CircleDetailsScreen extends StatelessWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: circle.detailedMembers!.take(3).length,
                 itemBuilder: (context, index) {
-                  return CircleMemberTile(member: circle.detailedMembers![index]);
+                  return CircleMemberTile(
+                    member: circle.detailedMembers![index],
+                  );
                 },
               )
             else
@@ -176,7 +175,7 @@ class CircleDetailsScreen extends StatelessWidget {
                   style: GoogleFonts.inter(color: Colors.grey),
                 ),
               ),
-              
+
             SizedBox(height: 40.h),
           ],
         ),

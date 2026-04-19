@@ -49,7 +49,9 @@ class EditProfileScreen extends StatelessWidget {
                         decoration: const BoxDecoration(
                           shape: BoxShape.circle,
                           image: DecorationImage(
-                            image: NetworkImage('https://images.unsplash.com/photo-1544005313-94ddf0286df2'),
+                            image: NetworkImage(
+                              'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
+                            ),
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -65,7 +67,11 @@ class EditProfileScreen extends StatelessWidget {
                               color: AppColors.primary,
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(Icons.edit, color: Colors.white, size: 16.sp),
+                            child: Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                              size: 16.sp,
+                            ),
                           ),
                         ),
                       ),
@@ -110,7 +116,8 @@ class EditProfileScreen extends StatelessWidget {
                     showCountryPicker(
                       context: context,
                       onSelect: (Country country) {
-                        controller.selectedCountryCode.value = "+${country.phoneCode}";
+                        controller.selectedCountryCode.value =
+                            "+${country.phoneCode}";
                       },
                     );
                   },
@@ -130,7 +137,9 @@ class EditProfileScreen extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 12.w),
-                Expanded(child: _buildTextField(controller.phoneController, "Phone")),
+                Expanded(
+                  child: _buildTextField(controller.phoneController, "Phone"),
+                ),
               ],
             ),
             SizedBox(height: 24.h),
@@ -138,7 +147,9 @@ class EditProfileScreen extends StatelessWidget {
             _buildLabel("Date of Birth"),
             SizedBox(height: 12.h),
             _buildSelectField(
-              text: controller.dateOfBirth.value.isEmpty ? "DD/MM/YYYY" : controller.dateOfBirth.value,
+              text: controller.dateOfBirth.value.isEmpty
+                  ? "DD/MM/YYYY"
+                  : controller.dateOfBirth.value,
               icon: Icons.calendar_month,
               onTap: () async {
                 final date = await showDatePicker(
@@ -148,7 +159,8 @@ class EditProfileScreen extends StatelessWidget {
                   lastDate: DateTime.now(),
                 );
                 if (date != null) {
-                  controller.dateOfBirth.value = "${date.day}/${date.month}/${date.year}";
+                  controller.dateOfBirth.value =
+                      "${date.day}/${date.month}/${date.year}";
                 }
               },
             ),
@@ -176,7 +188,7 @@ class EditProfileScreen extends StatelessWidget {
             SizedBox(height: 12.h),
             _buildDropdown(
               value: "New Jersey",
-              items: ["New Jersey", "New York", "California"],
+              items: ["New Jersey", "New York"],
               onChanged: (val) {},
             ),
             SizedBox(height: 24.h),
@@ -184,7 +196,7 @@ class EditProfileScreen extends StatelessWidget {
             _buildLabel("Location"),
             SizedBox(height: 12.h),
             _buildSelectField(
-              text: "2464 Royal Ln. Mesa, New Jersey 45463",
+              text: "2464 Royal Ln. Mesa",
               icon: Icons.location_on,
               onTap: () {},
             ),
@@ -234,9 +246,14 @@ class EditProfileScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final interest = controller.availableInterests[index];
                 return Obx(() {
-                  final isSelected = controller.selectedInterests.contains(interest);
+                  final isSelected = controller.selectedInterests.contains(
+                    interest,
+                  );
                   return CheckboxListTile(
-                    title: Text(interest, style: GoogleFonts.inter(fontSize: 14.sp)),
+                    title: Text(
+                      interest,
+                      style: GoogleFonts.inter(fontSize: 14.sp),
+                    ),
                     value: isSelected,
                     onChanged: (val) => controller.toggleInterest(interest),
                     activeColor: AppColors.primary,
@@ -260,11 +277,16 @@ class EditProfileScreen extends StatelessWidget {
             foregroundColor: Colors.white,
             elevation: 0,
             minimumSize: Size(double.infinity, 56.h),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.r)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30.r),
+            ),
           ),
           child: Text(
             "Save Changes",
-            style: GoogleFonts.inter(fontSize: 16.sp, fontWeight: FontWeight.w700),
+            style: GoogleFonts.inter(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ),
@@ -282,7 +304,11 @@ class EditProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, {int maxLines = 1}) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String hint, {
+    int maxLines = 1,
+  }) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
@@ -304,7 +330,11 @@ class EditProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSelectField({required String text, required IconData icon, required VoidCallback onTap}) {
+  Widget _buildSelectField({
+    required String text,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -325,7 +355,11 @@ class EditProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDropdown({required String value, required List<String> items, required Function(String?) onChanged}) {
+  Widget _buildDropdown({
+    required String value,
+    required List<String> items,
+    required Function(String?) onChanged,
+  }) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       decoration: BoxDecoration(
@@ -337,7 +371,14 @@ class EditProfileScreen extends StatelessWidget {
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, style: GoogleFonts.inter(fontSize: 14.sp)))).toList(),
+          items: items
+              .map(
+                (e) => DropdownMenuItem(
+                  value: e,
+                  child: Text(e, style: GoogleFonts.inter(fontSize: 14.sp)),
+                ),
+              )
+              .toList(),
           onChanged: onChanged,
         ),
       ),

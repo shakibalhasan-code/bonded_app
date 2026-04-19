@@ -113,12 +113,12 @@ class EventCard extends StatelessWidget {
                               "Edit Event",
                             ),
                             const PopupMenuDivider(),
-                            _buildPopupItem(
-                              "cancel",
-                              Icons.delete_outline,
-                              "Cancel Event",
-                            ),
-                            const PopupMenuDivider(),
+                            // _buildPopupItem(
+                            //   "cancel",
+                            //   Icons.delete_outline,
+                            //   "Cancel Event",
+                            // ),
+                            // const PopupMenuDivider(),
                             _buildPopupItem(
                               "highlights",
                               Icons.auto_awesome_outlined,

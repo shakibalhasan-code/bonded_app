@@ -203,7 +203,7 @@ class CircleCard extends StatelessWidget {
           ),
         ),
         Text(
-          "Price: ${circle.price ?? '${4.99}'}",
+          "Price: ${circle.price ?? '\$4.99'}",
           style: GoogleFonts.inter(
             fontSize: 16.sp,
             fontWeight: FontWeight.w700,

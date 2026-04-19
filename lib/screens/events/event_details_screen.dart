@@ -15,8 +15,9 @@ class EventDetailsScreen extends StatelessWidget {
     final EventModel event = Get.arguments;
 
     // Mock data for the flow
-    final mockDescription = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
-    
+    final mockDescription =
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
+
     final List<VenueModel> venues = [
       VenueModel(name: "Grand Place Hotel", location: "New York"),
       VenueModel(name: "Sonny Restaurant", location: "New York"),
@@ -114,7 +115,7 @@ class EventDetailsScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  "\$${event.price?.toStringAsFixed(2) ?? "5.00"}",
+                  "\$${event.price?.toStringAsFixed(2) ?? "\$5.00"}",
                   style: GoogleFonts.inter(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w800,
@@ -175,7 +176,11 @@ class EventDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  Icon(Icons.arrow_forward_ios, size: 16.sp, color: Colors.grey[400]),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16.sp,
+                    color: Colors.grey[400],
+                  ),
                 ],
               ),
             ),
@@ -183,19 +188,19 @@ class EventDetailsScreen extends StatelessWidget {
 
             // Location
             Row(
-               children: [
-                 Icon(Icons.location_on, color: AppColors.primary, size: 20.sp),
-                 SizedBox(width: 8.w),
-                 Expanded(
-                   child: Text(
-                     "Grand city St. 100, New York, United States.",
-                     style: GoogleFonts.inter(
-                       fontSize: 14.sp,
-                       color: Colors.grey[700],
-                     ),
-                   ),
-                 ),
-               ],
+              children: [
+                Icon(Icons.location_on, color: AppColors.primary, size: 20.sp),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    "Grand city St. 100, New York, United States.",
+                    style: GoogleFonts.inter(
+                      fontSize: 14.sp,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                ),
+              ],
             ),
             SizedBox(height: 12.h),
             ClipRRect(
@@ -233,7 +238,10 @@ class EventDetailsScreen extends StatelessWidget {
             SizedBox(height: 8.h),
             Text(
               "Birthday Celebration",
-              style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[700]),
+              style: GoogleFonts.inter(
+                fontSize: 14.sp,
+                color: Colors.grey[700],
+              ),
             ),
             SizedBox(height: 24.h),
 
@@ -242,23 +250,48 @@ class EventDetailsScreen extends StatelessWidget {
             SizedBox(height: 8.h),
             Text(
               "+49-5410-81030619",
-              style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[700]),
+              style: GoogleFonts.inter(
+                fontSize: 14.sp,
+                color: Colors.grey[700],
+              ),
             ),
             SizedBox(height: 24.h),
 
             // Social Media
             _buildSectionTitle("Social Media"),
             SizedBox(height: 12.h),
-            _buildSocialTile(Icons.phone, "https://www.whatsapp.com/bondedapp", "WhatsApp"),
-            _buildSocialTile(Icons.facebook, "https://www.facebook.com/bondedapp", "Facebook"),
-            _buildSocialTile(Icons.camera_alt, "https://www.twitter.com/bondedapp", "Twitter"), // Twitter logo substitute
-            _buildSocialTile(Icons.camera_alt, "https://www.instagram.com/bondedapp", "Instagram"),
+            _buildSocialTile(
+              Icons.phone,
+              "https://www.whatsapp.com/bondedapp",
+              "WhatsApp",
+            ),
+            _buildSocialTile(
+              Icons.facebook,
+              "https://www.facebook.com/bondedapp",
+              "Facebook",
+            ),
+            _buildSocialTile(
+              Icons.camera_alt,
+              "https://www.twitter.com/bondedapp",
+              "Twitter",
+            ), // Twitter logo substitute
+            _buildSocialTile(
+              Icons.camera_alt,
+              "https://www.instagram.com/bondedapp",
+              "Instagram",
+            ),
             SizedBox(height: 24.h),
 
             // Event Highlights
             _buildSectionTitle("Event Highlights"),
             SizedBox(height: 12.h),
-            Text("Video Highlights", style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13.sp)),
+            Text(
+              "Video Highlights",
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.bold,
+                fontSize: 13.sp,
+              ),
+            ),
             SizedBox(height: 12.h),
             SizedBox(
               height: 140.h,
@@ -269,7 +302,13 @@ class EventDetailsScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: 24.h),
-            Text("Add Images", style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13.sp)),
+            Text(
+              "Add Images",
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.bold,
+                fontSize: 13.sp,
+              ),
+            ),
             SizedBox(height: 12.h),
             GridView.builder(
               shrinkWrap: true,
@@ -328,7 +367,9 @@ class EventDetailsScreen extends StatelessWidget {
             onPressed: () {},
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: AppColors.primary),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6.r)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6.r),
+              ),
               padding: EdgeInsets.symmetric(horizontal: 12.w),
             ),
             child: Text(
@@ -362,7 +403,10 @@ class EventDetailsScreen extends StatelessWidget {
           Expanded(
             child: Text(
               url,
-              style: GoogleFonts.inter(fontSize: 13.sp, color: Colors.grey[700]),
+              style: GoogleFonts.inter(
+                fontSize: 13.sp,
+                color: Colors.grey[700],
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -379,20 +423,24 @@ class EventDetailsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16.r),
         image: const DecorationImage(
-          image: NetworkImage("https://images.unsplash.com/photo-1492684223066-81342ee5ff30"),
+          image: NetworkImage(
+            "https://images.unsplash.com/photo-1492684223066-81342ee5ff30",
+          ),
           fit: BoxFit.cover,
         ),
       ),
-      child: isVideo ? Center(
-        child: Container(
-          padding: EdgeInsets.all(8.w),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.8),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(Icons.play_arrow, color: Colors.white, size: 18.sp),
-        ),
-      ) : null,
+      child: isVideo
+          ? Center(
+              child: Container(
+                padding: EdgeInsets.all(8.w),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.8),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.play_arrow, color: Colors.white, size: 18.sp),
+              ),
+            )
+          : null,
     );
   }
 }

@@ -21,12 +21,19 @@ class BondScreen extends StatelessWidget {
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-          backgroundColor: Colors.white,
           elevation: 0,
           toolbarHeight: 80.h,
           title: Row(
             children: [
-              SvgPicture.asset(AppAssets.appLogo, width: 32.sp, height: 32.sp),
+              SvgPicture.asset(
+                AppAssets.appLogo,
+                width: 32.w,
+                height: 32.h,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.primary,
+                  BlendMode.srcIn,
+                ),
+              ),
               SizedBox(width: 12.w),
               Text(
                 "Bonded Connections",
@@ -39,9 +46,15 @@ class BondScreen extends StatelessWidget {
             ],
           ),
           actions: [
-            _buildAppBarAction(Icons.person, onTap: () => Get.toNamed(AppRoutes.PROFILE)),
+            _buildAppBarAction(
+              Icons.person,
+              onTap: () => Get.toNamed(AppRoutes.PROFILE),
+            ),
             SizedBox(width: 12.w),
-            _buildAppBarAction(Icons.notifications, onTap: () => Get.toNamed(AppRoutes.NOTIFICATION)),
+            _buildAppBarAction(
+              Icons.notifications,
+              onTap: () => Get.toNamed(AppRoutes.NOTIFICATION),
+            ),
             SizedBox(width: 16.w),
           ],
           bottom: TabBar(
