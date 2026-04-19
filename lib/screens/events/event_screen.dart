@@ -69,10 +69,24 @@ class EventScreen extends StatelessWidget {
         padding: EdgeInsets.only(bottom: 10.h),
         child: FloatingActionButton(
           heroTag: null,
-          onPressed: () => Get.toNamed(
-            AppRoutes.CREATE_EVENT,
-            arguments: {'isVirtual': controller.selectedCategory.value == 1},
-          ),
+          onPressed: () {
+            final categoryIndex = controller.selectedCategory.value;
+            String category = "In-Person";
+            if (categoryIndex == 1) {
+              category = "Virtual";
+            } else if (categoryIndex == 2) {
+              category = "Highlight";
+            }
+            
+            Get.toNamed(
+              AppRoutes.CREATE_EVENT,
+              arguments: {
+                'isVirtual': categoryIndex == 1,
+                'isHighlight': categoryIndex == 2,
+                'category': category,
+              },
+            );
+          },
           backgroundColor: AppColors.primary,
           shape: const CircleBorder(),
           child: const Icon(Icons.add, color: Colors.white, size: 30),

@@ -23,7 +23,8 @@ class AppButton extends StatefulWidget {
   State<AppButton> createState() => _AppButtonState();
 }
 
-class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMixin {
+class _AppButtonState extends State<AppButton>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -34,9 +35,10 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
       vsync: this,
       duration: const Duration(milliseconds: 100),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.96,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -55,10 +57,12 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: Container(
-          height: 56.h,
+          height: 50.h,
           width: widget.width ?? double.infinity,
           decoration: BoxDecoration(
-            color: widget.isPrimary ? AppColors.primary : AppColors.buttonSecondary,
+            color: widget.isPrimary
+                ? AppColors.primary
+                : AppColors.buttonSecondary,
             borderRadius: BorderRadius.circular(28.r),
             boxShadow: widget.isPrimary
                 ? [

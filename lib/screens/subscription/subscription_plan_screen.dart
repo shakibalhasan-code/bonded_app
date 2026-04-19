@@ -1,3 +1,4 @@
+import 'package:bonded_app/core/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -96,7 +97,7 @@ class SubscriptionPlanScreen extends StatelessWidget {
         centerTitle: true,
         actions: [
           TextButton(
-            onPressed: () => Get.offAll(() => const HomeScreen()),
+            onPressed: () => Get.offAllNamed(AppRoutes.MAIN),
             child: Text(
               "Skip",
               style: GoogleFonts.inter(
@@ -132,7 +133,8 @@ class SubscriptionPlanScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final plan = plans[index];
                 return Obx(() {
-                  final isSelected = controller.selectedPlan.value == plan['name'];
+                  final isSelected =
+                      controller.selectedPlan.value == plan['name'];
                   return _SubscriptionCard(
                     name: plan['name'],
                     price: plan['price'],
@@ -268,26 +270,34 @@ class _SubscriptionCard extends StatelessWidget {
             Padding(
               padding: EdgeInsets.all(20.w),
               child: Column(
-                children: features.map((feature) => Padding(
-                  padding: EdgeInsets.only(bottom: 12.h),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.check, color: AppColors.primary, size: 16.sp),
-                      SizedBox(width: 8.w),
-                      Expanded(
-                        child: Text(
-                          feature,
-                          style: GoogleFonts.inter(
-                            fontSize: 13.sp,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey[700],
-                          ),
+                children: features
+                    .map(
+                      (feature) => Padding(
+                        padding: EdgeInsets.only(bottom: 12.h),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.check,
+                              color: AppColors.primary,
+                              size: 16.sp,
+                            ),
+                            SizedBox(width: 8.w),
+                            Expanded(
+                              child: Text(
+                                feature,
+                                style: GoogleFonts.inter(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey[700],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                )).toList(),
+                    )
+                    .toList(),
               ),
             ),
           ],

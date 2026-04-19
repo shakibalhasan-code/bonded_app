@@ -3,11 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/routes/app_routes.dart';
-import '../../controllers/circle_controller.dart';
 import '../../models/circle_model.dart';
-import '../../widgets/circles/create_post_sheet.dart';
-import '../../widgets/circles/circle_post_item.dart';
 import '../../widgets/circles/circle_member_tile.dart';
 
 class CircleDetailsScreen extends StatelessWidget {
@@ -16,7 +12,6 @@ class CircleDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final CircleModel circle = Get.arguments;
-    final CircleController controller = Get.find<CircleController>();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -29,261 +24,161 @@ class CircleDetailsScreen extends StatelessWidget {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          circle.name,
+          "Circle Details",
           style: GoogleFonts.inter(
             fontSize: 18.sp,
             fontWeight: FontWeight.w700,
             color: const Color(0xFF1B0B3B),
           ),
         ),
-        actions: [
-          PopupMenuButton<String>(
-            offset: const Offset(0, 45),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-            icon: Container(
-              padding: EdgeInsets.all(4.w),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary, width: 1.5),
-              ),
-              child: Icon(
-                Icons.more_vert,
-                color: AppColors.primary,
-                size: 18.sp,
-              ),
-            ),
-            onSelected: (value) {
-              if (value == 'info') {
-                _showCircleInfoBottomSheet(context, circle);
-              } else if (value == 'members') {
-                Get.toNamed(
-                  AppRoutes.CIRCLE_MEMBERS,
-                  arguments: circle.detailedMembers,
-                );
-              } else if (value == 'edit') {
-                // Handle edit
-              } else if (value == 'delete') {
-                // Handle delete
-              } else if (value == 'lock') {
-                // Handle lock
-              }
-            },
-            itemBuilder: (context) {
-              if (circle.isOwner) {
-                return [
-                  _buildPopupMenuItem(
-                    'edit',
-                    Icons.edit_outlined,
-                    "Edit Circle",
-                  ),
-                  const PopupMenuDivider(),
-                  _buildPopupMenuItem(
-                    'delete',
-                    Icons.delete_outline,
-                    "Delete Circle",
-                  ),
-                  const PopupMenuDivider(),
-                  _buildPopupMenuItem(
-                    'lock',
-                    Icons.lock_outline,
-                    "Lock Circle",
-                  ),
-                ];
-              }
-              return [
-                _buildPopupMenuItem('info', Icons.info_outline, "Group Info"),
-                const PopupMenuDivider(),
-                _buildPopupMenuItem(
-                  'members',
-                  Icons.people_outline,
-                  "Group Members",
-                ),
-              ];
-            },
-          ),
-          SizedBox(width: 8.w),
-        ],
       ),
       body: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(horizontal: 24.w),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 12.h),
-            // Today Chip
-            Center(
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF9F9FF),
-                  borderRadius: BorderRadius.circular(8.r),
+            
+            // Circle Image
+            ClipRRect(
+              borderRadius: BorderRadius.circular(24.r),
+              child: Image.network(
+                circle.image,
+                width: double.infinity,
+                height: 220.h,
+                fit: BoxFit.cover,
+              ),
+            ),
+            
+            SizedBox(height: 24.h),
+
+            // Name and Price
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    circle.name,
+                    style: GoogleFonts.inter(
+                      fontSize: 20.sp,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF1B0B3B),
+                    ),
+                  ),
                 ),
-                child: Text(
-                  "Today",
+                Text(
+                  "\$${circle.price ?? "5.00"}",
                   style: GoogleFonts.inter(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[600],
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
                   ),
-                ),
-              ),
-            ),
-            SizedBox(height: 16.h),
-
-            // Post Feed
-            Obx(
-              () => ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: circle.posts.length,
-                itemBuilder: (context, index) {
-                  return CirclePostItem(post: circle.posts[index]);
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: null,
-        onPressed: () {
-          Get.bottomSheet(
-            CreatePostSheet(circle: circle),
-            isScrollControlled: true,
-          );
-        },
-        backgroundColor: AppColors.primary,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
-      ),
-    );
-  }
-
-  PopupMenuItem<String> _buildPopupMenuItem(
-    String value,
-    IconData icon,
-    String title,
-  ) {
-    return PopupMenuItem<String>(
-      value: value,
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            color: const Color(0xFF1B0B3B),
-            size: 22.sp,
-          ),
-          SizedBox(width: 16.w),
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF1B0B3B),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showCircleInfoBottomSheet(BuildContext context, CircleModel circle) {
-    Get.bottomSheet(
-      Container(
-        padding: EdgeInsets.all(24.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Center(
-                child: Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2.r),
-                  ),
-                ),
-              ),
-              SizedBox(height: 24.h),
-              Text(
-                "About Circle",
-                style: GoogleFonts.inter(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textHeading,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              Text(
-                circle.description,
-                style: GoogleFonts.inter(
-                  fontSize: 14.sp,
-                  color: Colors.grey[600],
-                  height: 1.6,
-                ),
-              ),
-              if (circle.address != null) ...[
-                SizedBox(height: 20.h),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.location_on,
-                      color: AppColors.primary,
-                      size: 20.sp,
-                    ),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: Text(
-                        circle.address!,
-                        style: GoogleFonts.inter(
-                          fontSize: 13.sp,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ],
-              const Divider(height: 40),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Members",
+            ),
+
+            SizedBox(height: 12.h),
+
+            // Location
+            Row(
+              children: [
+                Icon(
+                  Icons.location_on,
+                  color: AppColors.primary,
+                  size: 20.sp,
+                ),
+                SizedBox(width: 8.w),
+                Expanded(
+                  child: Text(
+                    circle.address ?? "Grand city St. 100, New York, United States.",
                     style: GoogleFonts.inter(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textHeading,
+                      fontSize: 14.sp,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  Text(
+                ),
+              ],
+            ),
+
+            SizedBox(height: 20.h),
+            const Divider(color: Color(0xFFF0F0F0), thickness: 1),
+            SizedBox(height: 20.h),
+
+            // Description Section
+            Text(
+              "Description:",
+              style: GoogleFonts.inter(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF1B0B3B),
+              ),
+            ),
+            SizedBox(height: 12.h),
+            Text(
+              circle.description,
+              style: GoogleFonts.inter(
+                fontSize: 14.sp,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w400,
+                height: 1.6,
+              ),
+            ),
+
+            SizedBox(height: 20.h),
+            const Divider(color: Color(0xFFF0F0F0), thickness: 1),
+            SizedBox(height: 20.h),
+
+            // Members Section
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Members",
+                  style: GoogleFonts.inter(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF1B0B3B),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {},
+                  child: Text(
                     "See All",
                     style: GoogleFonts.inter(
                       fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                       color: AppColors.primary,
                     ),
                   ),
-                ],
+                ),
+              ],
+            ),
+            
+            SizedBox(height: 8.h),
+
+            // Members List
+            if (circle.detailedMembers != null)
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: circle.detailedMembers!.take(3).length,
+                itemBuilder: (context, index) {
+                  return CircleMemberTile(member: circle.detailedMembers![index]);
+                },
+              )
+            else
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 20.h),
+                child: Text(
+                  "No detailed member information available.",
+                  style: GoogleFonts.inter(color: Colors.grey),
+                ),
               ),
-              SizedBox(height: 16.h),
-              if (circle.detailedMembers != null)
-                ...circle.detailedMembers!
-                    .take(3)
-                    .map((member) => CircleMemberTile(member: member))
-                    .toList()
-              else
-                const Text("No members available"),
-              SizedBox(height: 20.h),
-            ],
-          ),
+              
+            SizedBox(height: 40.h),
+          ],
         ),
       ),
     );

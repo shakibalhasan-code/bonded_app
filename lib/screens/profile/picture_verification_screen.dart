@@ -35,6 +35,20 @@ class PictureVerificationScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
+        actions: [
+          TextButton(
+            onPressed: () => Get.toNamed(AppRoutes.KYC_DOCUMENT),
+            child: Text(
+              "Skip",
+              style: GoogleFonts.inter(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+          SizedBox(width: 8.w),
+        ],
       ),
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 24.w),

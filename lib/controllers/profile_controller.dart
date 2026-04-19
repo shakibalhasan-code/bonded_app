@@ -36,7 +36,7 @@ class ProfileController extends BaseController {
   var selectedInterests = <String>[].obs;
 
   // Connection Type State
-  var selectedConnectionType = 'One-on-One Friendship'.obs;
+  var selectedConnectionTypes = <String>[].obs;
 
   // Verification & KYC State
   var verificationImagePath = ''.obs;
@@ -183,6 +183,13 @@ class ProfileController extends BaseController {
       selectedInterests.remove(interest);
     } else {
       selectedInterests.add(interest);
+    }
+  }
+  void toggleConnectionType(String type) {
+    if (selectedConnectionTypes.contains(type)) {
+      selectedConnectionTypes.remove(type);
+    } else {
+      selectedConnectionTypes.add(type);
     }
   }
 }

@@ -32,7 +32,10 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       centerTitle: true,
       actions: [
-        _buildActionIcon(Icons.person_outline, onTap: () {}),
+        _buildActionIcon(
+          Icons.person_outline,
+          onTap: () => Get.toNamed(AppRoutes.PROFILE),
+        ),
         SizedBox(width: 12.w),
         _buildActionIcon(
           Icons.notifications_outlined,

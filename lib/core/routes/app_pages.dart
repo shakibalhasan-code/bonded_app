@@ -36,7 +36,9 @@ import '../../screens/events/event_kyc_screen.dart';
 import '../../screens/bond/bond_profile_screen.dart';
 import '../../screens/messages/chat_screen.dart';
 import '../../screens/bond/nearby_people_screen.dart';
+import '../../core/bindings/profile_binding.dart';
 import 'app_routes.dart';
+
 
 
 
@@ -77,26 +79,32 @@ class AppPages {
     GetPage(
       name: AppRoutes.PROFILE_BUILDING,
       page: () => const ProfileBuildingScreen(),
+      binding: ProfileBinding(),
     ),
     GetPage(
       name: AppRoutes.ADD_LOCATION,
       page: () => const AddLocationScreen(),
+      binding: ProfileBinding(),
     ),
     GetPage(
       name: AppRoutes.CHOOSE_INTEREST,
       page: () => const ChooseInterestScreen(),
+      binding: ProfileBinding(),
     ),
     GetPage(
       name: AppRoutes.CONNECTION_TYPE,
       page: () => const ConnectionTypeScreen(),
+      binding: ProfileBinding(),
     ),
     GetPage(
       name: AppRoutes.PICTURE_VERIFICATION,
       page: () => const PictureVerificationScreen(),
+      binding: ProfileBinding(),
     ),
     GetPage(
       name: AppRoutes.KYC_DOCUMENT,
       page: () => const KYCDocumentScreen(),
+      binding: ProfileBinding(),
     ),
     GetPage(
       name: AppRoutes.NOTIFICATION,
@@ -173,10 +181,12 @@ class AppPages {
     GetPage(
       name: AppRoutes.PROFILE,
       page: () => const ProfileScreen(),
+      binding: ProfileBinding(),
     ),
     GetPage(
       name: AppRoutes.EDIT_PROFILE,
       page: () => const EditProfileScreen(),
+      binding: ProfileBinding(),
     ),
   ];
 }

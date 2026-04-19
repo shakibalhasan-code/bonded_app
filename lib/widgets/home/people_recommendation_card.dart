@@ -6,7 +6,8 @@ import '../../core/theme/app_colors.dart';
 class PeopleRecommendationCard extends StatelessWidget {
   final Map<String, dynamic> data;
 
-  const PeopleRecommendationCard({Key? key, required this.data}) : super(key: key);
+  const PeopleRecommendationCard({Key? key, required this.data})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -92,7 +93,11 @@ class PeopleRecommendationCard extends StatelessWidget {
                   color: const Color(0xFFF9F9FF),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.chat_bubble_outline, color: AppColors.primary, size: 20.sp),
+                child: Icon(
+                  Icons.chat_bubble_outline,
+                  color: AppColors.primary,
+                  size: 20.sp,
+                ),
               ),
             ],
           ),

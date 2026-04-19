@@ -59,9 +59,9 @@ class ConnectionTypeScreen extends StatelessWidget {
 
             ...connectionTypes.map((type) {
               return Obx(() {
-                final isSelected = controller.selectedConnectionType.value == type;
+                final isSelected = controller.selectedConnectionTypes.contains(type);
                 return GestureDetector(
-                  onTap: () => controller.selectedConnectionType.value = type,
+                  onTap: () => controller.toggleConnectionType(type),
                   child: Container(
                     margin: EdgeInsets.only(bottom: 16.h),
                     padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),

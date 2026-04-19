@@ -182,7 +182,7 @@ class CircleController extends GetxController {
         tags: ["Hiking", "Sports", "Outdoor Fitness", "Dance", "Game"],
         isLocked: true,
         isOwner: true,
-        price: "${5.00}",
+        price: "5.00",
         address: "Grand city St. 100, New York, United States.",
         detailedMembers: mockedDetailedMembers,
       ),
@@ -233,7 +233,7 @@ class CircleController extends GetxController {
         description:
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse fermentum, risus pellentesque eleifend pulvinar, tortor mauris dignissim felis, et mattis sapien diam non ex. Sed vitae convallis nulla, sit amet interdum urna. Proin luctus lorem diam, eget finibus nisi commodo ac. Mauris mattis in odio eget interdum. Nunc interdum dui eu mi mollis volutpat.",
         image:
-            "https://images.unsplash.com/photo-1550929555-5c2494191fe8?q=80&w=870&auto=format&fit=crop",
+            "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         memberAvatars: sharedAvatars,
         tags: ["Sports", "Fitness"],
         isJoined: true,

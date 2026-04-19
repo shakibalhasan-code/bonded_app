@@ -246,8 +246,6 @@ class CircleCard extends StatelessWidget {
       itemBuilder: (context) => [
         _buildMenuItem('edit', Icons.edit_outlined, "Edit Circle"),
         const PopupMenuDivider(),
-        _buildMenuItem('delete', Icons.delete_outline, "Delete Circle"),
-        const PopupMenuDivider(),
         _buildMenuItem('unlock', Icons.lock_open_outlined, "Unlock Circle"),
         const PopupMenuDivider(),
         _buildMenuItem('add_member', Icons.person_add_outlined, "Add Member"),
