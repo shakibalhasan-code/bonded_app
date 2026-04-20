@@ -246,7 +246,12 @@ class CircleCard extends StatelessWidget {
             break;
           case 'group_info':
             // Logic handled in Details screen or a similar bottom sheet here if needed
-            Get.toNamed(AppRoutes.CIRCLE_DETAILS, arguments: circle);
+            Get.toNamed(
+              circle.isJoined.value
+                  ? AppRoutes.JOINED_CIRCLE_DETAILS
+                  : AppRoutes.PUBLIC_CIRCLE_DETAILS,
+              arguments: circle,
+            );
             break;
           case 'group_members':
             Get.toNamed(
