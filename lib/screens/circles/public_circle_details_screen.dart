@@ -261,7 +261,7 @@ class PublicCircleDetailsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreatePostSheet(context, circle),
+        onPressed: () => _showCreateOptionsDialog(context, circle),
         backgroundColor: AppColors.primary,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white, size: 32),
@@ -363,7 +363,7 @@ class PublicCircleDetailsScreen extends StatelessWidget {
                 SizedBox(width: 8.w),
                 _buildStatusChip("Circle Events"),
                 SizedBox(width: 8.w),
-                _buildStatusChip("Members"),
+                _buildStatusChip("Circle Members"),
               ],
             ),
           ),
@@ -515,6 +515,198 @@ class PublicCircleDetailsScreen extends StatelessWidget {
       CreatePostSheet(circle: circle),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+    );
+  }
+
+  void _showCreateOptionsDialog(BuildContext context, CircleModel circle) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28.r),
+        ),
+        child: Container(
+          padding: EdgeInsets.all(24.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28.r),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Create Content",
+                style: GoogleFonts.inter(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1B0B3B),
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                "What would you like to create today?",
+                style: GoogleFonts.inter(
+                  fontSize: 14.sp,
+                  color: Colors.grey[600],
+                ),
+              ),
+              SizedBox(height: 32.h),
+              ElevatedButton(
+                onPressed: () {
+                  Get.back();
+                  _showCreatePostSheet(context, circle);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  minimumSize: Size(double.infinity, 56.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.r),
+                  ),
+                ),
+                child: Text(
+                  "Create Post",
+                  style: GoogleFonts.inter(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              SizedBox(height: 12.h),
+              ElevatedButton(
+                onPressed: () {
+                  Get.back();
+                  _showCreateEventDialog(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary.withOpacity(0.1),
+                  foregroundColor: AppColors.primary,
+                  minimumSize: Size(double.infinity, 56.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.r),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  "Create Event",
+                  style: GoogleFonts.inter(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCreateEventDialog(BuildContext context) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28.r),
+        ),
+        child: Container(
+          padding: EdgeInsets.all(24.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28.r),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 80.h,
+                height: 80.h,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.check, color: Colors.white, size: 48.sp),
+              ),
+              SizedBox(height: 24.h),
+              Text(
+                "Confirmation Required!",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1B0B3B),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                "Select which event you want to create? After selection you will proceed with the flow accordingly.",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 14.sp,
+                  color: Colors.grey[600],
+                  height: 1.5,
+                ),
+              ),
+              SizedBox(height: 32.h),
+              ElevatedButton(
+                onPressed: () {
+                  Get.back();
+                  Get.toNamed(
+                    AppRoutes.CREATE_EVENT,
+                    arguments: {
+                      'isVirtual': false,
+                      'category': 'Birthday Celebration',
+                    },
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: Size(double.infinity, 56.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.r),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  "In-Person Event",
+                  style: GoogleFonts.inter(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              SizedBox(height: 12.h),
+              ElevatedButton(
+                onPressed: () {
+                  Get.back();
+                  Get.toNamed(
+                    AppRoutes.CREATE_EVENT,
+                    arguments: {
+                      'isVirtual': true,
+                      'category': 'Birthday Celebration',
+                    },
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary.withOpacity(0.1),
+                  foregroundColor: AppColors.primary,
+                  minimumSize: Size(double.infinity, 56.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.r),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  "Bonded Virtual Event",
+                  style: GoogleFonts.inter(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

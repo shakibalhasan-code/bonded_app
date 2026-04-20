@@ -49,7 +49,7 @@ class CirclesScreen extends StatelessWidget {
         child: FloatingActionButton(
           heroTag: null,
           onPressed: () {
-            Get.dialog(const CircleSelectionDialog());
+            Get.toNamed(AppRoutes.CREATE_CIRCLE, arguments: {'isPublic': false});
           },
           backgroundColor: AppColors.primary,
           shape: const CircleBorder(),

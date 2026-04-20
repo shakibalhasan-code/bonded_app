@@ -36,12 +36,15 @@ class CircleMemberTile extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      member.name,
-                      style: GoogleFonts.inter(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textHeading,
+                    Expanded(
+                      child: Text(
+                        member.name,
+                        style: GoogleFonts.inter(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textHeading,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (member.isCreator) ...[
@@ -76,28 +79,27 @@ class CircleMemberTile extends StatelessWidget {
               ],
             ),
           ),
-          if (!member.isCreator)
-            SizedBox(
-              height: 32.h,
-              child: OutlinedButton(
-                onPressed: () {},
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.primary),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.r),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+          SizedBox(
+            height: 32.h,
+            child: OutlinedButton(
+              onPressed: () {},
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.primary),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.r),
                 ),
-                child: Text(
-                  "Bond",
-                  style: GoogleFonts.inter(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+              ),
+              child: Text(
+                "Bond",
+                style: GoogleFonts.inter(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
                 ),
               ),
             ),
+          ),
         ],
       ),
     );

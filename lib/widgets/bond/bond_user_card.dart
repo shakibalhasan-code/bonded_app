@@ -106,8 +106,6 @@ class BondUserCard extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(width: 12.w),
-          _buildMessageIcon(),
         ],
       );
     } else if (user.bondStatus.value == BondStatus.requested) {
