@@ -6,12 +6,14 @@ class MemberModel {
   final String name;
   final String image;
   final String role; // e.g., "Brunch lover, Wine Nights, Game Nights"
+  final bool isCreator;
 
   MemberModel({
     required this.id,
     required this.name,
     required this.image,
     required this.role,
+    this.isCreator = false,
   });
 }
 
@@ -25,7 +27,7 @@ class CircleModel {
   final bool isLocked;
   final String? price;
   final bool isOwner;
-  final bool isJoined;
+  final RxBool isJoined;
   final String? address;
   final List<MemberModel>? detailedMembers;
   final RxList<PostModel> posts;
@@ -40,10 +42,11 @@ class CircleModel {
     this.isLocked = false,
     this.price,
     this.isOwner = false,
-    this.isJoined = false,
+    bool isJoined = false,
     this.address,
     this.detailedMembers,
     List<PostModel>? posts,
-  }) : posts = (posts ?? <PostModel>[]).obs;
+  })  : isJoined = isJoined.obs,
+        posts = (posts ?? <PostModel>[]).obs;
 }
 

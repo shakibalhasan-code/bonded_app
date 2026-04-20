@@ -20,10 +20,13 @@ class CircleHeader extends StatelessWidget {
           SvgPicture.asset(
             AppAssets.appLogo,
             height: 32.h,
-            colorFilter: const ColorFilter.mode(AppColors.primary, BlendMode.srcIn),
+            colorFilter: const ColorFilter.mode(
+              AppColors.primary,
+              BlendMode.srcIn,
+            ),
           ),
           Text(
-            "Circle",
+            "Circles",
             style: GoogleFonts.inter(
               fontSize: 18.sp,
               fontWeight: FontWeight.w700,
@@ -32,7 +35,10 @@ class CircleHeader extends StatelessWidget {
           ),
           Row(
             children: [
-              _buildIcon(Icons.person_outline, onTap: () => Get.toNamed(AppRoutes.PROFILE)),
+              _buildIcon(
+                Icons.person_outline,
+                onTap: () => Get.toNamed(AppRoutes.PROFILE),
+              ),
               SizedBox(width: 12.w),
               _buildIcon(
                 Icons.notifications_outlined,

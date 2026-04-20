@@ -85,20 +85,20 @@ class PeopleRecommendationCard extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(width: 12.w),
-              Container(
-                height: 48.h,
-                width: 48.h,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF9F9FF),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.chat_bubble_outline,
-                  color: AppColors.primary,
-                  size: 20.sp,
-                ),
-              ),
+              // SizedBox(width: 12.w),
+              // Container(
+              //   height: 48.h,
+              //   width: 48.h,
+              //   decoration: BoxDecoration(
+              //     color: const Color(0xFFF9F9FF),
+              //     shape: BoxShape.circle,
+              //   ),
+              //   child: Icon(
+              //     Icons.chat_bubble_outline,
+              //     color: AppColors.primary,
+              //     size: 20.sp,
+              //   ),
+              // ),
             ],
           ),
         ],

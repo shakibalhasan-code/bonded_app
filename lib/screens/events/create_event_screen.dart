@@ -24,6 +24,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _seatsController = TextEditingController();
   final TextEditingController _virtualLinkController = TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
 
   bool _isVirtual = false;
   bool _showPhone = true;
@@ -33,7 +34,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   TimeOfDay? _selectedTime;
   bool _isPaid = false;
 
-  final List<String> _categories = ["In-Person", "Virtual", "Highlights"];
+  final List<String> _categories = ["Birthday Celebration", "Graduation", "Anniversary"];
   final List<String> _suggestedVenues = [
     "Grand Place Hotel",
     "Sonny Restaurant",
@@ -47,11 +48,13 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   void initState() {
     super.initState();
     final args = Get.arguments;
-    if (args != null && args is Map && args['isVirtual'] == true) {
-      _isVirtual = true;
-      _selectedCategory = "Virtual";
-    } else {
-      _selectedCategory = "In-Person";
+    if (args != null && args is Map) {
+      if (args['isVirtual'] == true) {
+        _isVirtual = true;
+      }
+      if (args['category'] != null && _categories.contains(args['category'])) {
+        _selectedCategory = args['category'];
+      }
     }
   }
 
@@ -281,6 +284,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 ),
               ],
             ),
+            if (_isPaid) ...[
+              SizedBox(height: 24.h),
+              _buildLabel("Ticket Price"),
+              _buildTextField(_priceController, "Ticket price"),
+            ],
             SizedBox(height: 24.h),
 
             if (!_isVirtual) ...[

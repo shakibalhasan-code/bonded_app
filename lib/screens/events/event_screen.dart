@@ -39,7 +39,7 @@ class EventScreen extends StatelessWidget {
           ),
         ),
         title: Text(
-          "Bonded Events",
+          "Events",
           style: GoogleFonts.inter(
             fontSize: 20.sp,
             fontWeight: FontWeight.w700,
@@ -77,24 +77,7 @@ class EventScreen extends StatelessWidget {
         padding: EdgeInsets.only(bottom: 100.h),
         child: FloatingActionButton(
           heroTag: null,
-          onPressed: () {
-            final categoryIndex = controller.selectedCategory.value;
-            String category = "In-Person";
-            if (categoryIndex == 1) {
-              category = "Virtual";
-            } else if (categoryIndex == 2) {
-              category = "Highlight";
-            }
-
-            Get.toNamed(
-              AppRoutes.CREATE_EVENT,
-              arguments: {
-                'isVirtual': categoryIndex == 1,
-                'isHighlight': categoryIndex == 2,
-                'category': category,
-              },
-            );
-          },
+          onPressed: () => _showCreateEventDialog(context, controller),
           backgroundColor: AppColors.primary,
           shape: const CircleBorder(),
           child: const Icon(Icons.add, color: Colors.white, size: 30),
@@ -111,6 +94,7 @@ class EventScreen extends StatelessWidget {
         SizedBox(height: 24.h),
         CategoryFilter(
           categories: const [
+            "Bonded Events",
             "In-Person Events",
             "Virtual Events",
             "Event Highlights",
@@ -119,60 +103,68 @@ class EventScreen extends StatelessWidget {
           onCategoryChanged: controller.changeCategory,
         ),
         SizedBox(height: 24.h),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20.w),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                controller.selectedCategory.value == 1
-                    ? "Upcoming Events"
-                    : controller.selectedCategory.value == 2
-                    ? "Recently Happened"
-                    : "Explore Events Nearby",
-                style: GoogleFonts.inter(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textHeading,
-                ),
-              ),
-              IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                icon: Icon(
-                  Icons.filter_list,
-                  color: AppColors.primary,
-                  size: 24.sp,
-                ),
-                onPressed: () => Get.toNamed(AppRoutes.EVENT_FILTER),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: 20.h),
         Expanded(
-          child: GridView.builder(
-            padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.8,
-              crossAxisSpacing: 16.w,
-              mainAxisSpacing: 16.h,
-            ),
-            itemCount: controller.filteredEvents.length,
-            itemBuilder: (context, index) {
-              final event = controller.filteredEvents[index];
-              return EventCard(
-                event: event,
-                onTap: () => Get.toNamed(
-                  event.category == EventCategory.highlights
-                      ? AppRoutes.EVENT_HIGHLIGHT_DETAILS
-                      : AppRoutes.EVENT_DETAILS,
-                  arguments: event,
+          child: controller.selectedCategory.value == 0
+              ? _buildComingSoon()
+              : Column(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            controller.selectedCategory.value == 1
+                                ? "Upcoming Events"
+                                : controller.selectedCategory.value == 2
+                                    ? "Recently Happened"
+                                    : "Explore Events Nearby",
+                            style: GoogleFonts.inter(
+                              fontSize: 18.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textHeading,
+                            ),
+                          ),
+                          IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: Icon(
+                              Icons.filter_list,
+                              color: AppColors.primary,
+                              size: 24.sp,
+                            ),
+                            onPressed: () => Get.toNamed(AppRoutes.EVENT_FILTER),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 20.h),
+                    Expanded(
+                      child: GridView.builder(
+                        padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.8,
+                          crossAxisSpacing: 16.w,
+                          mainAxisSpacing: 16.h,
+                        ),
+                        itemCount: controller.filteredEvents.length,
+                        itemBuilder: (context, index) {
+                          final event = controller.filteredEvents[index];
+                          return EventCard(
+                            event: event,
+                            onTap: () => Get.toNamed(
+                              event.category == EventCategory.highlights
+                                  ? AppRoutes.EVENT_HIGHLIGHT_DETAILS
+                                  : AppRoutes.EVENT_DETAILS,
+                              arguments: event,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              );
-            },
-          ),
         ),
       ],
     );
@@ -258,6 +250,110 @@ class EventScreen extends StatelessWidget {
     }
   }
 
+  void _showCreateEventDialog(BuildContext context, EventController controller) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28.r)),
+        child: Container(
+          padding: EdgeInsets.all(24.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28.r),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 80.h,
+                height: 80.h,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 48.sp,
+                ),
+              ),
+              SizedBox(height: 24.h),
+              Text(
+                "Confirmation Required!",
+                style: GoogleFonts.inter(
+                  fontSize: 22.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textHeading,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                "Select which event you want to create? After selection you will proceed with the flow accordingly.",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 14.sp,
+                  color: Colors.grey[600],
+                  height: 1.5,
+                ),
+              ),
+              SizedBox(height: 32.h),
+              ElevatedButton(
+                onPressed: () {
+                  Get.back();
+                  Get.toNamed(
+                    AppRoutes.CREATE_EVENT,
+                    arguments: {'isVirtual': false, 'category': 'Birthday Celebration'},
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: Size(double.infinity, 56.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.r),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  "In-Person Event",
+                  style: GoogleFonts.inter(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              SizedBox(height: 12.h),
+              ElevatedButton(
+                onPressed: () {
+                  Get.back();
+                  Get.toNamed(
+                    AppRoutes.CREATE_EVENT,
+                    arguments: {'isVirtual': true, 'category': 'Birthday Celebration'},
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary.withOpacity(0.1),
+                  foregroundColor: AppColors.primary,
+                  minimumSize: Size(double.infinity, 56.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.r),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  "Bonded Virtual Event",
+                  style: GoogleFonts.inter(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildMainTabs(EventController controller) {
     return Container(
       decoration: BoxDecoration(
@@ -279,6 +375,50 @@ class EventScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildComingSoon() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(24.w),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.rocket_launch_outlined,
+              color: AppColors.primary,
+              size: 64.sp,
+            ),
+          ),
+          SizedBox(height: 24.h),
+          Text(
+            "Coming Soon",
+            style: GoogleFonts.inter(
+              fontSize: 22.sp,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textHeading,
+            ),
+          ),
+          SizedBox(height: 12.h),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 40.w),
+            child: Text(
+              "We are working on bringing you exclusive Bonded Events. Stay tuned!",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 14.sp,
+                color: Colors.grey[600],
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

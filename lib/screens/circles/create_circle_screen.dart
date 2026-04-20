@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_colors.dart';
+import '../../widgets/circles/interest_selection_sheet.dart';
 
 class CreateCircleScreen extends StatefulWidget {
   const CreateCircleScreen({Key? key}) : super(key: key);
@@ -24,11 +25,7 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
   final TextEditingController locationController = TextEditingController();
   final TextEditingController priceController = TextEditingController();
 
-  List<TextEditingController> interestControllers = [
-    TextEditingController(),
-    TextEditingController(),
-    TextEditingController(),
-  ];
+  List<String> selectedInterests = [];
 
   bool isPaid = false;
 
@@ -80,7 +77,9 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          "Create Private Circle",
+          Get.arguments?['isPublic'] == true
+              ? "Create Public Circle"
+              : "Create Private Circle",
           style: GoogleFonts.inter(
             fontSize: 18.sp,
             fontWeight: FontWeight.w700,
@@ -214,84 +213,79 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
             // Add Circle Interest
             _buildSectionTitle("Add Circle Interest"),
             SizedBox(height: 12.h),
-            ...List.generate(interestControllers.length, (index) {
-              return Padding(
-                padding: EdgeInsets.only(bottom: 12.h),
+            GestureDetector(
+              onTap: _showInterestSelectionSheet,
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9F9FF),
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+                ),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      width: 40.w,
-                      height: 40.w,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          "${index + 1}",
-                          style: GoogleFonts.inter(
-                            fontSize: 15.sp,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primary,
-                          ),
-                        ),
+                    Text(
+                      "Select Interests",
+                      style: GoogleFonts.inter(
+                        fontSize: 14.sp,
+                        color: Colors.grey[400],
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    SizedBox(width: 12.w),
-                    Expanded(
-                      child: _buildTextField(
-                        interestControllers[index],
-                        "Interest",
-                      ),
-                    ),
-                    SizedBox(width: 12.w),
-                    GestureDetector(
-                      onTap: () {
-                        if (interestControllers.length > 1) {
-                          setState(() {
-                            interestControllers.removeAt(index);
-                          });
-                        }
-                      },
-                      child: Icon(
-                        Icons.delete_outline,
-                        color: AppColors.primary,
-                        size: 24.sp,
-                      ),
+                    Icon(
+                      Icons.keyboard_arrow_down,
+                      color: AppColors.primary,
+                      size: 24.sp,
                     ),
                   ],
                 ),
-              );
-            }),
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  interestControllers.add(TextEditingController());
-                });
-              },
-              child: Row(
-                children: [
-                  Container(
-                    width: 20.w,
-                    height: 20.w,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.add, color: Colors.white, size: 14.sp),
-                  ),
-                  SizedBox(width: 10.w),
-                  Text(
-                    "Add more",
-                    style: GoogleFonts.inter(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1B0B3B),
-                    ),
-                  ),
-                ],
               ),
             ),
+            if (selectedInterests.isNotEmpty) ...[
+              SizedBox(height: 12.h),
+              Wrap(
+                spacing: 8.w,
+                runSpacing: 8.h,
+                children: selectedInterests.map((interest) {
+                  return Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(20.r),
+                      border: Border.all(color: AppColors.primary.withOpacity(0.12)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          interest,
+                          style: GoogleFonts.inter(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        SizedBox(width: 6.w),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedInterests.remove(interest);
+                            });
+                          },
+                          child: Icon(
+                            Icons.close,
+                            size: 14.sp,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
             SizedBox(height: 24.h),
 
             // Is Paid Circle
@@ -492,6 +486,21 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
           ),
         ),
       ),
+    );
+  }
+  
+  void _showInterestSelectionSheet() {
+    Get.bottomSheet(
+      InterestSelectionSheet(
+        initialSelected: selectedInterests,
+        onSelected: (selected) {
+          setState(() {
+            selectedInterests = selected;
+          });
+        },
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
     );
   }
 

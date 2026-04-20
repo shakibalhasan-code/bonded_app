@@ -38,6 +38,8 @@ class PostModel {
   final RxInt commentsCount;
   final RxInt sharesCount;
   final RxBool isLiked;
+  final RxString reactionType; // "none", "like", "love", "care", "haha", "wow", "sad", "angry"
+  final RxBool isCountPrivate;
   final RxBool isCommenting;
   final RxList<CommentModel> comments;
 
@@ -52,12 +54,16 @@ class PostModel {
     int commentsCount = 0,
     int sharesCount = 0,
     bool isLiked = false,
+    String reactionType = "none",
+    bool isCountPrivate = true,
     bool isCommenting = false,
     List<CommentModel>? comments,
   })  : likesCount = likesCount.obs,
         commentsCount = commentsCount.obs,
         sharesCount = sharesCount.obs,
         isLiked = isLiked.obs,
+        reactionType = reactionType.obs,
+        isCountPrivate = isCountPrivate.obs,
         isCommenting = isCommenting.obs,
         comments = (comments ?? <CommentModel>[]).obs;
 }

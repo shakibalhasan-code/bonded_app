@@ -41,6 +41,7 @@ class CircleController extends GetxController {
         name: 'Matthias Huckestein',
         image: 'https://i.pravatar.cc/150?u=1',
         role: 'Brunch lover, Wine Nights, Game Nights',
+        isCreator: true,
       ),
       MemberModel(
         id: '2',
@@ -237,6 +238,35 @@ class CircleController extends GetxController {
         memberAvatars: sharedAvatars,
         tags: ["Sports", "Fitness"],
         isJoined: true,
+        isOwner: false,
+        detailedMembers: mockedDetailedMembers,
+        posts: mockPosts,
+      ),
+      CircleModel(
+        id: 'myj2',
+        name: "Tech & Startup Circle",
+        description:
+            "Join our community of developers, designers, and entrepreneurs. We discuss the latest in tech, share startup tips, and network with like-minded individuals.",
+        image:
+            "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1740&auto=format&fit=crop",
+        memberAvatars: sharedAvatars,
+        tags: ["Tech", "Networking", "Startups"],
+        isJoined: true,
+        isOwner: true,
+        detailedMembers: mockedDetailedMembers,
+        posts: mockPosts,
+      ),
+      CircleModel(
+        id: 'myj3',
+        name: "Digital Nomad Circle",
+        description:
+            "A group for those who work while traveling. Share tips on best co-working spaces, visas, and travel hacks.",
+        image:
+            "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?q=80&w=1740&auto=format&fit=crop",
+        memberAvatars: sharedAvatars,
+        tags: ["Travel", "Remote Work", "Lifestyle"],
+        isJoined: true,
+        isOwner: true,
         detailedMembers: mockedDetailedMembers,
         posts: mockPosts,
       ),
@@ -245,13 +275,26 @@ class CircleController extends GetxController {
 
   // Feed Interaction Methods
   void toggleLikePost(PostModel post) {
-    if (post.isLiked.value) {
-      post.isLiked.value = false;
-      post.likesCount.value--;
+    if (post.reactionType.value != "none") {
+      updatePostReaction(post, "none");
     } else {
-      post.isLiked.value = true;
-      post.likesCount.value++;
+      updatePostReaction(post, "like");
     }
+  }
+
+  void updatePostReaction(PostModel post, String type) {
+    // If transitioning from none to a reaction
+    if (post.reactionType.value == "none" && type != "none") {
+      post.likesCount.value++;
+      post.isLiked.value = true;
+    }
+    // If transitioning from a reaction to none
+    else if (post.reactionType.value != "none" && type == "none") {
+      post.likesCount.value--;
+      post.isLiked.value = false;
+    }
+    
+    post.reactionType.value = type;
   }
 
   void toggleCommentInput(PostModel post) {

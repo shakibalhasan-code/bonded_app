@@ -8,6 +8,7 @@ import '../../controllers/circle_controller.dart';
 import '../../widgets/circles/circle_header.dart';
 import '../../widgets/circles/circle_tab_bar.dart';
 import '../../widgets/circles/circle_card.dart';
+import '../../widgets/circles/circle_selection_dialog.dart';
 
 class CirclesScreen extends StatelessWidget {
   const CirclesScreen({Key? key}) : super(key: key);
@@ -47,7 +48,9 @@ class CirclesScreen extends StatelessWidget {
         padding: EdgeInsets.only(bottom: 80.h),
         child: FloatingActionButton(
           heroTag: null,
-          onPressed: () => Get.toNamed(AppRoutes.CREATE_CIRCLE),
+          onPressed: () {
+            Get.dialog(const CircleSelectionDialog());
+          },
           backgroundColor: AppColors.primary,
           shape: const CircleBorder(),
           child: const Icon(Icons.add, color: Colors.white, size: 30),

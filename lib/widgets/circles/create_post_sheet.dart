@@ -95,22 +95,19 @@ class CreatePostSheet extends StatelessWidget {
           Row(
             children: [
               _buildActionIcon(Icons.mic_none),
-              SizedBox(width: 16.w),
-              _buildActionIcon(Icons.emoji_emotions_outlined),
-              SizedBox(width: 16.w),
+              SizedBox(width: 20.w),
+              _buildActionIcon(Icons.sentiment_satisfied_alt_outlined),
+              SizedBox(width: 20.w),
               _buildActionIcon(Icons.image_outlined),
-              SizedBox(width: 16.w),
+              SizedBox(width: 20.w),
               _buildActionIcon(Icons.videocam_outlined),
               const Spacer(),
-              GestureDetector(
-                onTap: () => controller.createPost(circle, textController.text),
-                child: Container(
-                  padding: EdgeInsets.all(12.w),
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.send_rounded, color: Colors.white, size: 24.sp),
+              IconButton(
+                onPressed: () => controller.createPost(circle, textController.text),
+                icon: Icon(
+                  Icons.send_rounded,
+                  color: AppColors.primary,
+                  size: 28.sp,
                 ),
               ),
             ],

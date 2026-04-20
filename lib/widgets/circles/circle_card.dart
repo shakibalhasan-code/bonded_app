@@ -66,8 +66,11 @@ class CircleCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                if (circle.isOwner)
-                  Positioned(top: 8.h, right: 8.w, child: _buildOwnerMenu()),
+                Positioned(
+                  top: 8.h,
+                  right: 8.w,
+                  child: _buildCircleMenu(context),
+                ),
               ],
             ),
 
@@ -113,7 +116,7 @@ class CircleCard extends StatelessWidget {
                   SizedBox(height: 16.h),
                   if (circle.isLocked)
                     _buildUnlockAction()
-                  else if (!circle.isJoined && !circle.isOwner)
+                  else if (circle.isJoined.value && !circle.isOwner)
                     AppButton(text: "Join Circle", onPressed: () {}),
                 ],
               ),
@@ -214,7 +217,7 @@ class CircleCard extends StatelessWidget {
     );
   }
 
-  Widget _buildOwnerMenu() {
+  Widget _buildCircleMenu(BuildContext context) {
     return PopupMenuButton<String>(
       offset: const Offset(0, 40),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
@@ -235,21 +238,43 @@ class CircleCard extends StatelessWidget {
           case 'delete':
             controller.deleteCircle(circle);
             break;
-          case 'unlock':
+          case 'lock':
             controller.lockCircle(circle);
             break;
           case 'add_member':
             Get.toNamed(AppRoutes.ADD_MEMBERS, arguments: circle);
             break;
+          case 'group_info':
+            // Logic handled in Details screen or a similar bottom sheet here if needed
+            Get.toNamed(AppRoutes.CIRCLE_DETAILS, arguments: circle);
+            break;
+          case 'group_members':
+            Get.toNamed(
+              AppRoutes.CIRCLE_MEMBERS,
+              arguments: circle.detailedMembers,
+            );
+            break;
         }
       },
-      itemBuilder: (context) => [
-        _buildMenuItem('edit', Icons.edit_outlined, "Edit Circle"),
-        const PopupMenuDivider(),
-        _buildMenuItem('unlock', Icons.lock_open_outlined, "Unlock Circle"),
-        const PopupMenuDivider(),
-        _buildMenuItem('add_member', Icons.person_add_outlined, "Add Member"),
-      ],
+      itemBuilder: (context) {
+        if (circle.isOwner) {
+          return [
+            _buildMenuItem('edit', Icons.edit_outlined, "Edit Circle"),
+            const PopupMenuDivider(),
+            _buildMenuItem('delete', Icons.delete_outline, "Delete Circle"),
+            const PopupMenuDivider(),
+            _buildMenuItem('lock', Icons.lock_outline, "Lock Circle"),
+            const PopupMenuDivider(),
+            _buildMenuItem('add_member', Icons.person_add_outlined, "Add Member"),
+          ];
+        } else {
+          return [
+            _buildMenuItem('group_info', Icons.info_outline, "Group Info"),
+            const PopupMenuDivider(),
+            _buildMenuItem('group_members', Icons.people_outline, "Group Members"),
+          ];
+        }
+      },
     );
   }
 

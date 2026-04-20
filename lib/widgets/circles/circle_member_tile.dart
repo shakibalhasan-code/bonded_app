@@ -34,13 +34,35 @@ class CircleMemberTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  member.name,
-                  style: GoogleFonts.inter(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textHeading,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      member.name,
+                      style: GoogleFonts.inter(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textHeading,
+                      ),
+                    ),
+                    if (member.isCreator) ...[
+                      SizedBox(width: 8.w),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4.r),
+                        ),
+                        child: Text(
+                          "Creator",
+                          style: GoogleFonts.inter(
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 SizedBox(height: 4.h),
                 Text(
@@ -54,6 +76,28 @@ class CircleMemberTile extends StatelessWidget {
               ],
             ),
           ),
+          if (!member.isCreator)
+            SizedBox(
+              height: 32.h,
+              child: OutlinedButton(
+                onPressed: () {},
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                ),
+                child: Text(
+                  "Bond",
+                  style: GoogleFonts.inter(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

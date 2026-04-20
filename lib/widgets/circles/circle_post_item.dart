@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../models/home_models.dart';
 import '../../controllers/circle_controller.dart';
 import 'circle_comment_item.dart';
+import 'reaction_selector.dart';
 
 class CirclePostItem extends StatefulWidget {
   final PostModel post;
@@ -51,6 +52,7 @@ class _CirclePostItemState extends State<CirclePostItem> {
           _buildStatsRow(),
           const Divider(height: 32),
           _buildInteractionRow(controller),
+          SizedBox(height: 10.h),
           
           // Comments Section
           Obx(() => ListView.builder(
@@ -188,24 +190,26 @@ class _CirclePostItemState extends State<CirclePostItem> {
             child: Icon(Icons.favorite, size: 10.sp, color: Colors.white),
           ),
           SizedBox(width: 8.w),
-          Text(
-            widget.post.likesCount.value.toString(),
-            style: GoogleFonts.inter(
-              fontSize: 13.sp,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textHeading,
-            ),
-          ),
+          Obx(() => Text(
+                widget.post.isCountPrivate.value
+                    ? "Liked by others"
+                    : widget.post.likesCount.value.toString(),
+                style: GoogleFonts.inter(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textHeading,
+                ),
+              )),
           const Spacer(),
-          Text(
-            "${widget.post.commentsCount.value} comments",
-            style: GoogleFonts.inter(fontSize: 12.sp, color: Colors.grey[600]),
-          ),
+          Obx(() => Text(
+                "${widget.post.commentsCount.value} comments",
+                style: GoogleFonts.inter(fontSize: 12.sp, color: Colors.grey[600]),
+              )),
           SizedBox(width: 12.w),
-          Text(
-            "${widget.post.sharesCount.value} shares",
-            style: GoogleFonts.inter(fontSize: 12.sp, color: Colors.grey[600]),
-          ),
+          Obx(() => Text(
+                "${widget.post.sharesCount.value} shares",
+                style: GoogleFonts.inter(fontSize: 12.sp, color: Colors.grey[600]),
+              )),
         ],
       ),
     );
@@ -217,9 +221,106 @@ class _CirclePostItemState extends State<CirclePostItem> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildActionButton(Icons.thumb_up_outlined, "Like", onTap: () => controller.toggleLikePost(widget.post)),
-          _buildActionButton(Icons.chat_bubble_outline, "Comment", onTap: () => controller.toggleCommentInput(widget.post)),
+          Obx(() {
+            // Defensive check for potential null or uninitialized state
+            if (widget.post.reactionType == null) {
+              return _buildActionButton(Icons.thumb_up_outlined, "Like", 
+                onTap: () => controller.toggleLikePost(widget.post));
+            }
+
+            final reaction = widget.post.reactionType.value;
+            IconData icon = Icons.thumb_up_outlined;
+            Color color = AppColors.textHeading;
+            String label = "Like";
+            String emoji = "";
+
+            switch (reaction) {
+              case "like":
+                icon = Icons.thumb_up;
+                color = Colors.blue;
+                label = "Like";
+                break;
+              case "love":
+                emoji = "❤️";
+                label = "Love";
+                break;
+              case "care":
+                emoji = "🤗";
+                label = "Care";
+                break;
+              case "haha":
+                emoji = "😆";
+                label = "Haha";
+                break;
+              case "wow":
+                emoji = "😮";
+                label = "Wow";
+                break;
+              case "sad":
+                emoji = "😢";
+                label = "Sad";
+                break;
+              case "angry":
+                emoji = "😡";
+                label = "Angry";
+                break;
+            }
+
+            return GestureDetector(
+              onTap: () => controller.toggleLikePost(widget.post),
+              onLongPressStart: (details) => _showReactionMenu(context, details.globalPosition, controller),
+              child: Row(
+                children: [
+                  emoji.isNotEmpty
+                      ? Text(emoji, style: TextStyle(fontSize: 20.sp))
+                      : Icon(icon, size: 20.sp, color: color),
+                  SizedBox(width: 8.w),
+                  Text(
+                    label,
+                    style: GoogleFonts.inter(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: emoji.isNotEmpty ? AppColors.primary : color,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          _buildActionButton(Icons.chat_bubble_outline, "Comment",
+              onTap: () => controller.toggleCommentInput(widget.post)),
           _buildActionButton(Icons.share_outlined, "Share"),
+        ],
+      ),
+    );
+  }
+
+  void _showReactionMenu(BuildContext context, Offset position, CircleController controller) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    const menuWidth = 320.0; // Estimated width including padding
+    
+    // Calculate centered position but clamp to screen edges
+    double leftPosition = position.dx - (menuWidth / 2);
+    if (leftPosition < 16.w) leftPosition = 16.w;
+    if (leftPosition + menuWidth > screenWidth - 16.w) {
+      leftPosition = screenWidth - menuWidth - 16.w;
+    }
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.transparent,
+      builder: (context) => Stack(
+        children: [
+          Positioned(
+            left: leftPosition,
+            top: position.dy - 80.h, // Position above the touch point
+            child: ReactionSelector(
+              onReactionSelected: (type) {
+                controller.updatePostReaction(widget.post, type);
+                Navigator.pop(context);
+              },
+            ),
+          ),
         ],
       ),
     );

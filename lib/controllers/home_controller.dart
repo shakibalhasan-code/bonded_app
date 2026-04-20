@@ -53,13 +53,26 @@ class HomeController extends GetxController {
 
   // Interactivity Methods
   void toggleLikePost(PostModel post) {
-    if (post.isLiked.value) {
-      post.isLiked.value = false;
-      post.likesCount.value--;
+    if (post.reactionType == null || post.reactionType.value != "none") {
+      updatePostReaction(post, "none");
     } else {
-      post.isLiked.value = true;
-      post.likesCount.value++;
+      updatePostReaction(post, "like");
     }
+  }
+
+  void updatePostReaction(PostModel post, String type) {
+    // If transitioning from none to a reaction
+    if ((post.reactionType == null || post.reactionType.value == "none") && type != "none") {
+      post.likesCount.value++;
+      post.isLiked.value = true;
+    }
+    // If transitioning from a reaction to none
+    else if (post.reactionType != null && post.reactionType.value != "none" && type == "none") {
+      post.likesCount.value--;
+      post.isLiked.value = false;
+    }
+    
+    post.reactionType.value = type;
   }
 
   void toggleCommentInput(PostModel post) {
