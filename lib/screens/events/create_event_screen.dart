@@ -34,13 +34,17 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   TimeOfDay? _selectedTime;
   bool _isPaid = false;
 
-  final List<String> _categories = ["Birthday Celebration", "Graduation", "Anniversary"];
+  final List<String> _categories = [
+    "Birthday Celebration",
+    "Graduation Celebration",
+    "Anniversary Celebration",
+  ];
   final List<String> _suggestedVenues = [
     "Grand Place Hotel",
     "Sonny Restaurant",
     "Redfin Hotel",
     "Dreams Restaurant",
-    "Five Star Hotel"
+    "Five Star Hotel",
   ];
   final Set<String> _addedVenues = {};
 
@@ -75,9 +79,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.primary,
-            ),
+            colorScheme: ColorScheme.light(primary: AppColors.primary),
           ),
           child: child!,
         );
@@ -95,9 +97,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.primary,
-            ),
+            colorScheme: ColorScheme.light(primary: AppColors.primary),
           ),
           child: child!,
         );
@@ -150,25 +150,33 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   ),
                 ),
                 child: _coverImagePath == null
-                  ? Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.image_outlined, color: Colors.grey[400], size: 48.sp),
-                        SizedBox(height: 12.h),
-                        Text(
-                          "Add event cover image",
-                          style: GoogleFonts.inter(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF1B0B3B),
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.image_outlined,
+                            color: Colors.grey[400],
+                            size: 48.sp,
                           ),
+                          SizedBox(height: 12.h),
+                          Text(
+                            "Add event cover image",
+                            style: GoogleFonts.inter(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF1B0B3B),
+                            ),
+                          ),
+                        ],
+                      )
+                    : ClipRRect(
+                        borderRadius: BorderRadius.circular(16.r),
+                        child: Image.file(
+                          File(_coverImagePath!),
+                          fit: BoxFit.cover,
+                          width: double.infinity,
                         ),
-                      ],
-                    )
-                  : ClipRRect(
-                      borderRadius: BorderRadius.circular(16.r),
-                      child: Image.file(File(_coverImagePath!), fit: BoxFit.cover, width: double.infinity),
-                    ),
+                      ),
               ),
             ),
             SizedBox(height: 24.h),
@@ -178,21 +186,31 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             SizedBox(height: 24.h),
 
             _buildLabel("Description"),
-            _buildTextField(_descriptionController, "Description...", maxLines: 4),
+            _buildTextField(
+              _descriptionController,
+              "Description...",
+              maxLines: 4,
+            ),
             SizedBox(height: 24.h),
 
             _buildLabel("Phone Number"),
             Row(
               children: [
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 12.h,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF9F9FF),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
                   child: Row(
                     children: [
-                      Text("🇺🇸 +1", style: GoogleFonts.inter(fontSize: 14.sp)),
+                      Text(
+                        "🇺🇸 +1",
+                        style: GoogleFonts.inter(fontSize: 14.sp),
+                      ),
                       const Icon(Icons.keyboard_arrow_down),
                     ],
                   ),
@@ -204,17 +222,35 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             SizedBox(height: 24.h),
 
             _buildLabel("Add Social Media Links"),
-            _buildSocialInput(Icons.facebook, _fbController, "Add Facebook Link", Colors.blue),
+            _buildSocialInput(
+              Icons.facebook,
+              _fbController,
+              "Add Facebook Link",
+              Colors.blue,
+            ),
             SizedBox(height: 12.h),
-            _buildSocialInput(Icons.alternate_email, _twitterController, "Add Twitter Link", Colors.lightBlue),
+            _buildSocialInput(
+              Icons.alternate_email,
+              _twitterController,
+              "Add Twitter Link",
+              Colors.lightBlue,
+            ),
             SizedBox(height: 24.h),
 
             _buildLabel("Show phone number to attendees?"),
             Row(
               children: [
-                _buildRadioButton("Yes", _showPhone, (val) => setState(() => _showPhone = true)),
+                _buildRadioButton(
+                  "Yes",
+                  _showPhone,
+                  (val) => setState(() => _showPhone = true),
+                ),
                 SizedBox(width: 24.w),
-                _buildRadioButton("No", !_showPhone, (val) => setState(() => _showPhone = false)),
+                _buildRadioButton(
+                  "No",
+                  !_showPhone,
+                  (val) => setState(() => _showPhone = false),
+                ),
               ],
             ),
             SizedBox(height: 24.h),
@@ -222,9 +258,17 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             _buildLabel("Show social media links to attendees?"),
             Row(
               children: [
-                _buildRadioButton("Yes", _showSocial, (val) => setState(() => _showSocial = true)),
+                _buildRadioButton(
+                  "Yes",
+                  _showSocial,
+                  (val) => setState(() => _showSocial = true),
+                ),
                 SizedBox(width: 24.w),
-                _buildRadioButton("No", !_showSocial, (val) => setState(() => _showSocial = false)),
+                _buildRadioButton(
+                  "No",
+                  !_showSocial,
+                  (val) => setState(() => _showSocial = false),
+                ),
               ],
             ),
             SizedBox(height: 24.h),
@@ -235,7 +279,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
             _buildLabel("Date"),
             _buildPickerField(
-              _selectedDate == null ? "DD/MM/YYYY" : "${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}",
+              _selectedDate == null
+                  ? "DD/MM/YYYY"
+                  : "${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}",
               Icons.calendar_month_outlined,
               _selectDate,
             ),
@@ -243,7 +289,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
             _buildLabel("Time"),
             _buildPickerField(
-              _selectedTime == null ? "HH:MM" : "${_selectedTime!.format(context)}",
+              _selectedTime == null
+                  ? "HH:MM"
+                  : "${_selectedTime!.format(context)}",
               Icons.access_time,
               _selectTime,
             ),
@@ -272,7 +320,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   value: _isPaid,
                   onChanged: (val) => setState(() => _isPaid = val!),
                   activeColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4.r)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
                 ),
                 Text(
                   "Is this a Paid events?",
@@ -337,7 +387,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, {int maxLines = 1}) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String hint, {
+    int maxLines = 1,
+  }) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFF9F9FF),
@@ -348,15 +402,26 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         maxLines: maxLines,
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[400]),
-          contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+          hintStyle: GoogleFonts.inter(
+            fontSize: 14.sp,
+            color: Colors.grey[400],
+          ),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16.w,
+            vertical: 14.h,
+          ),
           border: InputBorder.none,
         ),
       ),
     );
   }
 
-  Widget _buildSocialInput(IconData icon, TextEditingController controller, String hint, Color iconColor) {
+  Widget _buildSocialInput(
+    IconData icon,
+    TextEditingController controller,
+    String hint,
+    Color iconColor,
+  ) {
     return Row(
       children: [
         Container(
@@ -373,7 +438,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     );
   }
 
-  Widget _buildRadioButton(String label, bool isSelected, Function(bool?)? onChanged) {
+  Widget _buildRadioButton(
+    String label,
+    bool isSelected,
+    Function(bool?)? onChanged,
+  ) {
     return Row(
       children: [
         Radio<bool>(
@@ -405,8 +474,13 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         child: DropdownButton<String>(
           isExpanded: true,
           value: _selectedCategory,
-          hint: Text("Dropdown to select", style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[400])),
-          items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+          hint: Text(
+            "Dropdown to select",
+            style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[400]),
+          ),
+          items: _categories
+              .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+              .toList(),
           onChanged: (val) => setState(() => _selectedCategory = val),
         ),
       ),
@@ -425,7 +499,13 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(text, style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[400])),
+            Text(
+              text,
+              style: GoogleFonts.inter(
+                fontSize: 14.sp,
+                color: Colors.grey[400],
+              ),
+            ),
             Icon(icon, color: AppColors.primary, size: 20.sp),
           ],
         ),
@@ -443,9 +523,19 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         controller: _locationController,
         decoration: InputDecoration(
           hintText: "Location",
-          hintStyle: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[400]),
-          suffixIcon: Icon(Icons.location_on, color: AppColors.primary, size: 20.sp),
-          contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+          hintStyle: GoogleFonts.inter(
+            fontSize: 14.sp,
+            color: Colors.grey[400],
+          ),
+          suffixIcon: Icon(
+            Icons.location_on,
+            color: AppColors.primary,
+            size: 20.sp,
+          ),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 16.w,
+            vertical: 14.h,
+          ),
           border: InputBorder.none,
         ),
       ),
@@ -468,21 +558,30 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             child: ElevatedButton(
               onPressed: () {
                 setState(() {
-                  if (isAdded) _addedVenues.remove(venue);
-                  else _addedVenues.add(venue);
+                  if (isAdded)
+                    _addedVenues.remove(venue);
+                  else
+                    _addedVenues.add(venue);
                 });
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: isAdded ? Colors.green : Colors.white,
                 foregroundColor: isAdded ? Colors.white : AppColors.primary,
-                side: BorderSide(color: isAdded ? Colors.green : AppColors.primary),
+                side: BorderSide(
+                  color: isAdded ? Colors.green : AppColors.primary,
+                ),
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.r)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
               ),
               child: Text(
                 isAdded ? "Added" : "Add",
-                style: GoogleFonts.inter(fontSize: 12.sp, fontWeight: FontWeight.bold),
+                style: GoogleFonts.inter(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),

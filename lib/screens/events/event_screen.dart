@@ -117,8 +117,8 @@ class EventScreen extends StatelessWidget {
                             controller.selectedCategory.value == 1
                                 ? "Upcoming Events"
                                 : controller.selectedCategory.value == 2
-                                    ? "Recently Happened"
-                                    : "Explore Events Nearby",
+                                ? "Recently Happened"
+                                : "Explore Events Nearby",
                             style: GoogleFonts.inter(
                               fontSize: 18.sp,
                               fontWeight: FontWeight.w700,
@@ -133,7 +133,8 @@ class EventScreen extends StatelessWidget {
                               color: AppColors.primary,
                               size: 24.sp,
                             ),
-                            onPressed: () => Get.toNamed(AppRoutes.EVENT_FILTER),
+                            onPressed: () =>
+                                Get.toNamed(AppRoutes.EVENT_FILTER),
                           ),
                         ],
                       ),
@@ -250,10 +251,15 @@ class EventScreen extends StatelessWidget {
     }
   }
 
-  void _showCreateEventDialog(BuildContext context, EventController controller) {
+  void _showCreateEventDialog(
+    BuildContext context,
+    EventController controller,
+  ) {
     Get.dialog(
       Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28.r)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28.r),
+        ),
         child: Container(
           padding: EdgeInsets.all(24.w),
           decoration: BoxDecoration(
@@ -270,17 +276,15 @@ class EventScreen extends StatelessWidget {
                   color: AppColors.primary,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  Icons.check,
-                  color: Colors.white,
-                  size: 48.sp,
-                ),
+                child: Icon(Icons.check, color: Colors.white, size: 48.sp),
               ),
               SizedBox(height: 24.h),
               Text(
                 "Confirmation Required!",
+                textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
-                  fontSize: 22.sp,
+                  fontSize: 20.sp,
+
                   fontWeight: FontWeight.w700,
                   color: AppColors.textHeading,
                 ),
@@ -301,7 +305,10 @@ class EventScreen extends StatelessWidget {
                   Get.back();
                   Get.toNamed(
                     AppRoutes.CREATE_EVENT,
-                    arguments: {'isVirtual': false, 'category': 'Birthday Celebration'},
+                    arguments: {
+                      'isVirtual': false,
+                      'category': 'Birthday Celebration',
+                    },
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -327,7 +334,10 @@ class EventScreen extends StatelessWidget {
                   Get.back();
                   Get.toNamed(
                     AppRoutes.CREATE_EVENT,
-                    arguments: {'isVirtual': true, 'category': 'Birthday Celebration'},
+                    arguments: {
+                      'isVirtual': true,
+                      'category': 'Birthday Celebration',
+                    },
                   );
                 },
                 style: ElevatedButton.styleFrom(
