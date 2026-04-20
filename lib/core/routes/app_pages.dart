@@ -10,6 +10,8 @@ import '../../screens/auth/welcome_screen.dart';
 import '../../screens/auth/signup_screen.dart';
 import '../../screens/auth/login_screen.dart';
 import '../../screens/auth/otp_verification_screen.dart';
+import '../../screens/auth/forgot_password_screen.dart';
+import '../../screens/auth/reset_password_screen.dart';
 import '../../screens/profile/profile_ready_screen.dart';
 import '../../screens/main_wrapper.dart';
 import '../../screens/subscription/subscription_plan_screen.dart';
@@ -20,7 +22,8 @@ import '../../screens/profile/add_location_screen.dart';
 import '../../screens/profile/choose_interest_screen.dart';
 import '../../screens/profile/kyc_document_screen.dart';
 import '../../screens/notification/notification_screen.dart';
-import '../../screens/circles/circle_details_screen.dart';
+import '../../screens/circles/public_circle_details_screen.dart';
+import '../../screens/circles/joined_circle_details_screen.dart';
 import '../../screens/circles/circle_members_screen.dart';
 import '../../screens/circles/add_members_screen.dart';
 import '../../screens/circles/create_circle_screen.dart';
@@ -55,6 +58,14 @@ class AppPages {
     GetPage(
       name: AppRoutes.VERIFICATION,
       page: () => const OtpVerificationScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.FORGOT_PASSWORD,
+      page: () => const ForgotPasswordScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.RESET_PASSWORD,
+      page: () => const ResetPasswordScreen(),
     ),
     GetPage(
       name: AppRoutes.PROFILE_READY,
@@ -111,8 +122,12 @@ class AppPages {
       page: () => const NotificationScreen(),
     ),
     GetPage(
-      name: AppRoutes.CIRCLE_DETAILS,
-      page: () => const CircleDetailsScreen(),
+      name: AppRoutes.PUBLIC_CIRCLE_DETAILS,
+      page: () => const PublicCircleDetailsScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.JOINED_CIRCLE_DETAILS,
+      page: () => const JoinedCircleDetailsScreen(),
     ),
     GetPage(
       name: AppRoutes.CIRCLE_MEMBERS,

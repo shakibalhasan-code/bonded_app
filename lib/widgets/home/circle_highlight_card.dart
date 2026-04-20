@@ -120,7 +120,7 @@ class CircleHighlightCard extends StatelessWidget {
                 orElse: () => circleController.publicCircles.first,
               ),
             );
-            Get.toNamed(AppRoutes.CIRCLE_DETAILS, arguments: circle);
+            Get.toNamed(AppRoutes.JOINED_CIRCLE_DETAILS, arguments: circle);
           },
           child: Text(
             "View Details",

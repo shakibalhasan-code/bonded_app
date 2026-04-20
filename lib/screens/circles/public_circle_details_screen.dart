@@ -6,8 +6,8 @@ import '../../core/theme/app_colors.dart';
 import '../../models/circle_model.dart';
 import '../../widgets/circles/circle_member_tile.dart';
 
-class CircleDetailsScreen extends StatelessWidget {
-  const CircleDetailsScreen({Key? key}) : super(key: key);
+class PublicCircleDetailsScreen extends StatelessWidget {
+  const PublicCircleDetailsScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +68,7 @@ class CircleDetailsScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  "\$${circle.price ?? "\$5.00"}",
+                  "\$${circle.price ?? "5.00"}",
                   style: GoogleFonts.inter(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w700,

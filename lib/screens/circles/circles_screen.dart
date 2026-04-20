@@ -101,7 +101,13 @@ class CirclesScreen extends StatelessWidget {
               final circle = circles[index];
               return CircleCard(
                 circle: circle,
-                onTap: () => Get.toNamed(AppRoutes.CIRCLE_DETAILS, arguments: circle),
+                onTap: () {
+                  if (controller.selectedTab.value == 0 || controller.selectedTab.value == 1) {
+                    Get.toNamed(AppRoutes.PUBLIC_CIRCLE_DETAILS, arguments: circle);
+                  } else {
+                    Get.toNamed(AppRoutes.JOINED_CIRCLE_DETAILS, arguments: circle);
+                  }
+                },
               );
             },
           ),
@@ -165,7 +171,9 @@ class CirclesScreen extends StatelessWidget {
                   : controller.myJoinedCircles[index];
               return CircleCard(
                 circle: circle,
-                onTap: () => Get.toNamed(AppRoutes.CIRCLE_DETAILS, arguments: circle),
+                onTap: () {
+                  Get.toNamed(AppRoutes.JOINED_CIRCLE_DETAILS, arguments: circle);
+                },
               );
             },
           ),

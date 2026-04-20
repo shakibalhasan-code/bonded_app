@@ -1,3 +1,4 @@
+import 'package:bonded_app/core/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -14,7 +15,10 @@ class OtpVerificationScreen extends StatefulWidget {
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  final List<TextEditingController> _otpControllers = List.generate(4, (index) => TextEditingController());
+  final List<TextEditingController> _otpControllers = List.generate(
+    4,
+    (index) => TextEditingController(),
+  );
   final List<FocusNode> _focusNodes = List.generate(4, (index) => FocusNode());
 
   @override
@@ -52,7 +56,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 24.w),
         child: Column(
-
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 20.h),
@@ -87,8 +90,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     color: const Color(0xFFF9F9FF),
                     borderRadius: BorderRadius.circular(16.r),
                     border: Border.all(
-                      color: _otpControllers[index].text.isNotEmpty 
-                          ? AppColors.primary 
+                      color: _otpControllers[index].text.isNotEmpty
+                          ? AppColors.primary
                           : Colors.grey[200]!,
                       width: 1.5,
                     ),
@@ -167,7 +170,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
             // Verify Button
             GestureDetector(
-              onTap: () => showSignupSuccessDialog(context),
+              onTap: () {
+                final args = Get.arguments as Map<String, dynamic>?;
+                if (args != null && args['reason'] == 'forgot_password') {
+                  Get.toNamed(AppRoutes.RESET_PASSWORD);
+                } else {
+                  showSignupSuccessDialog(context);
+                }
+              },
               child: Container(
                 height: 56.h,
                 width: double.infinity,
@@ -197,7 +207,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           ],
         ),
       ),
-
     );
   }
 }

@@ -11,6 +11,8 @@ abstract class AppRoutes {
   static const PAYMENT_METHOD = '/payment_method';
   static const ADD_CARD = '/add_card';
   static const NOTIFICATION = '/notification';
+  static const FORGOT_PASSWORD = '/forgot_password';
+  static const RESET_PASSWORD = '/reset_password';
 
 
   // Profile Flow
@@ -20,7 +22,8 @@ abstract class AppRoutes {
   static const CONNECTION_TYPE = '/connection_type';
   static const PICTURE_VERIFICATION = '/picture_verification';
   static const KYC_DOCUMENT = '/kyc_document';
-  static const CIRCLE_DETAILS = '/circle_details';
+  static const PUBLIC_CIRCLE_DETAILS = '/public_circle_details';
+  static const JOINED_CIRCLE_DETAILS = '/joined_circle_details';
   static const CIRCLE_MEMBERS = '/circle_members';
   static const ADD_MEMBERS = '/add_members';
   static const CREATE_CIRCLE = '/create_circle';

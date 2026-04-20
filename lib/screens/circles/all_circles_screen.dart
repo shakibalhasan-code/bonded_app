@@ -42,7 +42,13 @@ class AllCirclesScreen extends StatelessWidget {
           final circle = circles[index];
           return CircleCard(
             circle: circle,
-            onTap: () => Get.toNamed(AppRoutes.CIRCLE_DETAILS, arguments: circle),
+            onTap: () {
+              if (title.contains("Joined") || title.contains("Created")) {
+                Get.toNamed(AppRoutes.JOINED_CIRCLE_DETAILS, arguments: circle);
+              } else {
+                Get.toNamed(AppRoutes.PUBLIC_CIRCLE_DETAILS, arguments: circle);
+              }
+            },
           );
         },
       ),

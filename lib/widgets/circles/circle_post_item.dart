@@ -217,7 +217,7 @@ class _CirclePostItemState extends State<CirclePostItem> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildActionButton(Icons.thumb_up_outlined, "Comment", onTap: () => controller.toggleLikePost(widget.post)),
+          _buildActionButton(Icons.thumb_up_outlined, "Like", onTap: () => controller.toggleLikePost(widget.post)),
           _buildActionButton(Icons.chat_bubble_outline, "Comment", onTap: () => controller.toggleCommentInput(widget.post)),
           _buildActionButton(Icons.share_outlined, "Share"),
         ],
