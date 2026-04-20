@@ -280,7 +280,7 @@ class _CirclePostItemState extends State<CirclePostItem> {
                     style: GoogleFonts.inter(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
-                      color: emoji.isNotEmpty ? AppColors.primary : color,
+                      color: reaction == "love" ? Colors.red : (emoji.isNotEmpty ? AppColors.primary : color),
                     ),
                   ),
                 ],

@@ -36,8 +36,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   final List<String> _categories = [
     "Birthday Celebration",
-    "Graduation Celebration",
-    "Anniversary Celebration",
+    "Graduation",
+    "Anniversary",
   ];
   final List<String> _suggestedVenues = [
     "Grand Place Hotel",
@@ -325,7 +325,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   ),
                 ),
                 Text(
-                  "Is this a Paid events?",
+                  "Is this a Paid event?",
                   style: GoogleFonts.inter(
                     fontSize: 14.sp,
                     fontWeight: FontWeight.w600,
