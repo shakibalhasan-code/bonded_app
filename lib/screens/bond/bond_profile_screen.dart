@@ -209,7 +209,7 @@ class BondProfileScreen extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () => controller.rejectBondRequest(user),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF9F9FF),
+                      backgroundColor: const Color(0xFFFAF7FF),
                       elevation: 0,
                       minimumSize: Size(double.infinity, 56.h),
                       shape: RoundedRectangleBorder(

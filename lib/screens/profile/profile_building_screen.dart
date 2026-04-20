@@ -208,7 +208,7 @@ class ProfileBuildingScreen extends StatelessWidget {
                   height: 58.h,
                   padding: EdgeInsets.symmetric(horizontal: 16.w),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF9F9FF),
+                    color: const Color(0xFFFAF7FF),
                     borderRadius: BorderRadius.circular(16.r),
                     border: Border.all(color: Colors.grey[100]!),
                   ),

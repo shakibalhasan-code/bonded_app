@@ -181,7 +181,7 @@ class _AddCardScreenState extends State<AddCardScreen> {
               color: Colors.grey[400],
             ),
             filled: true,
-            fillColor: const Color(0xFFF9F9FF),
+            fillColor: const Color(0xFFFAF7FF),
             contentPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
             suffixIcon: suffixIcon != null 
               ? Icon(suffixIcon, color: AppColors.primary, size: 20.sp) 

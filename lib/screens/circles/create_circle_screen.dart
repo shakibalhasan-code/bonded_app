@@ -108,7 +108,7 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
                 width: double.infinity,
                 height: 180.h,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF9F9FF),
+                  color: const Color(0xFFFAF7FF),
                   borderRadius: BorderRadius.circular(16.r),
                 ),
                 child: CustomPaint(
@@ -219,7 +219,7 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
                 width: double.infinity,
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF9F9FF),
+                  color: const Color(0xFFFAF7FF),
                   borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(color: AppColors.primary.withOpacity(0.1)),
                 ),
@@ -542,7 +542,7 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
         hintText: hint,
         hintStyle: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[400]),
         filled: true,
-        fillColor: const Color(0xFFF9F9FF),
+        fillColor: const Color(0xFFFAF7FF),
         contentPadding: EdgeInsets.symmetric(
           horizontal: 16.w,
           vertical: maxLines > 1 ? 16.h : 0,

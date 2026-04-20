@@ -241,7 +241,7 @@ class _CommentItem extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(10.w),
         decoration: BoxDecoration(
-          color: const Color(0xFFF9F9FF),
+          color: const Color(0xFFFAF7FF),
           borderRadius: BorderRadius.circular(12.r),
         ),
         child: Column(

@@ -10,4 +10,7 @@ class AppColors {
   // Button Colors
   static const Color buttonPrimary = Color(0xFF7128D0);
   static const Color buttonSecondary = Color(0xFFF0E4FF);
+
+  // Input Field Colors
+  static const Color inputField = Color(0xFFFAF7FF);
 }

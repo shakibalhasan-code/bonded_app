@@ -125,7 +125,7 @@ class _EventKYCScreenState extends State<EventKYCScreen> {
             height: 160.h,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: const Color(0xFFF9F9FF),
+              color: const Color(0xFFFAF7FF),
               borderRadius: BorderRadius.circular(16.r),
               border: Border.all(
                 color: AppColors.primary.withOpacity(0.3),

@@ -56,7 +56,7 @@ class ETicketCard extends StatelessWidget {
                 return Container(
                   width: 80.w,
                   height: 80.w,
-                  color: const Color(0xFFF9F9FF),
+                  color: const Color(0xFFFAF7FF),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

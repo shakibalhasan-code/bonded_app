@@ -87,7 +87,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   height: 70.h,
                   width: 70.w,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF9F9FF),
+                    color: const Color(0xFFFAF7FF),
                     borderRadius: BorderRadius.circular(16.r),
                     border: Border.all(
                       color: _otpControllers[index].text.isNotEmpty

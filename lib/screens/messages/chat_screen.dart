@@ -43,7 +43,7 @@ class ChatScreen extends StatelessWidget {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
               decoration: BoxDecoration(
-                color: const Color(0xFFF9F9FF),
+                color: const Color(0xFFFAF7FF),
                 borderRadius: BorderRadius.circular(10.r),
               ),
               child: Text(
@@ -125,7 +125,7 @@ class ChatScreen extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
                   decoration: BoxDecoration(
-                    color: message.isMe ? AppColors.primary : const Color(0xFFF9F9FF),
+                    color: message.isMe ? AppColors.primary : const Color(0xFFFAF7FF),
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(message.isMe ? 16.r : 0),
                       topRight: Radius.circular(message.isMe ? 0 : 16.r),
@@ -167,7 +167,7 @@ class ChatScreen extends StatelessWidget {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
               decoration: BoxDecoration(
-                color: const Color(0xFFF9F9FF),
+                color: const Color(0xFFFAF7FF),
                 borderRadius: BorderRadius.circular(30.r),
               ),
               child: Row(

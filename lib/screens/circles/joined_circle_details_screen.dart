@@ -134,7 +134,7 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                       vertical: 10.h,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF9F9FF),
+                      color: const Color(0xFFFAF7FF),
                       borderRadius: BorderRadius.circular(20.r),
                       border: Border.all(color: Colors.grey[200]!),
                     ),
@@ -163,7 +163,7 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                         decoration: BoxDecoration(
                           color: _selectedTabIndex == index
                               ? AppColors.primary
-                              : const Color(0xFFF9F9FF),
+                              : const Color(0xFFFAF7FF),
                           borderRadius: BorderRadius.circular(20.r),
                           border: Border.all(
                             color: _selectedTabIndex == index

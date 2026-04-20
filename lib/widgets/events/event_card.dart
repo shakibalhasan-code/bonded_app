@@ -45,7 +45,7 @@ class EventCard extends StatelessWidget {
               },
               errorBuilder: (context, error, stackTrace) {
                 return Container(
-                  color: const Color(0xFFF9F9FF),
+                  color: const Color(0xFFFAF7FF),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

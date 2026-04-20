@@ -58,7 +58,7 @@ class MessagesScreen extends StatelessWidget {
       width: 40.w,
       height: 40.w,
       decoration: BoxDecoration(
-        color: const Color(0xFFF9F9FF),
+        color: const Color(0xFFFAF7FF),
         shape: BoxShape.circle,
       ),
       child: Icon(icon, color: AppColors.primary, size: 20.sp),

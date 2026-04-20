@@ -58,7 +58,7 @@ class EventFilterScreen extends StatelessWidget {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
               decoration: BoxDecoration(
-                color: const Color(0xFFF9F9FF),
+                color: const Color(0xFFFAF7FF),
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(color: Colors.grey[200]!),
               ),
@@ -236,7 +236,7 @@ class EventFilterScreen extends StatelessWidget {
                   Get.back();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF9F9FF),
+                  backgroundColor: const Color(0xFFFAF7FF),
                   foregroundColor: AppColors.primary,
                   elevation: 0,
                   minimumSize: Size(double.infinity, 56.h),
@@ -288,7 +288,7 @@ class EventFilterScreen extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9F9FF).withOpacity(0.5),
+        color: const Color(0xFFFAF7FF).withOpacity(0.5),
         borderRadius: BorderRadius.circular(16.r),
       ),
       child: Column(
@@ -401,7 +401,7 @@ class EventFilterScreen extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         decoration: BoxDecoration(
-          color: const Color(0xFFF9F9FF),
+          color: const Color(0xFFFAF7FF),
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(color: Colors.grey[200]!),
         ),

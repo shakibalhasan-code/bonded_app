@@ -64,7 +64,7 @@ class AddLocationScreen extends StatelessWidget {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               decoration: BoxDecoration(
-                color: const Color(0xFFF9F9FF),
+                color: const Color(0xFFFAF7FF),
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(color: Colors.grey[200]!),
               ),
@@ -98,7 +98,7 @@ class AddLocationScreen extends StatelessWidget {
             Container(
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               decoration: BoxDecoration(
-                color: const Color(0xFFF9F9FF),
+                color: const Color(0xFFFAF7FF),
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(color: Colors.grey[200]!),
               ),
@@ -134,7 +134,7 @@ class AddLocationScreen extends StatelessWidget {
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF9F9FF),
+                  color: const Color(0xFFFAF7FF),
                   borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(color: Colors.grey[200]!),
                 ),

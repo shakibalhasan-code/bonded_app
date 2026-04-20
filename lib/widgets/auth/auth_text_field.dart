@@ -97,7 +97,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
                   )
                 : null,
             filled: true,
-            fillColor: const Color(0xFFF9F9FF),
+            fillColor: const Color(0xFFFAF7FF),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16.r),
               borderSide: BorderSide(color: Colors.grey[100]!),

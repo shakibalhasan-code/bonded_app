@@ -125,7 +125,7 @@ class EditProfileScreen extends StatelessWidget {
                     height: 56.h,
                     padding: EdgeInsets.symmetric(horizontal: 12.w),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF9F9FF),
+                      color: const Color(0xFFFAF7FF),
                       borderRadius: BorderRadius.circular(12.r),
                     ),
                     child: Row(
@@ -316,7 +316,7 @@ class EditProfileScreen extends StatelessWidget {
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
-        fillColor: const Color(0xFFF9F9FF),
+        fillColor: const Color(0xFFFAF7FF),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.r),
           borderSide: BorderSide(color: Colors.grey[200]!),
@@ -340,7 +340,7 @@ class EditProfileScreen extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
         decoration: BoxDecoration(
-          color: const Color(0xFFF9F9FF),
+          color: const Color(0xFFFAF7FF),
           borderRadius: BorderRadius.circular(12.r),
           border: Border.all(color: Colors.grey[200]!),
         ),
@@ -363,7 +363,7 @@ class EditProfileScreen extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9F9FF),
+        color: const Color(0xFFFAF7FF),
         borderRadius: BorderRadius.circular(12.r),
         border: Border.all(color: Colors.grey[200]!),
       ),

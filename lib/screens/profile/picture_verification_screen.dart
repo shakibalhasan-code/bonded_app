@@ -61,7 +61,7 @@ class PictureVerificationScreen extends StatelessWidget {
               height: 250.h,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: const Color(0xFFF9F9FF),
+                color: const Color(0xFFFAF7FF),
                 borderRadius: BorderRadius.circular(24.r),
               ),
               child: Stack(

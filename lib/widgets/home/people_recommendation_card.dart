@@ -90,7 +90,7 @@ class PeopleRecommendationCard extends StatelessWidget {
               //   height: 48.h,
               //   width: 48.h,
               //   decoration: BoxDecoration(
-              //     color: const Color(0xFFF9F9FF),
+              //     color: const Color(0xFFFAF7FF),
               //     shape: BoxShape.circle,
               //   ),
               //   child: Icon(
