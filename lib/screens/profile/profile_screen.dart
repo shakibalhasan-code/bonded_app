@@ -8,7 +8,7 @@ import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -235,7 +235,7 @@ class ProfileScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-               Container(
+              Container(
                 width: 80.w,
                 height: 80.w,
                 decoration: BoxDecoration(

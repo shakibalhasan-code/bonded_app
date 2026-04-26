@@ -1,3 +1,4 @@
+import 'package:bonded_app/screens/profile/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -25,7 +26,11 @@ class MessagesScreen extends StatelessWidget {
         leadingWidth: 60.w,
         leading: Padding(
           padding: EdgeInsets.only(left: 20.w),
-          child: SvgPicture.asset(AppAssets.appLogo, width: 32.sp, height: 32.sp),
+          child: SvgPicture.asset(
+            AppAssets.appLogo,
+            width: 32.sp,
+            height: 32.sp,
+          ),
         ),
         centerTitle: true,
         title: Text(
@@ -37,7 +42,10 @@ class MessagesScreen extends StatelessWidget {
           ),
         ),
         actions: [
-          _buildAppBarAction(Icons.person),
+          InkWell(
+            onTap: () => Get.to(() => const ProfileScreen()),
+            child: _buildAppBarAction(Icons.person),
+          ),
           SizedBox(width: 12.w),
           _buildAppBarAction(Icons.notifications),
           SizedBox(width: 20.w),
@@ -54,14 +62,18 @@ class MessagesScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Obx(() => ListView.separated(
-                  padding: EdgeInsets.only(top: 8.h, bottom: 100.h),
-                  itemCount: controller.filteredConversations.length,
-                  separatorBuilder: (context, index) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    return ConversationTile(conversation: controller.filteredConversations[index]);
-                  },
-                )),
+            child: Obx(
+              () => ListView.separated(
+                padding: EdgeInsets.only(top: 8.h, bottom: 100.h),
+                itemCount: controller.filteredConversations.length,
+                separatorBuilder: (context, index) => const Divider(height: 1),
+                itemBuilder: (context, index) {
+                  return ConversationTile(
+                    conversation: controller.filteredConversations[index],
+                  );
+                },
+              ),
+            ),
           ),
         ],
       ),
@@ -80,4 +92,3 @@ class MessagesScreen extends StatelessWidget {
     );
   }
 }
-
