@@ -75,25 +75,35 @@ class _AppButtonState extends State<AppButton>
                 : [],
           ),
           alignment: Alignment.center,
-          child: widget.isLoading
-              ? SizedBox(
-                  height: 24.h,
-                  width: 24.h,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      widget.isPrimary ? Colors.white : AppColors.primary,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: widget.isLoading
+                ? SizedBox(
+                    height: 24.h,
+                    width: 24.h,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        widget.isPrimary ? Colors.white : AppColors.primary,
+                      ),
+                    ),
+                  )
+                : FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      widget.text,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color:
+                            widget.isPrimary ? Colors.white : AppColors.primary,
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                )
-              : Text(
-                  widget.text,
-                  style: GoogleFonts.inter(
-                    color: widget.isPrimary ? Colors.white : AppColors.primary,
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+          ),
         ),
       ),
     );

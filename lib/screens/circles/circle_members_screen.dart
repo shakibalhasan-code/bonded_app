@@ -5,13 +5,28 @@ import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/circle_model.dart';
 import '../../widgets/circles/circle_member_tile.dart';
+import '../../widgets/custom_search_field.dart';
 
 class CircleMembersScreen extends StatelessWidget {
   const CircleMembersScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final List<MemberModel> members = Get.arguments ?? [];
+    final List<MemberModel> allMembers = Get.arguments ?? [];
+    final RxList<MemberModel> filteredMembers = RxList<MemberModel>(allMembers);
+    final TextEditingController searchController = TextEditingController();
+
+    void filterMembers(String query) {
+      if (query.isEmpty) {
+        filteredMembers.value = allMembers;
+      } else {
+        filteredMembers.value = allMembers
+            .where((m) =>
+                m.name.toLowerCase().contains(query.toLowerCase()) ||
+                m.role.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -32,25 +47,39 @@ class CircleMembersScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: ListView.builder(
-        padding: EdgeInsets.all(20.w),
-        itemCount: members.length + 1,
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return Padding(
-              padding: EdgeInsets.only(bottom: 16.h),
-              child: Text(
-                "Members List",
-                style: GoogleFonts.inter(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textHeading,
-                ),
-              ),
-            );
-          }
-          return CircleMemberTile(member: members[index - 1]);
-        },
+      body: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+            child: CustomSearchField(
+              controller: searchController,
+              hintText: "Search members...",
+              onChanged: filterMembers,
+            ),
+          ),
+          Expanded(
+            child: Obx(() => ListView.builder(
+                  padding: EdgeInsets.all(20.w),
+                  itemCount: filteredMembers.length + 1,
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: 16.h),
+                        child: Text(
+                          "Members List",
+                          style: GoogleFonts.inter(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textHeading,
+                          ),
+                        ),
+                      );
+                    }
+                    return CircleMemberTile(member: filteredMembers[index - 1]);
+                  },
+                )),
+          ),
+        ],
       ),
     );
   }

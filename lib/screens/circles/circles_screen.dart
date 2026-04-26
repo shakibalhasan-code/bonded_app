@@ -1,3 +1,4 @@
+import 'package:bonded_app/models/circle_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -23,21 +24,23 @@ class CirclesScreen extends StatelessWidget {
         child: Column(
           children: [
             const CircleHeader(),
-            Obx(() => CircleTabBar(
-                  selectedIndex: controller.selectedTab.value,
-                  tabs: const ["Public Circle", "Private Circle", "My Circle"],
-                  onTabChanged: controller.changeTab,
-                )),
+            Obx(
+              () => CircleTabBar(
+                selectedIndex: controller.selectedTab.value,
+                tabs: const ["Public Circle", "Private Circle", "My Circle"],
+                onTabChanged: controller.changeTab,
+              ),
+            ),
             Expanded(
               child: Obx(() {
                 if (controller.selectedTab.value == 2) {
                   return _buildMyCirclesView(controller);
                 }
-                
+
                 final circles = controller.selectedTab.value == 0
-                    ? controller.publicCircles
-                    : controller.privateCircles;
-                
+                    ? controller.filteredPublicCircles
+                    : controller.filteredPrivateCircles;
+
                 return _buildCircleList(circles, controller);
               }),
             ),
@@ -49,7 +52,10 @@ class CirclesScreen extends StatelessWidget {
         child: FloatingActionButton(
           heroTag: null,
           onPressed: () {
-            Get.toNamed(AppRoutes.CREATE_CIRCLE, arguments: {'isPublic': false});
+            Get.toNamed(
+              AppRoutes.CREATE_CIRCLE,
+              arguments: {'isPublic': false},
+            );
           },
           backgroundColor: AppColors.primary,
           shape: const CircleBorder(),
@@ -59,67 +65,58 @@ class CirclesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCircleList(List circles, CircleController controller) {
+  Widget _buildCircleList(
+    List<CircleModel> circles,
+    CircleController controller,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Circle Nearby",
-                style: GoogleFonts.inter(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textHeading,
-                ),
-              ),
-              GestureDetector(
-                onTap: () => Get.toNamed(
-                  AppRoutes.ALL_CIRCLES,
-                  arguments: {
-                    'title': controller.selectedTab.value == 0 ? "Public Circles" : "Private Circles",
-                    'circles': circles,
-                  },
-                ),
-                child: Text(
-                  "See All",
-                  style: GoogleFonts.inter(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
+        _buildSectionHeader(
+          "Circle Nearby",
+          circles,
+          controller,
+          controller.selectedTab.value == 0
+              ? "Public Circles"
+              : "Private Circles",
         ),
         Expanded(
-          child: ListView.builder(
-            itemCount: circles.length,
-            padding: EdgeInsets.only(bottom: 100.h),
-            itemBuilder: (context, index) {
-              final circle = circles[index];
-              return CircleCard(
-                circle: circle,
-                onTap: () {
-                  if (controller.selectedTab.value == 0 || controller.selectedTab.value == 1) {
-                    Get.toNamed(AppRoutes.PUBLIC_CIRCLE_DETAILS, arguments: circle);
-                  } else {
-                    Get.toNamed(AppRoutes.JOINED_CIRCLE_DETAILS, arguments: circle);
-                  }
-                },
-              );
-            },
-          ),
+          child: circles.isEmpty
+              ? _buildEmptyState()
+              : ListView.builder(
+                  itemCount: circles.length,
+                  padding: EdgeInsets.only(bottom: 100.h),
+                  itemBuilder: (context, index) {
+                    final circle = circles[index];
+                    return CircleCard(
+                      circle: circle,
+                      onTap: () {
+                        if (controller.selectedTab.value == 0 ||
+                            controller.selectedTab.value == 1) {
+                          Get.toNamed(
+                            AppRoutes.PUBLIC_CIRCLE_DETAILS,
+                            arguments: circle,
+                          );
+                        } else {
+                          Get.toNamed(
+                            AppRoutes.JOINED_CIRCLE_DETAILS,
+                            arguments: circle,
+                          );
+                        }
+                      },
+                    );
+                  },
+                ),
         ),
       ],
     );
   }
 
   Widget _buildMyCirclesView(CircleController controller) {
+    final circles = controller.myCircleSubTab.value == 0
+        ? controller.filteredMyCreatedCircles
+        : controller.filteredMyJoinedCircles;
+
     return Column(
       children: [
         CircleSubTabBar(
@@ -127,61 +124,144 @@ class CirclesScreen extends StatelessWidget {
           tabs: const ["Created Circle", "Joined Circle"],
           onTabChanged: controller.changeMyCircleSubTab,
         ),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
+        _buildSectionHeader(
+          controller.myCircleSubTab.value == 0
+              ? "My Created Circles"
+              : "My Joined Circles",
+          circles,
+          controller,
+          controller.myCircleSubTab.value == 0
+              ? "Created Circles"
+              : "Joined Circles",
+        ),
+        Expanded(
+          child: circles.isEmpty
+              ? _buildEmptyState()
+              : ListView.builder(
+                  itemCount: circles.length,
+                  padding: EdgeInsets.only(bottom: 100.h),
+                  itemBuilder: (context, index) {
+                    final circle = circles[index];
+                    return CircleCard(
+                      circle: circle,
+                      onTap: () {
+                        Get.toNamed(
+                          AppRoutes.JOINED_CIRCLE_DETAILS,
+                          arguments: circle,
+                        );
+                      },
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(
+    String title,
+    List<CircleModel> circles,
+    CircleController controller,
+    String allCirclesTitle,
+  ) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+      child: Obx(() {
+        final isSearch = controller.isSearchVisible.value;
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            if (!isSearch)
               Text(
-                controller.myCircleSubTab.value == 0 ? "My Created Circles" : "My Joined Circles",
+                title,
                 style: GoogleFonts.inter(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textHeading,
                 ),
               ),
-              GestureDetector(
-                onTap: () => Get.toNamed(
-                  AppRoutes.ALL_CIRCLES,
-                  arguments: {
-                    'title': controller.myCircleSubTab.value == 0 ? "Created Circles" : "Joined Circles",
-                    'circles': controller.myCircleSubTab.value == 0
-                        ? controller.myCreatedCircles
-                        : controller.myJoinedCircles,
-                  },
-                ),
-                child: Text(
-                  "See All",
-                  style: GoogleFonts.inter(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+            if (isSearch)
+              Expanded(
+                child: Container(
+                  height: 40.h,
+                  margin: EdgeInsets.only(right: 12.w),
+                  padding: EdgeInsets.symmetric(horizontal: 12.w),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: TextField(
+                    controller: controller.searchController,
+                    onChanged: (value) => controller.searchQuery.value = value,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: "Search circles...",
+                      hintStyle: GoogleFonts.inter(
+                        fontSize: 14.sp,
+                        color: Colors.grey,
+                      ),
+                      border: InputBorder.none,
+                      icon: Icon(
+                        Icons.search,
+                        color: AppColors.primary,
+                        size: 20.sp,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ],
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: () => controller.toggleSearch(),
+                  child: Icon(
+                    isSearch ? Icons.close : Icons.search,
+                    color: AppColors.primary,
+                    size: 24.sp,
+                  ),
+                ),
+                if (!isSearch) ...[
+                  SizedBox(width: 16.w),
+                  GestureDetector(
+                    onTap: () => Get.toNamed(
+                      AppRoutes.ALL_CIRCLES,
+                      arguments: {'title': allCirclesTitle, 'circles': circles},
+                    ),
+                    child: Text(
+                      "See All",
+                      style: GoogleFonts.inter(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        );
+      }),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off, size: 64.sp, color: Colors.grey[300]),
+          SizedBox(height: 16.h),
+          Text(
+            "No circles found",
+            style: GoogleFonts.inter(
+              fontSize: 16.sp,
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            itemCount: controller.myCircleSubTab.value == 0
-                ? controller.myCreatedCircles.length
-                : controller.myJoinedCircles.length,
-            padding: EdgeInsets.only(bottom: 100.h),
-            itemBuilder: (context, index) {
-              final circle = controller.myCircleSubTab.value == 0
-                  ? controller.myCreatedCircles[index]
-                  : controller.myJoinedCircles[index];
-              return CircleCard(
-                circle: circle,
-                onTap: () {
-                  Get.toNamed(AppRoutes.JOINED_CIRCLE_DETAILS, arguments: circle);
-                },
-              );
-            },
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

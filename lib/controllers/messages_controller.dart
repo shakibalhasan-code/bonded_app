@@ -1,14 +1,35 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/conversation_model.dart';
 import '../models/bond_user_model.dart';
 
 class MessagesController extends GetxController {
   final conversations = <ConversationModel>[].obs;
+  
+  // Search State
+  final searchQuery = "".obs;
+  late final TextEditingController searchController;
+
+  List<ConversationModel> get filteredConversations {
+    if (searchQuery.value.isEmpty) return conversations;
+    return conversations
+        .where((c) =>
+            c.user.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
+            c.lastMessage.toLowerCase().contains(searchQuery.value.toLowerCase()))
+        .toList();
+  }
 
   @override
   void onInit() {
     super.onInit();
+    searchController = TextEditingController();
     _loadMockConversations();
+  }
+
+  @override
+  void onClose() {
+    searchController.dispose();
+    super.onClose();
   }
 
   void _loadMockConversations() {

@@ -138,11 +138,14 @@ class _InterestSelectionSheetState extends State<InterestSelectionSheet> {
                   ),
                   elevation: 0,
                 ),
-                child: Text(
-                  "Done",
-                  style: GoogleFonts.inter(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    "Done",
+                    style: GoogleFonts.inter(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),

@@ -16,22 +16,72 @@ class CircleController extends GetxController {
   final myCreatedCircles = <CircleModel>[].obs;
   final myJoinedCircles = <CircleModel>[].obs;
 
+  // Search State
+  final isSearchVisible = false.obs;
+  final searchQuery = "".obs;
+  late final TextEditingController searchController;
+
+  List<CircleModel> get filteredPublicCircles => _filterCircles(publicCircles);
+  List<CircleModel> get filteredPrivateCircles => _filterCircles(privateCircles);
+  List<CircleModel> get filteredMyCreatedCircles => _filterCircles(myCreatedCircles);
+  List<CircleModel> get filteredMyJoinedCircles => _filterCircles(myJoinedCircles);
+  List<MemberModel> get filteredAvailableMembers => _filterMembers(availableMembers);
+
+  List<CircleModel> _filterCircles(List<CircleModel> circles) {
+    if (searchQuery.value.isEmpty) return circles;
+    return circles
+        .where((c) =>
+            c.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
+            c.description.toLowerCase().contains(searchQuery.value.toLowerCase()))
+        .toList();
+  }
+
+  List<MemberModel> _filterMembers(List<MemberModel> members) {
+    if (searchQuery.value.isEmpty) return members;
+    return members
+        .where((m) =>
+            m.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
+            m.role.toLowerCase().contains(searchQuery.value.toLowerCase()))
+        .toList();
+  }
+
   @override
   void onInit() {
     super.onInit();
+    searchController = TextEditingController();
     _loadMockData();
     _loadAvailableMembers();
-    _loadMockData();
+  }
+
+  @override
+  void onClose() {
+    searchController.dispose();
+    super.onClose();
   }
 
   final availableMembers = <MemberModel>[].obs;
 
   void changeTab(int index) {
     selectedTab.value = index;
+    clearSearch();
   }
 
   void changeMyCircleSubTab(int index) {
     myCircleSubTab.value = index;
+    clearSearch();
+  }
+
+  void toggleSearch() {
+    isSearchVisible.value = !isSearchVisible.value;
+    if (!isSearchVisible.value) {
+      clearSearch();
+    }
+  }
+
+  void clearSearch() {
+    searchQuery.value = "";
+    searchController.clear();
+    isSearchVisible.value = false;
   }
 
   void _loadAvailableMembers() {

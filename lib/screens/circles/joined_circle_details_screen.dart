@@ -127,28 +127,28 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Row(
               children: [
-                if (_selectedTabIndex == 0) ...[
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 20.w,
-                      vertical: 10.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFAF7FF),
-                      borderRadius: BorderRadius.circular(20.r),
-                      border: Border.all(color: Colors.grey[200]!),
-                    ),
-                    child: Text(
-                      "Today",
-                      style: GoogleFonts.inter(
-                        fontSize: 14.sp,
-                        color: Colors.grey[500],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 12.w),
-                ],
+                // if (_selectedTabIndex == 0) ...[
+                //   Container(
+                //     padding: EdgeInsets.symmetric(
+                //       horizontal: 20.w,
+                //       vertical: 10.h,
+                //     ),
+                //     decoration: BoxDecoration(
+                //       color: const Color(0xFFFAF7FF),
+                //       borderRadius: BorderRadius.circular(20.r),
+                //       border: Border.all(color: Colors.grey[200]!),
+                //     ),
+                //     child: Text(
+                //       "Today",
+                //       style: GoogleFonts.inter(
+                //         fontSize: 14.sp,
+                //         color: Colors.grey[500],
+                //         fontWeight: FontWeight.w500,
+                //       ),
+                //     ),
+                //   ),
+                //   SizedBox(width: 12.w),
+                // ],
                 ...List.generate(
                   _tabs.length,
                   (index) => Padding(
@@ -191,8 +191,6 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
             ),
           ),
           SizedBox(height: 16.h),
-
-
 
           // Main Content Area
           Expanded(child: _buildMainContent(circle)),
@@ -321,12 +319,15 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                     borderRadius: BorderRadius.circular(30.r),
                   ),
                 ),
-                child: Text(
-                  "Create Post",
-                  style: GoogleFonts.inter(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    "Create Post",
+                    style: GoogleFonts.inter(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -345,11 +346,14 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                   ),
                   elevation: 0,
                 ),
-                child: Text(
-                  "Create Event",
-                  style: GoogleFonts.inter(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    "Create Event",
+                    style: GoogleFonts.inter(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
@@ -433,11 +437,14 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                   ),
                   elevation: 0,
                 ),
-                child: Text(
-                  "In-Person Event",
-                  style: GoogleFonts.inter(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    "In-Person Event",
+                    style: GoogleFonts.inter(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
@@ -462,11 +469,14 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                   ),
                   elevation: 0,
                 ),
-                child: Text(
-                  "Bonded Virtual Event",
-                  style: GoogleFonts.inter(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    "Bonded Virtual Event",
+                    style: GoogleFonts.inter(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),

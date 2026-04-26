@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../widgets/circles/interest_selection_sheet.dart';
+import '../../widgets/custom_search_field.dart';
 
 class CreateCircleScreen extends StatefulWidget {
   const CreateCircleScreen({Key? key}) : super(key: key);
@@ -24,6 +25,7 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
   final TextEditingController descController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
   final TextEditingController priceController = TextEditingController();
+  final TextEditingController memberSearchController = TextEditingController();
 
   List<String> selectedInterests = [];
 
@@ -63,6 +65,15 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
   ];
 
   int visibleMembersCount = 4;
+
+  List<Map<String, String>> get filteredMembers {
+    if (memberSearchController.text.isEmpty) return sampleMembers;
+    return sampleMembers
+        .where((m) =>
+            m["name"]!.toLowerCase().contains(memberSearchController.text.toLowerCase()) ||
+            m["role"]!.toLowerCase().contains(memberSearchController.text.toLowerCase()))
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -333,7 +344,13 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
             // Add Members
             _buildSectionTitle("Add Members"),
             SizedBox(height: 16.h),
-            ...sampleMembers
+            CustomSearchField(
+              controller: memberSearchController,
+              hintText: "Search members to add...",
+              onChanged: (val) => setState(() {}),
+            ),
+            SizedBox(height: 20.h),
+            ...filteredMembers
                 .take(visibleMembersCount)
                 .map((member) => _buildMemberTile(member))
                 .toList(),

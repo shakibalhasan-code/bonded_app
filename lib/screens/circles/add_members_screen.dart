@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/circle_model.dart';
 import '../../controllers/circle_controller.dart';
+import '../../widgets/custom_search_field.dart';
 
 class AddMembersScreen extends StatelessWidget {
   const AddMembersScreen({Key? key}) : super(key: key);
@@ -38,6 +39,12 @@ class AddMembersScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            CustomSearchField(
+              controller: controller.searchController,
+              hintText: "Search members...",
+              onChanged: (value) => controller.searchQuery.value = value,
+            ),
+            SizedBox(height: 24.h),
             Text(
               "Members",
               style: GoogleFonts.inter(
@@ -50,9 +57,9 @@ class AddMembersScreen extends StatelessWidget {
             Obx(() => ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: controller.availableMembers.length,
+                  itemCount: controller.filteredAvailableMembers.length,
                   itemBuilder: (context, index) {
-                    final member = controller.availableMembers[index];
+                    final member = controller.filteredAvailableMembers[index];
                     return _buildAddMemberTile(context, member, circle, controller);
                   },
                 )),

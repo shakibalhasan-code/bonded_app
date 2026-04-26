@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/bond_user_model.dart';
 
@@ -5,11 +6,35 @@ class BondController extends GetxController {
   var nearbyPeople = <BondUserModel>[].obs;
   var bondRequests = <BondUserModel>[].obs;
   var myBonds = <BondUserModel>[].obs;
+  
+  // Search State
+  final searchQuery = "".obs;
+  late final TextEditingController searchController;
+
+  List<BondUserModel> get filteredNearbyPeople => _filterUsers(nearbyPeople);
+  List<BondUserModel> get filteredBondRequests => _filterUsers(bondRequests);
+  List<BondUserModel> get filteredMyBonds => _filterUsers(myBonds);
+
+  List<BondUserModel> _filterUsers(List<BondUserModel> users) {
+    if (searchQuery.value.isEmpty) return users;
+    return users
+        .where((u) =>
+            u.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
+            u.username.toLowerCase().contains(searchQuery.value.toLowerCase()))
+        .toList();
+  }
 
   @override
   void onInit() {
     super.onInit();
+    searchController = TextEditingController();
     _loadMockData();
+  }
+
+  @override
+  void onClose() {
+    searchController.dispose();
+    super.onClose();
   }
 
   void _loadMockData() {

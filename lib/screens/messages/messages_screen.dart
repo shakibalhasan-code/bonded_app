@@ -7,6 +7,7 @@ import '../../controllers/messages_controller.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_assets.dart';
 import '../../widgets/messages/conversation_tile.dart';
+import '../../widgets/custom_search_field.dart';
 
 class MessagesScreen extends StatelessWidget {
   const MessagesScreen({Key? key}) : super(key: key);
@@ -42,14 +43,28 @@ class MessagesScreen extends StatelessWidget {
           SizedBox(width: 20.w),
         ],
       ),
-      body: Obx(() => ListView.separated(
-            padding: EdgeInsets.only(top: 8.h, bottom: 100.h),
-            itemCount: controller.conversations.length,
-            separatorBuilder: (context, index) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              return ConversationTile(conversation: controller.conversations[index]);
-            },
-          )),
+      body: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+            child: CustomSearchField(
+              controller: controller.searchController,
+              hintText: "Search messages...",
+              onChanged: (value) => controller.searchQuery.value = value,
+            ),
+          ),
+          Expanded(
+            child: Obx(() => ListView.separated(
+                  padding: EdgeInsets.only(top: 8.h, bottom: 100.h),
+                  itemCount: controller.filteredConversations.length,
+                  separatorBuilder: (context, index) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    return ConversationTile(conversation: controller.filteredConversations[index]);
+                  },
+                )),
+          ),
+        ],
+      ),
     );
   }
 

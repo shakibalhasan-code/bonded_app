@@ -94,17 +94,17 @@ class EventScreen extends StatelessWidget {
         SizedBox(height: 24.h),
         CategoryFilter(
           categories: const [
-            "Bonded Events",
             "In-Person Events",
             "Virtual Events",
             "Event Highlights",
+            "Bonded Events",
           ],
           selectedIndex: controller.selectedCategory.value,
           onCategoryChanged: controller.changeCategory,
         ),
         SizedBox(height: 24.h),
         Expanded(
-          child: controller.selectedCategory.value == 0
+          child: controller.selectedCategory.value == 3
               ? _buildComingSoon()
               : Column(
                   children: [

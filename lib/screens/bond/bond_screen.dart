@@ -8,6 +8,7 @@ import '../../controllers/bond_controller.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_assets.dart';
 import '../../widgets/bond/bond_user_card.dart';
+import '../../widgets/custom_search_field.dart';
 
 class BondScreen extends StatelessWidget {
   const BondScreen({Key? key}) : super(key: key);
@@ -78,11 +79,25 @@ class BondScreen extends StatelessWidget {
             ],
           ),
         ),
-        body: TabBarView(
+        body: Column(
           children: [
-            _buildNearbyTab(controller),
-            _buildRequestTab(controller),
-            _buildMyBondTab(controller),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+              child: CustomSearchField(
+                controller: controller.searchController,
+                hintText: "Search connections...",
+                onChanged: (value) => controller.searchQuery.value = value,
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _buildNearbyTab(controller),
+                  _buildRequestTab(controller),
+                  _buildMyBondTab(controller),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -138,9 +153,9 @@ class BondScreen extends StatelessWidget {
           Expanded(
             child: Obx(
               () => ListView.builder(
-                itemCount: controller.nearbyPeople.length,
+                itemCount: controller.filteredNearbyPeople.length,
                 itemBuilder: (context, index) {
-                  return BondUserCard(user: controller.nearbyPeople[index]);
+                  return BondUserCard(user: controller.filteredNearbyPeople[index]);
                 },
               ),
             ),
@@ -168,9 +183,9 @@ class BondScreen extends StatelessWidget {
           Expanded(
             child: Obx(
               () => ListView.builder(
-                itemCount: controller.bondRequests.length,
+                itemCount: controller.filteredBondRequests.length,
                 itemBuilder: (context, index) {
-                  return BondUserCard(user: controller.bondRequests[index]);
+                  return BondUserCard(user: controller.filteredBondRequests[index]);
                 },
               ),
             ),
@@ -198,9 +213,9 @@ class BondScreen extends StatelessWidget {
           Expanded(
             child: Obx(
               () => ListView.builder(
-                itemCount: controller.myBonds.length,
+                itemCount: controller.filteredMyBonds.length,
                 itemBuilder: (context, index) {
-                  return BondUserCard(user: controller.myBonds[index]);
+                  return BondUserCard(user: controller.filteredMyBonds[index]);
                 },
               ),
             ),

@@ -159,42 +159,60 @@ class ProfileScreen extends StatelessWidget {
 
             // Settings List
             _buildMenuItem(
-              icon: Icons.person_outline,
               title: "Edit Profile",
               onTap: () => Get.toNamed(AppRoutes.EDIT_PROFILE),
             ),
             _buildMenuItem(
-              icon: Icons.notifications_none,
               title: "Notification",
               trailing: Obx(
                 () => Switch(
                   value: controller.notificationsEnabled.value,
                   onChanged: (val) =>
                       controller.notificationsEnabled.value = val,
-                  activeColor: AppColors.primary,
+                  activeColor: Colors.white,
+                  activeTrackColor: AppColors.primary,
+                  inactiveThumbColor: Colors.white,
+                  inactiveTrackColor: Colors.grey[300],
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
             ),
-            _buildMenuItem(icon: Icons.lock_outline, title: "Change Password"),
             _buildMenuItem(
-              icon: Icons.description_outlined,
+              title: "Change Password",
+              onTap: () => Get.toNamed(AppRoutes.SECURITY),
+            ),
+            _buildMenuItem(
               title: "Terms of Service",
+              onTap: () => Get.toNamed(AppRoutes.TERMS_OF_SERVICE),
             ),
-            _buildMenuItem(icon: Icons.info_outline, title: "About Us"),
             _buildMenuItem(
-              icon: Icons.privacy_tip_outlined,
+              title: "About Us",
+              onTap: () => Get.toNamed(AppRoutes.ABOUT_US),
+            ),
+            _buildMenuItem(
               title: "Privacy Policy",
+              onTap: () => Get.toNamed(AppRoutes.PRIVACY_POLICY),
             ),
-            _buildMenuItem(icon: Icons.email_outlined, title: "Contact Us"),
-            _buildMenuItem(icon: Icons.logout, title: "Logout"),
             _buildMenuItem(
-              icon: Icons.no_accounts_outlined,
+              title: "Contact Us",
+              onTap: () => Get.toNamed(AppRoutes.CONTACT_US),
+            ),
+            _buildMenuItem(
+              title: "Logout",
+              onTap: () => _showConfirmationDialog(
+                title: "Logout",
+                message: "Are you sure you want to log out?",
+                onConfirm: () => Get.offAllNamed(AppRoutes.WELCOME),
+              ),
+            ),
+            _buildMenuItem(
               title: "Disable Account",
+              onTap: () => _showDisableConfirmationDialog(),
             ),
             _buildMenuItem(
-              icon: Icons.delete_outline,
               title: "Delete Account",
               color: Colors.red,
+              onTap: () => Get.toNamed(AppRoutes.DELETE_ACCOUNT),
             ),
           ],
         ),
@@ -202,32 +220,179 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  void _showDisableConfirmationDialog() {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28.r),
+        ),
+        child: Container(
+          padding: EdgeInsets.all(24.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28.r),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+               Container(
+                width: 80.w,
+                height: 80.w,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.warning_amber_rounded,
+                  color: AppColors.primary,
+                  size: 40.sp,
+                ),
+              ),
+              SizedBox(height: 24.h),
+              Text(
+                "Warning!",
+                style: GoogleFonts.inter(
+                  fontSize: 24.sp,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF1B0B3B),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                "Are you sure? You want to disable your account. You can Re-enable your account any time.",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 16.sp,
+                  color: Colors.grey[600],
+                  height: 1.5,
+                ),
+              ),
+              SizedBox(height: 32.h),
+              SizedBox(
+                width: double.infinity,
+                height: 56.h,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Get.back();
+                    Get.snackbar("Status", "Account disabled");
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.r),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    "Disable",
+                    style: GoogleFonts.inter(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: 12.h),
+              SizedBox(
+                width: double.infinity,
+                height: 56.h,
+                child: TextButton(
+                  onPressed: () => Get.back(),
+                  style: TextButton.styleFrom(
+                    backgroundColor: AppColors.primary.withOpacity(0.05),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30.r),
+                    ),
+                  ),
+                  child: Text(
+                    "Cancel",
+                    style: GoogleFonts.inter(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showConfirmationDialog({
+    required String title,
+    required String message,
+    required VoidCallback onConfirm,
+  }) {
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+        ),
+        content: Text(message, style: GoogleFonts.inter()),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text("Cancel", style: GoogleFonts.inter(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              onConfirm();
+            },
+            child: Text(
+              "Confirm",
+              style: GoogleFonts.inter(
+                color: title.contains("Delete")
+                    ? Colors.red
+                    : AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMenuItem({
-    required IconData icon,
     required String title,
     Widget? trailing,
     VoidCallback? onTap,
     Color? color,
   }) {
-    return ListTile(
+    return GestureDetector(
       onTap: onTap,
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: color ?? const Color(0xFF1B0B3B), size: 24.sp),
-      title: Text(
-        title,
-        style: GoogleFonts.inter(
-          fontSize: 16.sp,
-          fontWeight: FontWeight.w600,
-          color: color ?? const Color(0xFF1B0B3B),
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 10.h),
+        color: Colors.transparent,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+                color: color ?? const Color(0xFF1B0B3B),
+              ),
+            ),
+            trailing ??
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: const Color(0xFF1B0B3B),
+                  size: 16.sp,
+                ),
+          ],
         ),
       ),
-      trailing:
-          trailing ??
-          Icon(
-            Icons.arrow_forward_ios,
-            color: const Color(0xFF1B0B3B),
-            size: 16.sp,
-          ),
     );
   }
 }

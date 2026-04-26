@@ -3,6 +3,13 @@ import 'package:bonded_app/screens/profile/picture_verification_screen.dart';
 import 'package:bonded_app/screens/events/event_filter_screen.dart';
 import 'package:bonded_app/screens/profile/profile_screen.dart';
 import 'package:bonded_app/screens/profile/edit_profile_screen.dart';
+import 'package:bonded_app/screens/profile/security_screen.dart';
+import 'package:bonded_app/screens/profile/terms_of_service_screen.dart';
+import 'package:bonded_app/screens/profile/about_us_screen.dart';
+import 'package:bonded_app/screens/profile/privacy_policy_screen.dart';
+import 'package:bonded_app/screens/profile/contact_us_screen.dart';
+import 'package:bonded_app/screens/profile/delete_account_screen.dart';
+import 'package:bonded_app/screens/profile/delete_account_otp_screen.dart';
 import 'package:get/get.dart';
 import '../../screens/splash/splash_screen.dart';
 import '../../screens/onboarding/onboarding_screen.dart';
@@ -202,6 +209,25 @@ class AppPages {
       name: AppRoutes.EDIT_PROFILE,
       page: () => const EditProfileScreen(),
       binding: ProfileBinding(),
+    ),
+    GetPage(name: AppRoutes.SECURITY, page: () => const SecurityScreen()),
+    GetPage(
+      name: AppRoutes.TERMS_OF_SERVICE,
+      page: () => const TermsOfServiceScreen(),
+    ),
+    GetPage(name: AppRoutes.ABOUT_US, page: () => const AboutUsScreen()),
+    GetPage(
+      name: AppRoutes.PRIVACY_POLICY,
+      page: () => const PrivacyPolicyScreen(),
+    ),
+    GetPage(name: AppRoutes.CONTACT_US, page: () => const ContactUsScreen()),
+    GetPage(
+      name: AppRoutes.DELETE_ACCOUNT,
+      page: () => const DeleteAccountScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.DELETE_ACCOUNT_OTP,
+      page: () => const DeleteAccountOtpScreen(),
     ),
   ];
 }

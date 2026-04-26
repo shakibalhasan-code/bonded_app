@@ -9,9 +9,18 @@ import '../../models/circle_model.dart';
 import '../../widgets/circles/circle_member_tile.dart';
 import '../../widgets/circles/circle_post_item.dart';
 import '../../widgets/circles/create_post_sheet.dart';
+import '../../widgets/custom_search_field.dart';
 
-class PublicCircleDetailsScreen extends StatelessWidget {
+class PublicCircleDetailsScreen extends StatefulWidget {
   const PublicCircleDetailsScreen({Key? key}) : super(key: key);
+
+  @override
+  State<PublicCircleDetailsScreen> createState() => _PublicCircleDetailsScreenState();
+}
+
+class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
+  final TextEditingController searchController = TextEditingController();
+  final RxString searchQuery = "".obs;
 
   @override
   Widget build(BuildContext context) {
@@ -199,17 +208,33 @@ class PublicCircleDetailsScreen extends StatelessWidget {
             SizedBox(height: 8.h),
 
             // Members List
-            if (circle.detailedMembers != null)
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: circle.detailedMembers!.take(3).length,
-                itemBuilder: (context, index) {
-                  return CircleMemberTile(
-                    member: circle.detailedMembers![index],
-                  );
-                },
+            if (circle.detailedMembers != null) ...[
+              CustomSearchField(
+                controller: searchController,
+                hintText: "Search members...",
+                onChanged: (val) => searchQuery.value = val,
               ),
+              SizedBox(height: 16.h),
+              Obx(() {
+                final query = searchQuery.value.toLowerCase();
+                final filtered = circle.detailedMembers!
+                    .where((m) =>
+                        m.name.toLowerCase().contains(query) ||
+                        m.role.toLowerCase().contains(query))
+                    .toList();
+                
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: filtered.take(3).length,
+                  itemBuilder: (context, index) {
+                    return CircleMemberTile(
+                      member: filtered[index],
+                    );
+                  },
+                );
+              }),
+            ],
 
             SizedBox(height: 40.h),
 

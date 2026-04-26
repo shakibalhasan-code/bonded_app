@@ -42,6 +42,13 @@ abstract class AppRoutes {
   static const EVENT_FILTER = '/event_filter';
   static const PROFILE = '/profile';
   static const EDIT_PROFILE = '/edit_profile';
+  static const SECURITY = '/security';
+  static const TERMS_OF_SERVICE = '/terms_of_service';
+  static const ABOUT_US = '/about_us';
+  static const PRIVACY_POLICY = '/privacy_policy';
+  static const CONTACT_US = '/contact_us';
+  static const DELETE_ACCOUNT = '/delete_account';
+  static const DELETE_ACCOUNT_OTP = '/delete_account_otp';
 }
 
 
