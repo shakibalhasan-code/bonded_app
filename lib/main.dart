@@ -4,7 +4,11 @@ import 'package:get/get.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_pages.dart';
 
-void main() {
+import 'services/shared_prefs_service.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SharedPrefsService.init();
   runApp(const MyApp());
 }
 

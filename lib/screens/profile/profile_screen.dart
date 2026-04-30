@@ -84,13 +84,20 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
                   SizedBox(height: 16.h),
-                  Text(
-                    "Andrew Ainsley",
-                    style: GoogleFonts.inter(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1B0B3B),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Andrew Ainsley",
+                        style: GoogleFonts.inter(
+                          fontSize: 20.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1B0B3B),
+                        ),
+                      ),
+                      SizedBox(width: 5.w),
+                      Icon(Icons.verified, color: Colors.deepPurple),
+                    ],
                   ),
                   SizedBox(height: 4.h),
                   Text(
@@ -160,6 +167,10 @@ class ProfileScreen extends StatelessWidget {
             // Settings List
             _buildMenuItem(
               title: "Edit Profile",
+              onTap: () => Get.toNamed(AppRoutes.EDIT_PROFILE),
+            ),
+            _buildMenuItem(
+              title: "Verify Identity",
               onTap: () => Get.toNamed(AppRoutes.EDIT_PROFILE),
             ),
             _buildMenuItem(
