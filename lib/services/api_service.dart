@@ -1,6 +1,6 @@
 import 'dart:convert';
+import 'package:bonded_app/core/constants/app_endpoints.dart';
 import 'package:http/http.dart' as http;
-import '../core/constants/app_urls.dart';
 
 class ApiService {
   final String baseUrl;
@@ -8,7 +8,10 @@ class ApiService {
   ApiService({this.baseUrl = AppUrls.baseUrl});
 
   // GET request
-  Future<http.Response> get(String endpoint, {Map<String, String>? headers}) async {
+  Future<http.Response> get(
+    String endpoint, {
+    Map<String, String>? headers,
+  }) async {
     final response = await http.get(
       Uri.parse('$baseUrl$endpoint'),
       headers: _mergeHeaders(headers),
@@ -17,7 +20,11 @@ class ApiService {
   }
 
   // POST request
-  Future<http.Response> post(String endpoint, {dynamic body, Map<String, String>? headers}) async {
+  Future<http.Response> post(
+    String endpoint, {
+    dynamic body,
+    Map<String, String>? headers,
+  }) async {
     final response = await http.post(
       Uri.parse('$baseUrl$endpoint'),
       headers: _mergeHeaders(headers),
@@ -27,7 +34,11 @@ class ApiService {
   }
 
   // PUT request
-  Future<http.Response> put(String endpoint, {dynamic body, Map<String, String>? headers}) async {
+  Future<http.Response> put(
+    String endpoint, {
+    dynamic body,
+    Map<String, String>? headers,
+  }) async {
     final response = await http.put(
       Uri.parse('$baseUrl$endpoint'),
       headers: _mergeHeaders(headers),
@@ -37,7 +48,10 @@ class ApiService {
   }
 
   // DELETE request
-  Future<http.Response> delete(String endpoint, {Map<String, String>? headers}) async {
+  Future<http.Response> delete(
+    String endpoint, {
+    Map<String, String>? headers,
+  }) async {
     final response = await http.delete(
       Uri.parse('$baseUrl$endpoint'),
       headers: _mergeHeaders(headers),
@@ -56,10 +70,7 @@ class ApiService {
 
   // Default headers
   Map<String, String> _defaultHeaders() {
-    return {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+    return {'Content-Type': 'application/json', 'Accept': 'application/json'};
   }
 
   // Handle Response
@@ -68,7 +79,9 @@ class ApiService {
       return response;
     } else {
       // You can throw a custom exception here
-      throw Exception('Failed to load data: ${response.statusCode} ${response.body}');
+      throw Exception(
+        'Failed to load data: ${response.statusCode} ${response.body}',
+      );
     }
   }
 }
