@@ -221,7 +221,17 @@ class CircleController extends BaseController {
       }
     } catch (e) {
       debugPrint("Error creating circle: $e");
-      Get.snackbar('Error', 'An unexpected error occurred');
+      String errorMessage = e.toString();
+      if (errorMessage.startsWith('ApiException: ')) {
+        errorMessage = errorMessage.replaceFirst('ApiException: ', '');
+      }
+      Get.snackbar(
+        'Error',
+        errorMessage,
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red.withOpacity(0.9),
+        colorText: Colors.white,
+      );
     } finally {
       setLoading(false);
     }
