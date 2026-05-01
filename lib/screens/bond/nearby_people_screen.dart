@@ -1,3 +1,4 @@
+import 'package:bonded_app/models/bond_user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -31,13 +32,22 @@ class NearbyPeopleScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: Obx(() => ListView.builder(
-            padding: EdgeInsets.all(24.w),
-            itemCount: controller.nearbyPeople.length,
-            itemBuilder: (context, index) {
-              return BondUserCard(user: controller.nearbyPeople[index]);
-            },
-          )),
+      body: Obx(
+        () => controller.isLoadingNearby.value
+            ? const Center(child: CircularProgressIndicator())
+            : controller.filteredNearbyPeople.isEmpty
+                ? const Center(child: Text("No one nearby found"))
+                : ListView.builder(
+                    padding: EdgeInsets.all(24.w),
+                    itemCount: controller.filteredNearbyPeople.length,
+                    itemBuilder: (context, index) {
+                      return BondUserCard(
+                        connection: controller.filteredNearbyPeople[index],
+                        status: BondStatus.nearby,
+                      );
+                    },
+                  ),
+      ),
     );
   }
 }

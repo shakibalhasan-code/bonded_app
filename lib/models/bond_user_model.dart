@@ -1,39 +1,30 @@
 import 'package:get/get.dart';
+import 'user_model.dart';
 
-enum BondStatus { nearby, requested, bonded }
+enum BondStatus { nearby, requested, bonded, pending }
 
-class BondUserModel {
-  final String id;
-  final String name;
-  final String email;
-  final String image;
-  final String username;
-  final String gender;
-  final String birthDate;
-  final String connectionType;
-  final String city;
-  final String country;
-  final String bio;
-  final String location;
-  final bool isVerified;
-  final Map<String, List<String>> interests;
-  final Rx<BondStatus> bondStatus;
+class BondConnectionModel {
+  final String? bondId;
+  final String? status;
+  final DateTime? requestedAt;
+  final DateTime? bondedAt;
+  final UserModel user;
 
-  BondUserModel({
-    required this.id,
-    required this.name,
-    required this.email,
-    required this.image,
-    required this.username,
-    required this.gender,
-    required this.birthDate,
-    required this.connectionType,
-    required this.city,
-    required this.country,
-    required this.bio,
-    required this.location,
-    required this.interests,
-    this.isVerified = false,
-    BondStatus status = BondStatus.nearby,
-  }) : bondStatus = status.obs;
+  BondConnectionModel({
+    this.bondId,
+    this.status,
+    this.requestedAt,
+    this.bondedAt,
+    required this.user,
+  });
+
+  factory BondConnectionModel.fromJson(Map<String, dynamic> json) {
+    return BondConnectionModel(
+      bondId: json['bondId'],
+      status: json['status'],
+      requestedAt: json['requestedAt'] != null ? DateTime.parse(json['requestedAt']) : null,
+      bondedAt: json['bondedAt'] != null ? DateTime.parse(json['bondedAt']) : null,
+      user: UserModel.fromJson(json['user'] ?? json),
+    );
+  }
 }

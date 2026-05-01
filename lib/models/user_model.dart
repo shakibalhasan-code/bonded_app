@@ -26,6 +26,7 @@ class UserModel {
   final double averageRating;
   final int reviewCount;
   final UserPreferences? preferences;
+  final List<String>? connectionType;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -55,6 +56,7 @@ class UserModel {
     required this.averageRating,
     required this.reviewCount,
     this.preferences,
+    this.connectionType,
     this.createdAt,
     this.updatedAt,
   });
@@ -93,6 +95,9 @@ class UserModel {
       preferences: json['preferences'] != null
           ? UserPreferences.fromJson(json['preferences'])
           : null,
+      connectionType: json['connectionType'] != null
+          ? List<String>.from(json['connectionType'])
+          : null,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : null,
@@ -129,6 +134,7 @@ class UserModel {
       'averageRating': averageRating,
       'reviewCount': reviewCount,
       'preferences': preferences?.toJson(),
+      'connectionType': connectionType,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
     };

@@ -22,12 +22,17 @@ class ConversationTile extends StatelessWidget {
             // Avatar
             ClipRRect(
               borderRadius: BorderRadius.circular(20.r),
-              child: Image.network(
-                conversation.user.image,
-                width: 60.w,
-                height: 60.w,
-                fit: BoxFit.cover,
-              ),
+              child: conversation.user.avatar != null && conversation.user.avatar!.isNotEmpty
+                  ? Image.network(
+                      conversation.user.avatar!.startsWith('http')
+                          ? conversation.user.avatar!
+                          : 'https://bonded-backend.onrender.com/${conversation.user.avatar}',
+                      width: 60.w,
+                      height: 60.w,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                    )
+                  : _buildPlaceholder(),
             ),
             SizedBox(width: 16.w),
 
@@ -37,7 +42,7 @@ class ConversationTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    conversation.user.name,
+                    conversation.user.fullName ?? conversation.user.username ?? "Unknown User",
                     style: GoogleFonts.inter(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w700,
@@ -93,6 +98,15 @@ class ConversationTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      width: 60.w,
+      height: 60.w,
+      color: Colors.grey[200],
+      child: Icon(Icons.person, color: Colors.grey[400]),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:bonded_app/core/routes/app_routes.dart';
+import 'package:bonded_app/models/bond_user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -120,107 +121,137 @@ class BondScreen extends StatelessWidget {
   }
 
   Widget _buildNearbyTab(BondController controller) {
-    return Padding(
-      padding: EdgeInsets.all(16.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Meet People Nearby",
-                style: GoogleFonts.inter(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1B0B3B),
-                ),
-              ),
-              GestureDetector(
-                onTap: () => Get.toNamed(AppRoutes.NEARBY_PEOPLE),
-                child: Text(
-                  "See All",
+    return RefreshIndicator(
+      onRefresh: controller.fetchNearbyPeople,
+      child: Padding(
+        padding: EdgeInsets.all(16.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Meet People Nearby",
                   style: GoogleFonts.inter(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1B0B3B),
                   ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          Expanded(
-            child: Obx(
-              () => ListView.builder(
-                itemCount: controller.filteredNearbyPeople.length,
-                itemBuilder: (context, index) {
-                  return BondUserCard(user: controller.filteredNearbyPeople[index]);
-                },
+                GestureDetector(
+                  onTap: () => Get.toNamed(AppRoutes.NEARBY_PEOPLE),
+                  child: Text(
+                    "See All",
+                    style: GoogleFonts.inter(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16.h),
+            Expanded(
+              child: Obx(
+                () => controller.isLoadingNearby.value
+                    ? const Center(child: CircularProgressIndicator())
+                    : controller.filteredNearbyPeople.isEmpty
+                    ? const Center(child: Text("No one nearby found"))
+                    : ListView.builder(
+                        itemCount: controller.filteredNearbyPeople.length,
+                        itemBuilder: (context, index) {
+                          return BondUserCard(
+                            connection: controller.filteredNearbyPeople[index],
+                            status: BondStatus.nearby,
+                          );
+                        },
+                      ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildRequestTab(BondController controller) {
-    return Padding(
-      padding: EdgeInsets.all(16.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Bond Request for you",
-            style: GoogleFonts.inter(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1B0B3B),
-            ),
-          ),
-          SizedBox(height: 16.h),
-          Expanded(
-            child: Obx(
-              () => ListView.builder(
-                itemCount: controller.filteredBondRequests.length,
-                itemBuilder: (context, index) {
-                  return BondUserCard(user: controller.filteredBondRequests[index]);
-                },
+    return RefreshIndicator(
+      onRefresh: controller.fetchIncomingRequests,
+      child: Padding(
+        padding: EdgeInsets.all(16.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Bond Request for you",
+              style: GoogleFonts.inter(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF1B0B3B),
               ),
             ),
-          ),
-        ],
+            SizedBox(height: 16.h),
+            Expanded(
+              child: Obx(
+                () => controller.isLoadingRequests.value
+                    ? const Center(child: CircularProgressIndicator())
+                    : controller.filteredBondRequests.isEmpty
+                    ? const Center(child: Text("No incoming requests"))
+                    : ListView.builder(
+                        itemCount: controller.filteredBondRequests.length,
+                        itemBuilder: (context, index) {
+                          return BondUserCard(
+                            connection: controller.filteredBondRequests[index],
+                            status: BondStatus.requested,
+                          );
+                        },
+                      ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildMyBondTab(BondController controller) {
-    return Padding(
-      padding: EdgeInsets.all(16.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "People I know",
-            style: GoogleFonts.inter(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1B0B3B),
-            ),
-          ),
-          SizedBox(height: 16.h),
-          Expanded(
-            child: Obx(
-              () => ListView.builder(
-                itemCount: controller.filteredMyBonds.length,
-                itemBuilder: (context, index) {
-                  return BondUserCard(user: controller.filteredMyBonds[index]);
-                },
+    return RefreshIndicator(
+      onRefresh: controller.fetchMyBonds,
+      child: Padding(
+        padding: EdgeInsets.all(16.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "People I know",
+              style: GoogleFonts.inter(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF1B0B3B),
               ),
             ),
-          ),
-        ],
+            SizedBox(height: 16.h),
+            Expanded(
+              child: Obx(
+                () => controller.isLoadingMyBonds.value
+                    ? const Center(child: CircularProgressIndicator())
+                    : controller.filteredMyBonds.isEmpty
+                    ? const Center(child: Text("You have no bonds yet"))
+                    : ListView.builder(
+                        itemCount: controller.filteredMyBonds.length,
+                        itemBuilder: (context, index) {
+                          return BondUserCard(
+                            connection: controller.filteredMyBonds[index],
+                            status: BondStatus.bonded,
+                          );
+                        },
+                      ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

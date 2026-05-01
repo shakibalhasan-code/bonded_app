@@ -8,13 +8,19 @@ import '../../controllers/bond_controller.dart';
 import '../../core/routes/app_routes.dart';
 
 class BondUserCard extends StatelessWidget {
-  final BondUserModel user;
+  final BondConnectionModel connection;
+  final BondStatus status;
 
-  const BondUserCard({Key? key, required this.user}) : super(key: key);
+  const BondUserCard({
+    Key? key, 
+    required this.connection,
+    required this.status,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<BondController>();
+    final user = connection.user;
 
     return GestureDetector(
       onTap: () => Get.toNamed(AppRoutes.BOND_PROFILE, arguments: user),
@@ -38,12 +44,17 @@ class BondUserCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12.r),
-                  child: Image.network(
-                    user.image,
-                    width: 60.w,
-                    height: 60.w,
-                    fit: BoxFit.cover,
-                  ),
+                  child: user.avatar != null && user.avatar!.isNotEmpty
+                      ? Image.network(
+                          user.avatar!.startsWith('http') 
+                              ? user.avatar! 
+                              : 'https://bonded-backend.onrender.com/${user.avatar}',
+                          width: 60.w,
+                          height: 60.w,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                        )
+                      : _buildPlaceholder(),
                 ),
                 SizedBox(width: 12.w),
                 Expanded(
@@ -51,7 +62,7 @@ class BondUserCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        user.name,
+                        user.fullName ?? user.username ?? "Unknown User",
                         style: GoogleFonts.inter(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w700,
@@ -60,7 +71,7 @@ class BondUserCard extends StatelessWidget {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        user.interests.values.expand((e) => e).take(3).join(', '),
+                        user.interests?.map((i) => i.name).take(3).join(', ') ?? "No interests",
                         style: GoogleFonts.inter(
                           fontSize: 12.sp,
                           color: Colors.grey[600],
@@ -71,11 +82,11 @@ class BondUserCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (user.bondStatus.value == BondStatus.bonded)
-                  _buildMessageIcon(),
+                if (status == BondStatus.bonded)
+                  _buildMessageIcon(user),
               ],
             ),
-            if (user.bondStatus.value != BondStatus.bonded) ...[
+            if (status != BondStatus.bonded) ...[
               SizedBox(height: 16.h),
               const Divider(),
               SizedBox(height: 16.h),
@@ -87,14 +98,22 @@ class BondUserCard extends StatelessWidget {
     );
   }
 
+  Widget _buildPlaceholder() {
+    return Container(
+      width: 60.w,
+      height: 60.w,
+      color: Colors.grey[200],
+      child: Icon(Icons.person, color: Colors.grey[400]),
+    );
+  }
 
   Widget _buildActionRow(BondController controller) {
-    if (user.bondStatus.value == BondStatus.nearby) {
+    if (status == BondStatus.nearby) {
       return Row(
         children: [
           Expanded(
             child: ElevatedButton(
-              onPressed: () => controller.sendBondRequest(user),
+              onPressed: () => controller.sendBondRequest(connection.user.id),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.r)),
@@ -108,12 +127,12 @@ class BondUserCard extends StatelessWidget {
           ),
         ],
       );
-    } else if (user.bondStatus.value == BondStatus.requested) {
+    } else if (status == BondStatus.requested) {
       return Row(
         children: [
           Expanded(
             child: ElevatedButton(
-              onPressed: () => controller.rejectBondRequest(user),
+              onPressed: () => controller.rejectBondRequest(connection.bondId ?? ""),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFF0EDFF),
                 elevation: 0,
@@ -129,7 +148,7 @@ class BondUserCard extends StatelessWidget {
           SizedBox(width: 12.w),
           Expanded(
             child: ElevatedButton(
-              onPressed: () => controller.acceptBondRequest(user),
+              onPressed: () => controller.acceptBondRequest(connection.bondId ?? ""),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.r)),
@@ -147,7 +166,7 @@ class BondUserCard extends StatelessWidget {
     return const SizedBox.shrink();
   }
 
-  Widget _buildMessageIcon() {
+  Widget _buildMessageIcon(dynamic user) {
     return GestureDetector(
       onTap: () => Get.toNamed(AppRoutes.CHAT, arguments: user),
       child: Container(
@@ -160,5 +179,4 @@ class BondUserCard extends StatelessWidget {
       ),
     );
   }
-
 }

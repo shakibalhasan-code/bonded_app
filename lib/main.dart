@@ -6,6 +6,8 @@ import 'core/routes/app_pages.dart';
 
 import 'services/shared_prefs_service.dart';
 
+import 'core/bindings/initial_binding.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SharedPrefsService.init();
@@ -26,6 +28,7 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           title: 'Bonded App',
           theme: AppTheme.lightTheme,
+          initialBinding: InitialBinding(),
           initialRoute: AppPages.INITIAL,
           getPages: AppPages.routes,
           unknownRoute: AppPages.routes.firstWhere((p) => p.name == '/main'),

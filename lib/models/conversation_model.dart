@@ -1,7 +1,7 @@
-import '../models/bond_user_model.dart';
+import 'user_model.dart';
 
 class ConversationModel {
-  final BondUserModel user;
+  final UserModel user;
   final String lastMessage;
   final String time;
   final int unreadCount;

@@ -144,9 +144,13 @@ class AuthController extends BaseController {
       if (data['success'] == true) {
         final authData = data['data'];
         final accessToken = authData['accessToken'];
+        final refreshToken = authData['refreshToken'];
         
-        // Save token
+        // Save tokens
         await SharedPrefsService.saveString('accessToken', accessToken);
+        if (refreshToken != null) {
+          await SharedPrefsService.saveString('refreshToken', refreshToken);
+        }
         
         // Update user state
         currentUser.value = UserModel.fromJson(authData['user']);
@@ -300,6 +304,27 @@ class AuthController extends BaseController {
       }
     } catch (e) {
       // Handle error silently or with a non-print logger
+    }
+  }
+
+  // Fetch User Profile
+  Future<void> fetchUserProfile() async {
+    try {
+      final token = SharedPrefsService.getString('accessToken');
+      if (token == null) return;
+
+      final response = await _apiService.get(
+        AppUrls.getProfile,
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        currentUser.value = UserModel.fromJson(data['data']);
+        userData.value = data['data'];
+      }
+    } catch (e) {
+      debugPrint("Error fetching user profile: $e");
     }
   }
 }

@@ -38,6 +38,53 @@ class ProfileController extends BaseController {
     super.onInit();
     cityController.text = selectedCity.value;
     fetchInterests();
+    final authController = Get.find<AuthController>();
+    authController.fetchUserProfile().then((_) {
+      if (authController.currentUser.value != null) {
+        initializeControllers(authController.currentUser.value!);
+      }
+    });
+  }
+
+  void initializeControllers(UserModel user) {
+    fullNameController.text = user.fullName ?? '';
+    usernameController.text = user.username ?? '';
+    bioController.text = user.bio ?? '';
+    phoneController.text = user.phone ?? '';
+    selectedCountryCode.value = user.phoneCountryCode ?? '+1';
+    dateOfBirth.value = user.dateOfBirth ?? '';
+    selectedGender.value = user.gender?.capitalizeFirst ?? 'Male';
+    selectedCountry.value = user.country ?? 'United States of America';
+    selectedCity.value = user.city ?? 'New Jersey';
+    cityController.text = user.city ?? '';
+    currentAddress.value = user.address ?? '';
+    latitude.value = user.location?.coordinates[1] ?? 0.0;
+    longitude.value = user.location?.coordinates[0] ?? 0.0;
+
+    selectedInterests.clear();
+    if (user.interests != null) {
+      selectedInterests.addAll(user.interests!.map((e) => e.slug));
+    }
+
+    selectedConnectionTypes.clear();
+    if (user.connectionType != null) {
+      for (var typeSlug in user.connectionType!) {
+        // Special case for one-on-one-friendship
+        String displayName;
+        if (typeSlug == 'one_on_one_friendship') {
+          displayName = 'One-on-One Friendship';
+        } else {
+          displayName = typeSlug
+              .split('_')
+              .map((word) => word.capitalizeFirst)
+              .join(' ');
+        }
+        selectedConnectionTypes.add(displayName);
+      }
+    }
+
+    notificationsEnabled.value = user.preferences?.notifications ?? true;
+    profileVisibility.value = 'Public'; // Default or from user model if available
   }
 
   @override
@@ -79,6 +126,7 @@ class ProfileController extends BaseController {
   // New Profile UI States
   var notificationsEnabled = true.obs;
   var profileVisibility = 'Public'.obs;
+  var selectedConnectionType = 'Networking'.obs;
 
   Map<String, List<Interest>> get interestsByCategory {
     final Map<String, List<Interest>> grouped = {};
@@ -261,7 +309,7 @@ class ProfileController extends BaseController {
   }
 
   // Update Profile API Call
-  Future<void> updateProfile() async {
+  Future<void> updateProfile({bool isInitialFlow = true}) async {
     try {
       setLoading(true);
 
@@ -295,7 +343,11 @@ class ProfileController extends BaseController {
         "country": selectedCountry.value,
         "city": cityController.text,
         "connectionType": connectionTypeSlugs,
-        "location": {"longitude": longitude.value, "latitude": latitude.value},
+        "visibility": profileVisibility.value.toLowerCase(),
+        "location": {
+          "type": "Point",
+          "coordinates": [longitude.value, latitude.value]
+        },
         "address": currentAddress.value,
         "interests": interestsSlugs,
       };
@@ -316,7 +368,12 @@ class ProfileController extends BaseController {
           'Success',
           data['message'] ?? 'Profile updated successfully',
         );
-        Get.offAllNamed(AppRoutes.KYC_DOCUMENT);
+        
+        if (isInitialFlow) {
+          Get.offAllNamed(AppRoutes.KYC_DOCUMENT);
+        } else {
+          Get.back();
+        }
       } else {
         Get.snackbar('Error', data['message'] ?? 'Failed to update profile');
       }

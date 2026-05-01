@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../../models/bond_user_model.dart';
+import '../../models/user_model.dart';
 import '../../core/theme/app_colors.dart';
 
 class BondProfileScreen extends StatelessWidget {
@@ -12,8 +13,7 @@ class BondProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final BondUserModel user = Get.arguments;
-
+    final UserModel user = Get.arguments;
     final controller = Get.find<BondController>();
 
     return Scaffold(
@@ -55,14 +55,19 @@ class BondProfileScreen extends StatelessWidget {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(20.r),
-                        child: Image.network(
-                          user.image,
-                          width: 100.w,
-                          height: 100.w,
-                          fit: BoxFit.cover,
-                        ),
+                        child: user.avatar != null && user.avatar!.isNotEmpty
+                            ? Image.network(
+                                user.avatar!.startsWith('http')
+                                    ? user.avatar!
+                                    : 'https://bonded-backend.onrender.com/${user.avatar}',
+                                width: 100.w,
+                                height: 100.w,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                              )
+                            : _buildPlaceholder(),
                       ),
-                      if (user.isVerified)
+                      if (user.selfieVerification == 'verified')
                         Positioned(
                           bottom: 0,
                           left: 0,
@@ -92,7 +97,7 @@ class BondProfileScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 16.h),
                   Text(
-                    user.name,
+                    user.fullName ?? user.username ?? "Unknown User",
                     style: GoogleFonts.inter(
                       fontSize: 22.sp,
                       fontWeight: FontWeight.w700,
@@ -115,7 +120,7 @@ class BondProfileScreen extends StatelessWidget {
 
             // More About User
             Text(
-              "More About ${user.name.split(' ')[0]}:",
+              "More About ${user.fullName?.split(' ')[0] ?? 'User'}:",
               style: GoogleFonts.inter(
                 fontSize: 20.sp,
                 fontWeight: FontWeight.w800,
@@ -144,7 +149,7 @@ class BondProfileScreen extends StatelessWidget {
                 SizedBox(width: 8.w),
                 Expanded(
                   child: Text(
-                    user.location,
+                    "${user.city ?? ''}, ${user.country ?? ''}",
                     style: GoogleFonts.inter(
                       fontSize: 14.sp,
                       color: Colors.grey[600],
@@ -166,7 +171,7 @@ class BondProfileScreen extends StatelessWidget {
             ),
             SizedBox(height: 12.h),
             Text(
-              user.bio,
+              user.bio ?? "No bio available",
               style: GoogleFonts.inter(
                 fontSize: 14.sp,
                 color: Colors.grey[600],
@@ -190,24 +195,45 @@ class BondProfileScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomSheet: Obx(() => _buildFooter(user, controller)),
+      bottomSheet: _buildFooter(user, controller),
     );
   }
 
-  Widget _buildFooter(BondUserModel user, BondController controller) {
-    if (user.bondStatus.value == BondStatus.bonded) {
+  Widget _buildPlaceholder() {
+    return Container(
+      width: 100.w,
+      height: 100.w,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      child: Icon(Icons.person, color: Colors.grey[400], size: 40.sp),
+    );
+  }
+
+  Widget _buildFooter(UserModel user, BondController controller) {
+    // Check if user is already bonded or if there's a pending request
+    // For now, let's just show "Let's Bond" if they are in nearbyPeople
+    final isNearby = controller.nearbyPeople.any((c) => c.user.id == user.id);
+    final isRequest = controller.bondRequests.any((c) => c.user.id == user.id);
+    final isBonded = controller.myBonds.any((c) => c.user.id == user.id);
+
+    if (isBonded) {
       return const SizedBox.shrink();
     }
 
     return Container(
       padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, 32.h),
       color: Colors.white,
-      child: user.bondStatus.value == BondStatus.requested
+      child: isRequest
           ? Row(
               children: [
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => controller.rejectBondRequest(user),
+                    onPressed: () {
+                      final bond = controller.bondRequests.firstWhere((c) => c.user.id == user.id);
+                      controller.rejectBondRequest(bond.bondId ?? "");
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFFAF7FF),
                       elevation: 0,
@@ -229,7 +255,10 @@ class BondProfileScreen extends StatelessWidget {
                 SizedBox(width: 16.w),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => controller.acceptBondRequest(user),
+                    onPressed: () {
+                      final bond = controller.bondRequests.firstWhere((c) => c.user.id == user.id);
+                      controller.acceptBondRequest(bond.bondId ?? "");
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       minimumSize: Size(double.infinity, 56.h),
@@ -250,7 +279,7 @@ class BondProfileScreen extends StatelessWidget {
               ],
             )
           : ElevatedButton(
-              onPressed: () => controller.sendBondRequest(user),
+              onPressed: () => controller.sendBondRequest(user.id),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 minimumSize: Size(double.infinity, 56.h),
@@ -269,96 +298,106 @@ class BondProfileScreen extends StatelessWidget {
             ),
     );
   }
-}
 
-Widget _buildInfoGrid(BondUserModel user) {
-  return Column(
-    children: [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildInfoItem("Username", user.username),
-          _buildInfoItem("Gender", user.gender),
-        ],
-      ),
-      SizedBox(height: 16.h),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildInfoItem("Date Of Birth", user.birthDate),
-          _buildInfoItem("Connection Type", user.connectionType),
-        ],
-      ),
-      SizedBox(height: 16.h),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildInfoItem("City", user.city),
-          _buildInfoItem("Country", user.country),
-        ],
-      ),
-    ],
-  );
-}
-
-Widget _buildInfoItem(String label, String value) {
-  return SizedBox(
-    width: 160.w,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildInfoGrid(UserModel user) {
+    return Column(
       children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF1B0B3B),
-          ),
-        ),
-        SizedBox(height: 4.h),
-        Text(
-          value,
-          style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[600]),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildInterestsSection(BondUserModel user) {
-  return Column(
-    children: user.interests.entries.map((category) {
-      return Padding(
-        padding: EdgeInsets.only(bottom: 20.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              category.key,
-              style: GoogleFonts.inter(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ),
-            ),
-            SizedBox(height: 12.h),
-            Wrap(
-              spacing: 24.w,
-              runSpacing: 12.h,
-              children: category.value.map((interest) {
-                return Text(
-                  interest,
-                  style: GoogleFonts.inter(
-                    fontSize: 14.sp,
-                    color: const Color(0xFF1B0B3B),
-                    fontWeight: FontWeight.w500,
-                  ),
-                );
-              }).toList(),
-            ),
+            _buildInfoItem("Username", user.username ?? "N/A"),
+            _buildInfoItem("Gender", user.gender ?? "N/A"),
           ],
         ),
-      );
-    }).toList(),
-  );
+        SizedBox(height: 16.h),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildInfoItem("Date Of Birth", user.dateOfBirth ?? "N/A"),
+            _buildInfoItem("Connection Type", user.connectionType?.join(', ') ?? "N/A"),
+          ],
+        ),
+        SizedBox(height: 16.h),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildInfoItem("City", user.city ?? "N/A"),
+            _buildInfoItem("Country", user.country ?? "N/A"),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value) {
+    return SizedBox(
+      width: 160.w,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF1B0B3B),
+            ),
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            value,
+            style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[600]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInterestsSection(UserModel user) {
+    if (user.interests == null || user.interests!.isEmpty) {
+      return Text("No interests selected", style: GoogleFonts.inter(color: Colors.grey));
+    }
+
+    // Group interests by category
+    Map<String, List<Interest>> grouped = {};
+    for (var interest in user.interests!) {
+      grouped.putIfAbsent(interest.category, () => []).add(interest);
+    }
+
+    return Column(
+      children: grouped.entries.map((category) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: 20.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                category.key,
+                style: GoogleFonts.inter(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Wrap(
+                spacing: 24.w,
+                runSpacing: 12.h,
+                children: category.value.map((interest) {
+                  return Text(
+                    interest.name,
+                    style: GoogleFonts.inter(
+                      fontSize: 14.sp,
+                      color: const Color(0xFF1B0B3B),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
 }

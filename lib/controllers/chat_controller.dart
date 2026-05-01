@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../models/bond_user_model.dart';
+import '../models/user_model.dart';
 
 class ChatMessage {
   final String text;
@@ -23,13 +23,13 @@ class ChatController extends GetxController {
   final messageController = TextEditingController();
   final scrollController = ScrollController();
 
-  void initChat(BondUserModel user) {
-    // Mock initial messages based on Screenshot 2
+  void initChat(UserModel user) {
+    // Mock initial messages
     messages.assignAll([
       ChatMessage(
         text: "How’s the shot for later marina?",
-        senderName: user.name,
-        senderImage: user.image,
+        senderName: user.fullName ?? user.username ?? "Unknown",
+        senderImage: user.avatar ?? "https://i.pravatar.cc/150?u=1",
         timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
         isMe: false,
       ),
@@ -42,8 +42,8 @@ class ChatController extends GetxController {
       ),
       ChatMessage(
         text: "How’s the shot for later marina?",
-        senderName: user.name,
-        senderImage: user.image,
+        senderName: user.fullName ?? user.username ?? "Unknown",
+        senderImage: user.avatar ?? "https://i.pravatar.cc/150?u=1",
         timestamp: DateTime.now().subtract(const Duration(minutes: 1)),
         isMe: false,
       ),
@@ -57,7 +57,7 @@ class ChatController extends GetxController {
     ]);
   }
 
-  void sendMessage(String text, BondUserModel user) {
+  void sendMessage(String text, UserModel user) {
     if (text.trim().isEmpty) return;
 
     messages.add(ChatMessage(

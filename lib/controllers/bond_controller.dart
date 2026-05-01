@@ -1,26 +1,35 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/bond_user_model.dart';
+import '../services/api_service.dart';
 
 class BondController extends GetxController {
-  var nearbyPeople = <BondUserModel>[].obs;
-  var bondRequests = <BondUserModel>[].obs;
-  var myBonds = <BondUserModel>[].obs;
+  final ApiService _apiService = ApiService();
+  
+  var nearbyPeople = <BondConnectionModel>[].obs;
+  var bondRequests = <BondConnectionModel>[].obs;
+  var myBonds = <BondConnectionModel>[].obs;
+  
+  var isLoadingNearby = false.obs;
+  var isLoadingRequests = false.obs;
+  var isLoadingMyBonds = false.obs;
   
   // Search State
   final searchQuery = "".obs;
   late final TextEditingController searchController;
 
-  List<BondUserModel> get filteredNearbyPeople => _filterUsers(nearbyPeople);
-  List<BondUserModel> get filteredBondRequests => _filterUsers(bondRequests);
-  List<BondUserModel> get filteredMyBonds => _filterUsers(myBonds);
+  List<BondConnectionModel> get filteredNearbyPeople => _filterUsers(nearbyPeople);
+  List<BondConnectionModel> get filteredBondRequests => _filterUsers(bondRequests);
+  List<BondConnectionModel> get filteredMyBonds => _filterUsers(myBonds);
 
-  List<BondUserModel> _filterUsers(List<BondUserModel> users) {
-    if (searchQuery.value.isEmpty) return users;
-    return users
-        .where((u) =>
-            u.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
-            u.username.toLowerCase().contains(searchQuery.value.toLowerCase()))
+  List<BondConnectionModel> _filterUsers(List<BondConnectionModel> connections) {
+    if (searchQuery.value.isEmpty) return connections;
+    final query = searchQuery.value.toLowerCase();
+    return connections
+        .where((c) =>
+            (c.user.fullName?.toLowerCase().contains(query) ?? false) ||
+            (c.user.username?.toLowerCase().contains(query) ?? false))
         .toList();
   }
 
@@ -28,7 +37,7 @@ class BondController extends GetxController {
   void onInit() {
     super.onInit();
     searchController = TextEditingController();
-    _loadMockData();
+    fetchAllData();
   }
 
   @override
@@ -37,105 +46,102 @@ class BondController extends GetxController {
     super.onClose();
   }
 
-  void _loadMockData() {
-    final interests = {
-      'Social & Lifestyle': ['Brunch Lovers', 'Wine Nights', 'Game Nights'],
-      'Sports & Fitness': ['Gym & Fitness', 'Running', 'Yoga & Meditation'],
-      'Music & Entertainment': ['Pop', 'R&B', 'Hip-Hop'],
-      'Travel & Adventure': ['Group Travel', 'Road Trips', 'Weekend Gateways'],
-    };
-
-    final mockUsers = [
-      BondUserModel(
-        id: '1',
-        name: 'Matthias Huckestein',
-        email: 'mattias_huck@gmail.com',
-        image: 'https://i.pravatar.cc/150?u=1',
-        username: 'Ainsley_006',
-        gender: 'Male',
-        birthDate: '16/09/1994',
-        connectionType: 'One-on-One',
-        city: 'New York',
-        country: 'United States of America',
-        bio: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-        location: 'Time Square NYC, California, United States',
-        interests: interests,
-        isVerified: true,
-        status: BondStatus.nearby,
-      ),
-      BondUserModel(
-        id: '2',
-        name: 'Maike Rother',
-        email: 'maike@gmail.com',
-        image: 'https://i.pravatar.cc/150?u=2',
-        username: 'maike_r',
-        gender: 'Female',
-        birthDate: '22/05/1996',
-        connectionType: 'Group',
-        city: 'Berlin',
-        country: 'Germany',
-        bio: 'Enthusiastic traveler and food lover.',
-        location: 'Alexanderplatz, Berlin, Germany',
-        interests: interests,
-        status: BondStatus.nearby,
-      ),
-       BondUserModel(
-        id: '3',
-        name: 'Lilli Tepper',
-        email: 'lilli@gmail.com',
-        image: 'https://i.pravatar.cc/150?u=3',
-        username: 'lilli_t',
-        gender: 'Female',
-        birthDate: '10/12/1995',
-        connectionType: 'One-on-One',
-        city: 'Paris',
-        country: 'France',
-        bio: 'Art and culture enthusiast.',
-        location: 'Le Marais, Paris, France',
-        interests: interests,
-        status: BondStatus.requested,
-      ),
-      BondUserModel(
-        id: '4',
-        name: 'Fabienne Wakan',
-        email: 'fabienne@gmail.com',
-        image: 'https://i.pravatar.cc/150?u=4',
-        username: 'fabienne_w',
-        gender: 'Female',
-        birthDate: '05/03/1993',
-        connectionType: 'One-on-One',
-        city: 'Zurich',
-        country: 'Switzerland',
-        bio: 'Nature lover and hiker.',
-        location: 'Lake Zurich, Zurich, Switzerland',
-        interests: interests,
-        status: BondStatus.bonded,
-      ),
-    ];
-
-    nearbyPeople.assignAll(mockUsers.where((u) => u.bondStatus.value == BondStatus.nearby));
-    bondRequests.assignAll(mockUsers.where((u) => u.bondStatus.value == BondStatus.requested));
-    myBonds.assignAll(mockUsers.where((u) => u.bondStatus.value == BondStatus.bonded));
+  Future<void> fetchAllData() async {
+    await Future.wait([
+      fetchNearbyPeople(),
+      fetchIncomingRequests(),
+      fetchMyBonds(),
+    ]);
   }
 
-  void sendBondRequest(BondUserModel user) {
-    user.bondStatus.value = BondStatus.requested;
-    nearbyPeople.remove(user);
-    bondRequests.add(user);
-    Get.snackbar('Success', 'Bond request sent to ${user.name}');
+  Future<void> fetchNearbyPeople() async {
+    try {
+      isLoadingNearby.value = true;
+      final response = await _apiService.get('/bonds/nearby');
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        nearbyPeople.assignAll(
+          (data['data'] as List).map((json) => BondConnectionModel.fromJson(json)).toList(),
+        );
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to fetch nearby people: $e');
+    } finally {
+      isLoadingNearby.value = false;
+    }
   }
 
-  void acceptBondRequest(BondUserModel user) {
-    user.bondStatus.value = BondStatus.bonded;
-    bondRequests.remove(user);
-    myBonds.add(user);
-    Get.snackbar('Accepted', 'You are now bonded with ${user.name}');
+  Future<void> fetchIncomingRequests() async {
+    try {
+      isLoadingRequests.value = true;
+      final response = await _apiService.get('/bonds/requests/incoming');
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        bondRequests.assignAll(
+          (data['data'] as List).map((json) => BondConnectionModel.fromJson(json)).toList(),
+        );
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to fetch bond requests: $e');
+    } finally {
+      isLoadingRequests.value = false;
+    }
   }
 
-  void rejectBondRequest(BondUserModel user) {
-    user.bondStatus.value = BondStatus.nearby;
-    bondRequests.remove(user);
-    nearbyPeople.add(user);
-    Get.snackbar('Rejected', 'Bond request from ${user.name} rejected');
+  Future<void> fetchMyBonds() async {
+    try {
+      isLoadingMyBonds.value = true;
+      final response = await _apiService.get('/bonds/connections');
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        myBonds.assignAll(
+          (data['data'] as List).map((json) => BondConnectionModel.fromJson(json)).toList(),
+        );
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to fetch my bonds: $e');
+    } finally {
+      isLoadingMyBonds.value = false;
+    }
+  }
+
+  Future<void> sendBondRequest(String userId) async {
+    try {
+      final response = await _apiService.post('/bonds/request/$userId');
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        Get.snackbar('Success', 'Bond request sent');
+        fetchNearbyPeople();
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to send bond request: $e');
+    }
+  }
+
+  Future<void> acceptBondRequest(String bondId) async {
+    try {
+      final response = await _apiService.patch('/bonds/request/accept/$bondId');
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        Get.snackbar('Success', 'Bond request accepted');
+        fetchIncomingRequests();
+        fetchMyBonds();
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to accept bond request: $e');
+    }
+  }
+
+  Future<void> rejectBondRequest(String bondId) async {
+    try {
+      final response = await _apiService.patch('/bonds/request/reject/$bondId');
+      final data = jsonDecode(response.body);
+      if (data['success']) {
+        Get.snackbar('Success', 'Bond request rejected');
+        fetchIncomingRequests();
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to reject bond request: $e');
+    }
   }
 }
