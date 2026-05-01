@@ -14,4 +14,7 @@ class AppUrls {
 
   // User Endpoints
   static const String userProfile = '/user/profile';
+  static const String updateProfile = '/user/me';
+  static const String updateAvatar = '/user/me/avatar';
+  static const String getInterests = '/interests';
 }

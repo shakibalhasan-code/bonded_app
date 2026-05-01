@@ -37,7 +37,7 @@ class KYCDocumentScreen extends StatelessWidget {
         centerTitle: true,
         actions: [
           TextButton(
-            onPressed: () => _showCompletionDialog(),
+            onPressed: () => Get.offAllNamed(AppRoutes.PROFILE_READY),
             child: Text(
               "Skip",
               style: GoogleFonts.inter(
@@ -89,7 +89,7 @@ class KYCDocumentScreen extends StatelessWidget {
             AppButton(
               text: "Continue",
               isPrimary: true,
-              onPressed: () => _showCompletionDialog(),
+              onPressed: () => Get.offAllNamed(AppRoutes.PROFILE_READY),
             ),
             SizedBox(height: 40.h),
           ],

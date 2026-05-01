@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../services/api_service.dart';
 import '../services/shared_prefs_service.dart';
 import '../core/constants/app_endpoints.dart';
+import '../core/routes/app_routes.dart';
+import '../models/user_model.dart';
 import 'base_controller.dart';
 
 class AuthController extends BaseController {
@@ -11,6 +14,26 @@ class AuthController extends BaseController {
   // Observable variables
   final RxBool isPasswordVisible = false.obs;
   final RxMap<String, dynamic> userData = <String, dynamic>{}.obs;
+  final Rxn<UserModel> currentUser = Rxn<UserModel>();
+
+  // Controllers
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
+
+  @override
+  void onClose() {
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.onClose();
+  }
+
+  void clearControllers() {
+    emailController.clear();
+    passwordController.clear();
+    confirmPasswordController.clear();
+  }
 
   void togglePasswordVisibility() {
     isPasswordVisible.value = !isPasswordVisible.value;
@@ -31,7 +54,7 @@ class AuthController extends BaseController {
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
         Get.snackbar('Success', data['message'] ?? 'Account created successfully');
-        // Handle navigation or next steps
+        Get.toNamed(AppRoutes.VERIFICATION, arguments: {'email': email});
       } else {
         Get.snackbar('Error', data['message'] ?? 'Failed to register');
       }
@@ -65,29 +88,19 @@ class AuthController extends BaseController {
         await SharedPrefsService.saveString('refreshToken', refreshToken);
         
         userData.value = authData['user'];
+        currentUser.value = UserModel.fromJson(authData['user']);
         
         Get.snackbar('Success', data['message'] ?? 'Login successful');
-        // Navigate to home or complete profile
+        Get.offAllNamed(AppRoutes.MAIN);
       } else {
         Get.snackbar('Error', data['message'] ?? 'Invalid credentials');
       }
     } catch (e) {
-      // The API service throws Exception on non-200 status codes
-      // We can parse the error message if it's JSON
-      String errorMessage = e.toString();
-      try {
-        // Extract JSON from Exception message if possible
-        if (errorMessage.contains('{')) {
-          final jsonPart = errorMessage.substring(errorMessage.indexOf('{'));
-          final errorJson = jsonDecode(jsonPart);
-          errorMessage = errorJson['message'] ?? errorMessage;
-        }
-      } catch (_) {}
-      
-      Get.snackbar('Error', errorMessage);
+      Get.snackbar('Error', e.toString());
     } finally {
       setLoading(false);
     }
+
   }
 
   // Resend OTP
@@ -129,8 +142,23 @@ class AuthController extends BaseController {
 
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
+        final authData = data['data'];
+        final accessToken = authData['accessToken'];
+        
+        // Save token
+        await SharedPrefsService.saveString('accessToken', accessToken);
+        
+        // Update user state
+        currentUser.value = UserModel.fromJson(authData['user']);
+        
         Get.snackbar('Success', data['message'] ?? 'Account verified successfully');
-        // Handle navigation
+        
+        // Navigate based on profile completion
+        if (authData['isCompleteProfile'] == true) {
+          Get.offAllNamed(AppRoutes.MAIN);
+        } else {
+          Get.offAllNamed(AppRoutes.PROFILE_BUILDING);
+        }
       } else {
         Get.snackbar('Error', data['message'] ?? 'Verification failed');
       }
@@ -155,6 +183,7 @@ class AuthController extends BaseController {
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
         Get.snackbar('Success', data['message'] ?? 'OTP sent to your email');
+        Get.toNamed(AppRoutes.VERIFICATION, arguments: {'email': email, 'reason': 'forgot_password'});
       } else {
         Get.snackbar('Error', data['message'] ?? 'Failed to send OTP');
       }
@@ -210,6 +239,7 @@ class AuthController extends BaseController {
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
         Get.snackbar('Success', data['message'] ?? 'Password reset successful');
+        Get.offAllNamed(AppRoutes.LOGIN);
       } else {
         Get.snackbar('Error', data['message'] ?? 'Failed to reset password');
       }

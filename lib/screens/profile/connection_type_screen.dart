@@ -109,10 +109,8 @@ class ConnectionTypeScreen extends StatelessWidget {
             const Spacer(),
 
             // Continue Button
-            GestureDetector(
-              onTap: () {
-                Get.toNamed(AppRoutes.PICTURE_VERIFICATION);
-              },
+            Obx(() => GestureDetector(
+              onTap: controller.isLoading.value ? null : controller.updateProfile,
               child: Container(
                 height: 56.h,
                 width: double.infinity,
@@ -121,16 +119,18 @@ class ConnectionTypeScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(28.r),
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  "Continue",
-                  style: GoogleFonts.inter(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
+                child: controller.isLoading.value
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : Text(
+                        "Continue",
+                        style: GoogleFonts.inter(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
-            ),
+            )),
             SizedBox(height: 40.h),
           ],
         ),

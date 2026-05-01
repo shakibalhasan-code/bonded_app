@@ -8,7 +8,9 @@ import '../../core/routes/app_routes.dart';
 import '../../widgets/auth/auth_text_field.dart';
 import '../../widgets/app_button.dart';
 
-class ForgotPasswordScreen extends StatelessWidget {
+import '../../controllers/auth_controller.dart';
+
+class ForgotPasswordScreen extends GetView<AuthController> {
   const ForgotPasswordScreen({Key? key}) : super(key: key);
 
   @override
@@ -49,23 +51,28 @@ class ForgotPasswordScreen extends StatelessWidget {
             SizedBox(height: 32.h),
 
             // Email Field
-            const AuthTextField(
+            AuthTextField(
               label: "Email",
               hintText: "Enter your email",
               prefixIcon: Icons.email_outlined,
+              controller: controller.emailController,
             ),
 
             SizedBox(height: 48.h),
 
             // Send OTP Button
-            AppButton(
+            Obx(() => AppButton(
               text: "Send OTP",
               isPrimary: true,
-              onPressed: () => Get.toNamed(
-                AppRoutes.VERIFICATION,
-                arguments: {'reason': 'forgot_password'},
-              ),
-            ),
+              isLoading: controller.isLoading.value,
+              onPressed: () {
+                if (controller.emailController.text.isEmpty) {
+                  Get.snackbar('Error', 'Please enter your email');
+                  return;
+                }
+                controller.forgotPassword(controller.emailController.text);
+              },
+            )),
             SizedBox(height: 40.h),
           ],
         ),

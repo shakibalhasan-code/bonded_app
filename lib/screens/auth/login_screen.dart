@@ -1,3 +1,4 @@
+import 'package:bonded_app/controllers/auth_controller.dart';
 import 'package:bonded_app/widgets/auth/social_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -10,7 +11,7 @@ import '../../core/routes/app_routes.dart';
 import '../../widgets/auth/auth_text_field.dart';
 import '../../widgets/app_button.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends GetView<AuthController> {
   const LoginScreen({Key? key}) : super(key: key);
 
   @override
@@ -51,17 +52,19 @@ class LoginScreen extends StatelessWidget {
             SizedBox(height: 32.h),
 
             // Form Fields
-            const AuthTextField(
+            AuthTextField(
               label: "Email",
               hintText: "Email",
               prefixIcon: Icons.email_outlined,
+              controller: controller.emailController,
             ),
             SizedBox(height: 20.h),
-            const AuthTextField(
+            AuthTextField(
               label: "Password",
               hintText: "Password",
               prefixIcon: Icons.lock_outline,
               isPassword: true,
+              controller: controller.passwordController,
             ),
 
             SizedBox(height: 12.h),
@@ -156,10 +159,23 @@ class LoginScreen extends StatelessWidget {
             SizedBox(height: 60.h),
 
             // Login Button
-            AppButton(
-              text: "Login",
-              isPrimary: true,
-              onPressed: () => Get.offAllNamed(AppRoutes.MAIN),
+            Obx(
+              () => AppButton(
+                text: "Login",
+                isPrimary: true,
+                isLoading: controller.isLoading.value,
+                onPressed: () {
+                  if (controller.emailController.text.isEmpty ||
+                      controller.passwordController.text.isEmpty) {
+                    Get.snackbar('Error', 'Please fill all fields');
+                    return;
+                  }
+                  controller.login(
+                    controller.emailController.text,
+                    controller.passwordController.text,
+                  );
+                },
+              ),
             ),
             SizedBox(height: 40.h),
           ],

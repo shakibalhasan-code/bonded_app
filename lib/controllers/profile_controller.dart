@@ -1,25 +1,54 @@
+import 'dart:convert';
 import 'dart:io';
+import 'package:bonded_app/core/routes/app_routes.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter/material.dart';
 
 import 'base_controller.dart';
+import '../services/api_service.dart';
+import '../services/shared_prefs_service.dart';
+import '../core/constants/app_endpoints.dart';
+import '../models/user_model.dart';
+import 'auth_controller.dart';
 
 class ProfileController extends BaseController {
+  final ApiService _apiService = ApiService();
   final ImagePicker _picker = ImagePicker();
-  
+
   // Profile Building State
   var profileImagePath = ''.obs;
   final fullNameController = TextEditingController();
   final usernameController = TextEditingController();
   final bioController = TextEditingController();
   final phoneController = TextEditingController();
+  final cityController = TextEditingController();
   var selectedCountryCode = '+1'.obs;
   var selectedCountryName = 'United States'.obs;
   var dateOfBirth = ''.obs;
   var selectedGender = ''.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    cityController.text = selectedCity.value;
+    fetchInterests();
+  }
+
+  @override
+  void onClose() {
+    fullNameController.dispose();
+    usernameController.dispose();
+    bioController.dispose();
+    phoneController.dispose();
+    cityController.dispose();
+    super.onClose();
+  }
 
   // Validation Errors
   var fullNameError = ''.obs;
@@ -30,10 +59,14 @@ class ProfileController extends BaseController {
   var selectedCountry = 'United States of America'.obs;
   var selectedCity = 'New Jersey'.obs;
   var currentAddress = ''.obs;
+  var latitude = 0.0.obs;
+  var longitude = 0.0.obs;
   var isLoadingLocation = false.obs;
 
   // Interests State
-  var selectedInterests = <String>[].obs;
+  var allInterests = <Interest>[].obs;
+  var selectedInterests = <String>[].obs; // Stores slugs
+  var isLoadingInterests = false.obs;
 
   // Connection Type State
   var selectedConnectionTypes = <String>[].obs;
@@ -46,11 +79,38 @@ class ProfileController extends BaseController {
   // New Profile UI States
   var notificationsEnabled = true.obs;
   var profileVisibility = 'Public'.obs;
-  var availableInterests = [
-    "Brunch Lovers", "Wine Nights", "Game Nights", "Movie Lovers",
-    "Foodies", "Coffee Dates", "Picnic & Outdoor Chill", "Book Clubs",
-    "Fashion & Style", "Pet Lovers", "Photography"
-  ].obs;
+
+  Map<String, List<Interest>> get interestsByCategory {
+    final Map<String, List<Interest>> grouped = {};
+    for (var interest in allInterests) {
+      final category = _capitalizeCategory(interest.category);
+      if (!grouped.containsKey(category)) {
+        grouped[category] = [];
+      }
+      grouped[category]!.add(interest);
+    }
+    return grouped;
+  }
+
+  String _capitalizeCategory(String category) {
+    return category.split('-').map((word) => word.capitalizeFirst).join(' ');
+  }
+
+  Future<void> fetchInterests() async {
+    try {
+      isLoadingInterests.value = true;
+      final response = await _apiService.get(AppUrls.getInterests);
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final List<dynamic> interestsJson = data['data'];
+        allInterests.value = interestsJson.map((i) => Interest.fromJson(i)).toList();
+      }
+    } catch (e) {
+      debugPrint("Error fetching interests: $e");
+    } finally {
+      isLoadingInterests.value = false;
+    }
+  }
 
   Future<void> pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -87,7 +147,7 @@ class ProfileController extends BaseController {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         Get.snackbar(
-          'Location Disabled', 
+          'Location Disabled',
           'Please enable location services in your device settings.',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.redAccent,
@@ -102,7 +162,7 @@ class ProfileController extends BaseController {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           Get.snackbar(
-            'Permission Denied', 
+            'Permission Denied',
             'Location permissions are required to fetch your address.',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.redAccent,
@@ -112,10 +172,10 @@ class ProfileController extends BaseController {
           return;
         }
       }
-      
+
       if (permission == LocationPermission.deniedForever) {
         Get.snackbar(
-          'Permission Restricted', 
+          'Permission Restricted',
           'Location permissions are permanently denied. Please enable them in settings.',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.redAccent,
@@ -128,7 +188,7 @@ class ProfileController extends BaseController {
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-      
+
       List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
@@ -136,14 +196,20 @@ class ProfileController extends BaseController {
 
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
-        currentAddress.value = "${place.street ?? ''}, ${place.locality ?? ''}, ${place.administrativeArea ?? ''} ${place.postalCode ?? ''}".trim().replaceAll(RegExp(r'^, |, $'), '');
+        currentAddress.value =
+            "${place.street ?? ''}, ${place.locality ?? ''}, ${place.administrativeArea ?? ''} ${place.postalCode ?? ''}"
+                .trim()
+                .replaceAll(RegExp(r'^, |, $'), '');
         selectedCountry.value = place.country ?? selectedCountry.value;
+        cityController.text = place.locality ?? '';
         selectedCity.value = place.locality ?? selectedCity.value;
+        latitude.value = position.latitude;
+        longitude.value = position.longitude;
       }
     } catch (e) {
       debugPrint("Error fetching location: $e");
       Get.snackbar(
-        'Error', 
+        'Error',
         'Could not fetch location. Please try manual entry.',
         snackPosition: SnackPosition.BOTTOM,
       );
@@ -178,18 +244,119 @@ class ProfileController extends BaseController {
     return isValid;
   }
 
-  void toggleInterest(String interest) {
-    if (selectedInterests.contains(interest)) {
-      selectedInterests.remove(interest);
+  void toggleInterest(String slug) {
+    if (selectedInterests.contains(slug)) {
+      selectedInterests.remove(slug);
     } else {
-      selectedInterests.add(interest);
+      selectedInterests.add(slug);
     }
   }
+
   void toggleConnectionType(String type) {
     if (selectedConnectionTypes.contains(type)) {
       selectedConnectionTypes.remove(type);
     } else {
       selectedConnectionTypes.add(type);
+    }
+  }
+
+  // Update Profile API Call
+  Future<void> updateProfile() async {
+    try {
+      setLoading(true);
+
+      // 1. Upload Avatar first if available
+      if (profileImagePath.value.isNotEmpty) {
+        final avatarSuccess = await updateAvatar();
+        if (!avatarSuccess) {
+          Get.snackbar('Error', 'Failed to upload profile picture');
+          return;
+        }
+      }
+
+      // 2. Then Update Profile
+      final token = SharedPrefsService.getString('accessToken');
+
+      // Use slugs directly as they are already stored in selectedInterests
+      final interestsSlugs = selectedInterests.toList();
+
+      final connectionTypeSlugs = selectedConnectionTypes
+          .map((e) => e.toLowerCase().replaceAll(' ', '_').replaceAll('-', '_'))
+          .toList();
+
+      final body = {
+        "fullName": fullNameController.text,
+        "username": usernameController.text,
+        "bio": bioController.text,
+        "phoneCountryCode": selectedCountryCode.value,
+        "phone": phoneController.text,
+        "dateOfBirth": dateOfBirth.value,
+        "gender": selectedGender.value.toLowerCase(),
+        "country": selectedCountry.value,
+        "city": cityController.text,
+        "connectionType": connectionTypeSlugs,
+        "location": {"longitude": longitude.value, "latitude": latitude.value},
+        "address": currentAddress.value,
+        "interests": interestsSlugs,
+      };
+
+      final response = await _apiService.patch(
+        AppUrls.updateProfile,
+        headers: {'Authorization': 'Bearer $token'},
+        body: body,
+      );
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        // Update global user state
+        final authController = Get.find<AuthController>();
+        authController.currentUser.value = UserModel.fromJson(data['data']['user']);
+
+        Get.snackbar(
+          'Success',
+          data['message'] ?? 'Profile updated successfully',
+        );
+        Get.offAllNamed(AppRoutes.KYC_DOCUMENT);
+      } else {
+        Get.snackbar('Error', data['message'] ?? 'Failed to update profile');
+      }
+    } catch (e) {
+      Get.snackbar('Error', e.toString());
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Update Avatar API Call
+  Future<bool> updateAvatar() async {
+    try {
+      final token = SharedPrefsService.getString('accessToken');
+      final file = File(profileImagePath.value);
+
+      final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
+      final mimeParts = mimeType.split('/');
+
+      final multipartFile = await http.MultipartFile.fromPath(
+        'image',
+        file.path,
+        contentType: MediaType(
+          mimeParts.first,
+          mimeParts.length > 1 ? mimeParts[1] : 'jpeg',
+        ),
+      );
+
+      final response = await _apiService.multipartRequest(
+        'PATCH',
+        AppUrls.updateAvatar,
+        headers: {'Authorization': 'Bearer $token'},
+        files: [multipartFile], // ✅ now correct type
+      );
+
+      final data = jsonDecode(response.body);
+      return data['success'] == true;
+    } catch (e) {
+      debugPrint("Error updating avatar: $e");
+      return false;
     }
   }
 }

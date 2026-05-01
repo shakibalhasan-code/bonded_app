@@ -1,3 +1,4 @@
+import 'package:bonded_app/controllers/auth_controller.dart';
 import 'package:bonded_app/core/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -15,11 +16,12 @@ class OtpVerificationScreen extends StatefulWidget {
 }
 
 class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
+  final AuthController controller = Get.find<AuthController>();
   final List<TextEditingController> _otpControllers = List.generate(
-    4,
+    6,
     (index) => TextEditingController(),
   );
-  final List<FocusNode> _focusNodes = List.generate(4, (index) => FocusNode());
+  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
 
   @override
   void dispose() {
@@ -33,7 +35,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   }
 
   void _onChanged(String value, int index) {
-    if (value.length == 1 && index < 3) {
+    if (value.length == 1 && index < 5) {
       _focusNodes[index + 1].requestFocus();
     }
     if (value.isEmpty && index > 0) {
@@ -82,13 +84,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(
-                4,
+                6,
                 (index) => Container(
-                  height: 70.h,
-                  width: 70.w,
+                  height: 56.h,
+                  width: 50.w,
                   decoration: BoxDecoration(
                     color: const Color(0xFFFAF7FF),
-                    borderRadius: BorderRadius.circular(16.r),
+                    borderRadius: BorderRadius.circular(12.r),
                     border: Border.all(
                       color: _otpControllers[index].text.isNotEmpty
                           ? AppColors.primary
@@ -108,7 +110,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       textAlign: TextAlign.center,
                       maxLength: 1,
                       style: GoogleFonts.inter(
-                        fontSize: 24.sp,
+                        fontSize: 20.sp,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textHeading,
                       ),
@@ -169,37 +171,59 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             SizedBox(height: 60.h),
 
             // Verify Button
-            GestureDetector(
-              onTap: () {
-                final args = Get.arguments as Map<String, dynamic>?;
-                if (args != null && args['reason'] == 'forgot_password') {
-                  Get.toNamed(AppRoutes.RESET_PASSWORD);
-                } else {
-                  showSignupSuccessDialog(context);
-                }
-              },
-              child: Container(
-                height: 56.h,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(28.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  "Verify OTP",
-                  style: GoogleFonts.inter(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+            Obx(
+              () => GestureDetector(
+                onTap: controller.isLoading.value
+                    ? null
+                    : () {
+                        final otp = _otpControllers.map((e) => e.text).join();
+                        if (otp.length < 6) {
+                          Get.snackbar('Error', 'Please enter complete OTP');
+                          return;
+                        }
+
+                        final args = Get.arguments as Map<String, dynamic>?;
+                        final email = args?['email'] ?? '';
+
+                        if (args != null &&
+                            args['reason'] == 'forgot_password') {
+                          controller.verifyResetOtp(email, otp).then((token) {
+                            if (token != null) {
+                              Get.toNamed(
+                                AppRoutes.RESET_PASSWORD,
+                                arguments: {'resetToken': token},
+                              );
+                            }
+                          });
+                        } else {
+                          controller.verifyAccount(email, otp);
+                        }
+                      },
+                child: Container(
+                  height: 56.h,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(28.r),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
+                  alignment: Alignment.center,
+                  child: controller.isLoading.value
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(
+                          "Verify OTP",
+                          style: GoogleFonts.inter(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
             ),

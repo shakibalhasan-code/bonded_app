@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
+import 'package:country_picker/country_picker.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../controllers/profile_controller.dart';
@@ -41,7 +42,7 @@ class AddLocationScreen extends StatelessWidget {
           children: [
             SizedBox(height: 20.h),
             Text(
-              "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, to",
+              "Please provide your location details to help us find the best matches for you.",
               style: GoogleFonts.inter(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.w400,
@@ -61,27 +62,38 @@ class AddLocationScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: 8.h),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFAF7FF),
-                borderRadius: BorderRadius.circular(12.r),
-                border: Border.all(color: Colors.grey[200]!),
+            GestureDetector(
+              onTap: () {
+                showCountryPicker(
+                  context: context,
+                  showPhoneCode: false,
+                  onSelect: (Country country) {
+                    controller.selectedCountry.value = country.name;
+                  },
+                );
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFAF7FF),
+                  borderRadius: BorderRadius.circular(12.r),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Obx(() => Text(
+                        controller.selectedCountry.value,
+                        style: GoogleFonts.inter(
+                          fontSize: 14.sp,
+                          color: AppColors.textPrimary,
+                        ),
+                      )),
+                    ),
+                    Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
+                  ],
+                ),
               ),
-              child: Obx(() => DropdownButton<String>(
-                value: controller.selectedCountry.value,
-                isExpanded: true,
-                underline: const SizedBox(),
-                items: ["United States of America", "United Kingdom", "Canada"].map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value, style: GoogleFonts.inter(fontSize: 14.sp)),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) controller.selectedCountry.value = value;
-                },
-              )),
             ),
             SizedBox(height: 20.h),
 
@@ -102,21 +114,23 @@ class AddLocationScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12.r),
                 border: Border.all(color: Colors.grey[200]!),
               ),
-              child: Obx(() => DropdownButton<String>(
-                value: controller.selectedCity.value,
-                isExpanded: true,
-                underline: const SizedBox(),
-                items: ["New Jersey", "New York", "California"].map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value, style: GoogleFonts.inter(fontSize: 14.sp)),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  if (value != null) controller.selectedCity.value = value;
-                },
-              )),
+              child: TextField(
+                controller: controller.cityController,
+                decoration: InputDecoration(
+                  hintText: "Enter your city",
+                  hintStyle: GoogleFonts.inter(
+                    fontSize: 14.sp,
+                    color: Colors.grey[400],
+                  ),
+                  border: InputBorder.none,
+                ),
+                style: GoogleFonts.inter(
+                  fontSize: 14.sp,
+                  color: AppColors.textPrimary,
+                ),
+              ),
             ),
+
             SizedBox(height: 20.h),
 
             // Location with Map Icon

@@ -230,39 +230,53 @@ class EditProfileScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: 24.h),
-            Text(
-              "Social & Lifestyle",
-              style: GoogleFonts.inter(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ),
-            ),
-            SizedBox(height: 16.h),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: controller.availableInterests.length,
-              itemBuilder: (context, index) {
-                final interest = controller.availableInterests[index];
-                return Obx(() {
-                  final isSelected = controller.selectedInterests.contains(
-                    interest,
+            Obx(() {
+              if (controller.isLoadingInterests.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              
+              final categories = controller.interestsByCategory;
+              if (categories.isEmpty) {
+                return const Center(child: Text("No interests found"));
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: categories.entries.map((entry) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        entry.key,
+                        style: GoogleFonts.inter(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
+                      ...entry.value.map((interest) {
+                        return Obx(() {
+                          final isSelected = controller.selectedInterests.contains(interest.slug);
+                          return CheckboxListTile(
+                            title: Text(
+                              interest.name,
+                              style: GoogleFonts.inter(fontSize: 14.sp),
+                            ),
+                            value: isSelected,
+                            onChanged: (val) => controller.toggleInterest(interest.slug),
+                            activeColor: AppColors.primary,
+                            contentPadding: EdgeInsets.zero,
+                            controlAffinity: ListTileControlAffinity.trailing,
+                          );
+                        });
+                      }),
+                      SizedBox(height: 24.h),
+                    ],
                   );
-                  return CheckboxListTile(
-                    title: Text(
-                      interest,
-                      style: GoogleFonts.inter(fontSize: 14.sp),
-                    ),
-                    value: isSelected,
-                    onChanged: (val) => controller.toggleInterest(interest),
-                    activeColor: AppColors.primary,
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.trailing,
-                  );
-                });
-              },
-            ),
+                }).toList(),
+              );
+            }),
             SizedBox(height: 100.h),
           ],
         ),

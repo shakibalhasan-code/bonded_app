@@ -1,6 +1,14 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:bonded_app/core/constants/app_endpoints.dart';
 import 'package:http/http.dart' as http;
+
+class ApiException implements Exception {
+  final String message;
+  ApiException(this.message);
+  @override
+  String toString() => message;
+}
 
 class ApiService {
   final String baseUrl;
@@ -12,9 +20,13 @@ class ApiService {
     String endpoint, {
     Map<String, String>? headers,
   }) async {
+    final url = '$baseUrl$endpoint';
+    final mergedHeaders = _mergeHeaders(headers);
+    _logRequest('GET', url, mergedHeaders, null);
+    
     final response = await http.get(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: _mergeHeaders(headers),
+      Uri.parse(url),
+      headers: mergedHeaders,
     );
     return _handleResponse(response);
   }
@@ -25,10 +37,15 @@ class ApiService {
     dynamic body,
     Map<String, String>? headers,
   }) async {
+    final url = '$baseUrl$endpoint';
+    final mergedHeaders = _mergeHeaders(headers);
+    final encodedBody = body != null ? jsonEncode(body) : null;
+    _logRequest('POST', url, mergedHeaders, encodedBody);
+
     final response = await http.post(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: _mergeHeaders(headers),
-      body: body != null ? jsonEncode(body) : null,
+      Uri.parse(url),
+      headers: mergedHeaders,
+      body: encodedBody,
     );
     return _handleResponse(response);
   }
@@ -39,10 +56,34 @@ class ApiService {
     dynamic body,
     Map<String, String>? headers,
   }) async {
+    final url = '$baseUrl$endpoint';
+    final mergedHeaders = _mergeHeaders(headers);
+    final encodedBody = body != null ? jsonEncode(body) : null;
+    _logRequest('PUT', url, mergedHeaders, encodedBody);
+
     final response = await http.put(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: _mergeHeaders(headers),
-      body: body != null ? jsonEncode(body) : null,
+      Uri.parse(url),
+      headers: mergedHeaders,
+      body: encodedBody,
+    );
+    return _handleResponse(response);
+  }
+
+  // PATCH request
+  Future<http.Response> patch(
+    String endpoint, {
+    dynamic body,
+    Map<String, String>? headers,
+  }) async {
+    final url = '$baseUrl$endpoint';
+    final mergedHeaders = _mergeHeaders(headers);
+    final encodedBody = body != null ? jsonEncode(body) : null;
+    _logRequest('PATCH', url, mergedHeaders, encodedBody);
+
+    final response = await http.patch(
+      Uri.parse(url),
+      headers: mergedHeaders,
+      body: encodedBody,
     );
     return _handleResponse(response);
   }
@@ -52,9 +93,13 @@ class ApiService {
     String endpoint, {
     Map<String, String>? headers,
   }) async {
+    final url = '$baseUrl$endpoint';
+    final mergedHeaders = _mergeHeaders(headers);
+    _logRequest('DELETE', url, mergedHeaders, null);
+
     final response = await http.delete(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: _mergeHeaders(headers),
+      Uri.parse(url),
+      headers: mergedHeaders,
     );
     return _handleResponse(response);
   }
@@ -68,6 +113,37 @@ class ApiService {
     return headers;
   }
 
+  // Multipart request (e.g., for file uploads)
+  Future<http.Response> multipartRequest(
+    String method,
+    String endpoint, {
+    Map<String, String>? fields,
+    List<http.MultipartFile>? files,
+    Map<String, String>? headers,
+  }) async {
+    final url = '$baseUrl$endpoint';
+    final mergedHeaders = _mergeHeaders(headers);
+    mergedHeaders.remove('Content-Type'); // Let http package set the boundary
+    
+    _logRequest('$method (Multipart)', url, mergedHeaders, fields.toString());
+
+    final request = http.MultipartRequest(method, Uri.parse(url));
+    request.headers.addAll(mergedHeaders);
+    
+    if (fields != null) {
+      request.fields.addAll(fields);
+    }
+    
+    if (files != null) {
+      request.files.addAll(files);
+    }
+
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    
+    return _handleResponse(response);
+  }
+
   // Default headers
   Map<String, String> _defaultHeaders() {
     return {'Content-Type': 'application/json', 'Accept': 'application/json'};
@@ -75,13 +151,43 @@ class ApiService {
 
   // Handle Response
   http.Response _handleResponse(http.Response response) {
+    _logResponse(response);
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return response;
     } else {
-      // You can throw a custom exception here
-      throw Exception(
-        'Failed to load data: ${response.statusCode} ${response.body}',
-      );
+      String message = 'Failed to load data: ${response.statusCode}';
+      try {
+        final data = jsonDecode(response.body);
+        if (data != null) {
+          if (data['message'] != null) {
+            message = data['message'];
+          } else if (data['errorSources'] != null &&
+              data['errorSources'] is List &&
+              data['errorSources'].isNotEmpty) {
+            message = data['errorSources'][0]['message'] ?? message;
+          }
+        }
+      } catch (_) {
+        if (response.body.isNotEmpty) {
+          message = response.body;
+        }
+      }
+      throw ApiException(message);
     }
+  }
+
+  void _logRequest(String method, String url, Map<String, String> headers, String? body) {
+    debugPrint('--> $method $url');
+    debugPrint('Headers: $headers');
+    if (body != null) {
+      debugPrint('Body: $body');
+    }
+    debugPrint('--> END $method');
+  }
+
+  void _logResponse(http.Response response) {
+    debugPrint('<-- ${response.statusCode} ${response.request?.url}');
+    debugPrint('Response: ${response.body}');
+    debugPrint('<-- END HTTP');
   }
 }

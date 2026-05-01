@@ -8,7 +8,9 @@ import '../../core/routes/app_routes.dart';
 import '../../widgets/auth/auth_text_field.dart';
 import '../../widgets/app_button.dart';
 
-class ResetPasswordScreen extends StatelessWidget {
+import '../../controllers/auth_controller.dart';
+
+class ResetPasswordScreen extends GetView<AuthController> {
   const ResetPasswordScreen({Key? key}) : super(key: key);
 
   @override
@@ -49,40 +51,48 @@ class ResetPasswordScreen extends StatelessWidget {
             SizedBox(height: 32.h),
 
             // New Password Field
-            const AuthTextField(
+            AuthTextField(
               label: "New Password",
               hintText: "Enter new password",
               prefixIcon: Icons.lock_outline,
               isPassword: true,
+              controller: controller.passwordController,
             ),
             SizedBox(height: 20.h),
             
             // Confirm Password Field
-            const AuthTextField(
+            AuthTextField(
               label: "Confirm Password",
               hintText: "Confirm new password",
               prefixIcon: Icons.lock_outline,
               isPassword: true,
+              controller: controller.confirmPasswordController,
             ),
 
             SizedBox(height: 48.h),
 
             // Reset Password Button
-            AppButton(
+            Obx(() => AppButton(
               text: "Reset Password",
               isPrimary: true,
+              isLoading: controller.isLoading.value,
               onPressed: () {
-                // Show success dialog or snackbar and then go to login
-                Get.snackbar(
-                  "Success",
-                  "Password reset successfully",
-                  backgroundColor: Colors.green,
-                  colorText: Colors.white,
-                  snackPosition: SnackPosition.BOTTOM,
-                );
-                Get.offAllNamed(AppRoutes.LOGIN);
+                if (controller.passwordController.text.isEmpty || 
+                    controller.confirmPasswordController.text.isEmpty) {
+                  Get.snackbar('Error', 'Please fill all fields');
+                  return;
+                }
+                if (controller.passwordController.text != controller.confirmPasswordController.text) {
+                  Get.snackbar('Error', 'Passwords do not match');
+                  return;
+                }
+                
+                final args = Get.arguments as Map<String, dynamic>?;
+                final resetToken = args?['resetToken'] ?? '';
+                
+                controller.resetPassword(resetToken, controller.passwordController.text);
               },
-            ),
+            )),
             SizedBox(height: 40.h),
           ],
         ),

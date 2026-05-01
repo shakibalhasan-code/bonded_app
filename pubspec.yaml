@@ -47,6 +47,8 @@ dependencies:
   apple_maps_flutter: ^1.4.0
   http: ^1.6.0
   shared_preferences: ^2.5.5
+  mime: ^2.0.0
+  http_parser: ^4.1.2
 
 
 dev_dependencies:

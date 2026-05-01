@@ -47,6 +47,7 @@ import '../../screens/bond/bond_profile_screen.dart';
 import '../../screens/messages/chat_screen.dart';
 import '../../screens/bond/nearby_people_screen.dart';
 import '../../core/bindings/profile_binding.dart';
+import '../../core/bindings/auth_binding.dart';
 import 'app_routes.dart';
 
 
@@ -60,19 +61,30 @@ class AppPages {
     GetPage(name: AppRoutes.INITIAL, page: () => const SplashScreen()),
     GetPage(name: AppRoutes.ONBOARDING, page: () => const OnboardingScreen()),
     GetPage(name: AppRoutes.WELCOME, page: () => const WelcomeScreen()),
-    GetPage(name: AppRoutes.SIGNUP, page: () => const SignupScreen()),
-    GetPage(name: AppRoutes.LOGIN, page: () => const LoginScreen()),
+    GetPage(
+      name: AppRoutes.SIGNUP,
+      page: () => const SignupScreen(),
+      binding: AuthBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.LOGIN,
+      page: () => const LoginScreen(),
+      binding: AuthBinding(),
+    ),
     GetPage(
       name: AppRoutes.VERIFICATION,
       page: () => const OtpVerificationScreen(),
+      binding: AuthBinding(),
     ),
     GetPage(
       name: AppRoutes.FORGOT_PASSWORD,
       page: () => const ForgotPasswordScreen(),
+      binding: AuthBinding(),
     ),
     GetPage(
       name: AppRoutes.RESET_PASSWORD,
       page: () => const ResetPasswordScreen(),
+      binding: AuthBinding(),
     ),
     GetPage(
       name: AppRoutes.PROFILE_READY,

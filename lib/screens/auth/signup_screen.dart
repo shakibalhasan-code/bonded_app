@@ -1,3 +1,4 @@
+import 'package:bonded_app/controllers/auth_controller.dart';
 import 'package:bonded_app/widgets/auth/social_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -10,8 +11,8 @@ import '../../core/routes/app_routes.dart';
 import '../../widgets/auth/auth_text_field.dart';
 import '../../widgets/app_button.dart';
 
-class SignupScreen extends StatelessWidget {
-  const SignupScreen({Key? key}) : super(key: key);
+class SignupScreen extends GetView<AuthController> {
+  const SignupScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -51,24 +52,27 @@ class SignupScreen extends StatelessWidget {
             SizedBox(height: 32.h),
 
             // Form Fields
-            const AuthTextField(
+            AuthTextField(
               label: "Email",
               hintText: "Email",
               prefixIcon: Icons.email_outlined,
+              controller: controller.emailController,
             ),
             SizedBox(height: 20.h),
-            const AuthTextField(
+            AuthTextField(
               label: "Password",
               hintText: "Password",
               prefixIcon: Icons.lock_outline,
               isPassword: true,
+              controller: controller.passwordController,
             ),
             SizedBox(height: 20.h),
-            const AuthTextField(
+            AuthTextField(
               label: "Confirm Password",
               hintText: "Password",
               prefixIcon: Icons.lock_outline,
               isPassword: true,
+              controller: controller.confirmPasswordController,
             ),
 
             SizedBox(height: 24.h),
@@ -147,10 +151,29 @@ class SignupScreen extends StatelessWidget {
             SizedBox(height: 60.h),
 
             // Signup Button
-            AppButton(
-              text: "Sign Up",
-              isPrimary: true,
-              onPressed: () => Get.toNamed(AppRoutes.VERIFICATION),
+            Obx(
+              () => AppButton(
+                text: "Sign Up",
+                isPrimary: true,
+                isLoading: controller.isLoading.value,
+                onPressed: () {
+                  if (controller.emailController.text.isEmpty ||
+                      controller.passwordController.text.isEmpty ||
+                      controller.confirmPasswordController.text.isEmpty) {
+                    Get.snackbar('Error', 'Please fill all fields');
+                    return;
+                  }
+                  if (controller.passwordController.text !=
+                      controller.confirmPasswordController.text) {
+                    Get.snackbar('Error', 'Passwords do not match');
+                    return;
+                  }
+                  controller.register(
+                    controller.emailController.text,
+                    controller.passwordController.text,
+                  );
+                },
+              ),
             ),
             SizedBox(height: 40.h),
           ],
