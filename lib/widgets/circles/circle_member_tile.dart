@@ -47,7 +47,7 @@ class CircleMemberTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (member.isCreator) ...[
+                    if (member.isOwner) ...[
                       SizedBox(width: 8.w),
                       Container(
                         padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),

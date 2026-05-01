@@ -254,16 +254,18 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
   }
 
   Widget _buildMembersView(CircleModel circle) {
-    if (circle.detailedMembers == null || circle.detailedMembers!.isEmpty) {
-      return _buildEmptyState("No members information available.");
-    }
-    return ListView.builder(
-      padding: EdgeInsets.symmetric(horizontal: 24.w),
-      itemCount: circle.detailedMembers!.length,
-      itemBuilder: (context, index) {
-        return CircleMemberTile(member: circle.detailedMembers![index]);
-      },
-    );
+    return Obx(() {
+      if (circle.detailedMembers.isEmpty) {
+        return _buildEmptyState("No members information available.");
+      }
+      return ListView.builder(
+        padding: EdgeInsets.symmetric(horizontal: 24.w),
+        itemCount: circle.detailedMembers.length,
+        itemBuilder: (context, index) {
+          return CircleMemberTile(member: circle.detailedMembers[index]);
+        },
+      );
+    });
   }
 
   Widget _buildEmptyState(String message) {
@@ -523,10 +525,18 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(16.r),
                 child: Image.network(
-                  circle.image,
+                  circle.image.isNotEmpty ? circle.image : _getPlaceholderImage(circle.id),
                   width: double.infinity,
                   height: 150.h,
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Image.network(
+                      _getPlaceholderImage(circle.id),
+                      height: 150.h,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    );
+                  },
                 ),
               ),
               SizedBox(height: 16.h),
@@ -618,5 +628,18 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
         ],
       ),
     );
+  }
+  String _getPlaceholderImage(String id) {
+    final List<String> placeholders = [
+      'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&q=80',
+      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&q=80',
+      'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=800&q=80',
+      'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80',
+      'https://images.unsplash.com/photo-1505236858219-8359eb29e329?w=800&q=80',
+      'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&q=80',
+      'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&q=80',
+    ];
+    int index = id.hashCode % placeholders.length;
+    return placeholders[index.abs()];
   }
 }

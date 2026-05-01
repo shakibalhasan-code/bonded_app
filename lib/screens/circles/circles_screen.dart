@@ -33,6 +33,27 @@ class CirclesScreen extends StatelessWidget {
             ),
             Expanded(
               child: Obx(() {
+                // Determine loading state
+                bool isLoading = false;
+                if (controller.selectedTab.value == 0) {
+                  isLoading = controller.isLoadingPublic.value;
+                } else if (controller.selectedTab.value == 1) {
+                  isLoading = controller.isLoadingPrivate.value;
+                } else if (controller.selectedTab.value == 2) {
+                  isLoading = controller.myCircleSubTab.value == 0 
+                      ? controller.isLoadingCreated.value 
+                      : controller.isLoadingJoined.value;
+                }
+
+                if (isLoading && 
+                   ((controller.selectedTab.value == 0 && controller.publicCircles.isEmpty) ||
+                    (controller.selectedTab.value == 1 && controller.privateCircles.isEmpty) ||
+                    (controller.selectedTab.value == 2 && 
+                      ((controller.myCircleSubTab.value == 0 && controller.createdCircles.isEmpty) ||
+                       (controller.myCircleSubTab.value == 1 && controller.joinedCircles.isEmpty))))) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
                 if (controller.selectedTab.value == 2) {
                   return _buildMyCirclesView(controller);
                 }
@@ -41,7 +62,12 @@ class CirclesScreen extends StatelessWidget {
                     ? controller.filteredPublicCircles
                     : controller.filteredPrivateCircles;
 
-                return _buildCircleList(circles, controller);
+                return RefreshIndicator(
+                  onRefresh: () => controller.fetchCircles(
+                    visibility: controller.selectedTab.value == 0 ? 'public' : 'private'
+                  ),
+                  child: _buildCircleList(circles, controller),
+                );
               }),
             ),
           ],
@@ -117,44 +143,49 @@ class CirclesScreen extends StatelessWidget {
         ? controller.filteredMyCreatedCircles
         : controller.filteredMyJoinedCircles;
 
-    return Column(
-      children: [
-        CircleSubTabBar(
-          selectedIndex: controller.myCircleSubTab.value,
-          tabs: const ["Created Circle", "Joined Circle"],
-          onTabChanged: controller.changeMyCircleSubTab,
-        ),
-        _buildSectionHeader(
-          controller.myCircleSubTab.value == 0
-              ? "My Created Circles"
-              : "My Joined Circles",
-          circles,
-          controller,
-          controller.myCircleSubTab.value == 0
-              ? "Created Circles"
-              : "Joined Circles",
-        ),
-        Expanded(
-          child: circles.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  itemCount: circles.length,
-                  padding: EdgeInsets.only(bottom: 100.h),
-                  itemBuilder: (context, index) {
-                    final circle = circles[index];
-                    return CircleCard(
-                      circle: circle,
-                      onTap: () {
-                        Get.toNamed(
-                          AppRoutes.JOINED_CIRCLE_DETAILS,
-                          arguments: circle,
-                        );
-                      },
-                    );
-                  },
-                ),
-        ),
-      ],
+    return RefreshIndicator(
+      onRefresh: () => controller.fetchCircles(
+        scope: controller.myCircleSubTab.value == 0 ? 'created' : 'joined'
+      ),
+      child: Column(
+        children: [
+          CircleSubTabBar(
+            selectedIndex: controller.myCircleSubTab.value,
+            tabs: const ["Created Circle", "Joined Circle"],
+            onTabChanged: controller.changeMyCircleSubTab,
+          ),
+          _buildSectionHeader(
+            controller.myCircleSubTab.value == 0
+                ? "My Created Circles"
+                : "My Joined Circles",
+            circles,
+            controller,
+            controller.myCircleSubTab.value == 0
+                ? "Created Circles"
+                : "Joined Circles",
+          ),
+          Expanded(
+            child: circles.isEmpty
+                ? _buildEmptyState()
+                : ListView.builder(
+                    itemCount: circles.length,
+                    padding: EdgeInsets.only(bottom: 100.h),
+                    itemBuilder: (context, index) {
+                      final circle = circles[index];
+                      return CircleCard(
+                        circle: circle,
+                        onTap: () {
+                          Get.toNamed(
+                            AppRoutes.JOINED_CIRCLE_DETAILS,
+                            arguments: circle,
+                          );
+                        },
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 

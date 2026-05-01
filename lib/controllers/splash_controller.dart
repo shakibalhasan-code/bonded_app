@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:get/get.dart';
 import '../core/routes/app_routes.dart';
+import '../services/shared_prefs_service.dart';
 
 class SplashController extends GetxController {
   // Observables for animation state if needed
@@ -19,9 +20,16 @@ class SplashController extends GetxController {
     opacity.value = 1.0;
     scale.value = 1.0;
 
+    // Check for access token
+    final token = SharedPrefsService.getString('accessToken');
+
     // Navigate to next screen after delay
     Timer(const Duration(seconds: 3), () {
-      Get.offNamed(AppRoutes.ONBOARDING);
+      if (token != null && token.isNotEmpty) {
+        Get.offAllNamed(AppRoutes.MAIN);
+      } else {
+        Get.offAllNamed(AppRoutes.LOGIN);
+      }
     });
   }
 }

@@ -113,14 +113,20 @@ class CircleHighlightCard extends StatelessWidget {
           onTap: () {
             // Find the circle from CircleController or create a dummy one
             final circleController = Get.find<CircleController>();
-            final circle = circleController.publicCircles.firstWhere(
-              (c) => c.name == post.userName,
-              orElse: () => circleController.myJoinedCircles.firstWhere(
-                (c) => c.name == post.userName,
-                orElse: () => circleController.publicCircles.first,
-              ),
-            );
-            Get.toNamed(AppRoutes.JOINED_CIRCLE_DETAILS, arguments: circle);
+            final circle = circleController.publicCircles.firstWhereOrNull(
+              (c) => c.name == post.userName) ?? 
+              circleController.joinedCircles.firstWhereOrNull(
+                (c) => c.name == post.userName) ??
+              (circleController.publicCircles.isNotEmpty ? circleController.publicCircles.first : null);
+            
+            if (circle != null) {
+              Get.toNamed(
+                circle.isJoined.value
+                    ? AppRoutes.JOINED_CIRCLE_DETAILS
+                    : AppRoutes.PUBLIC_CIRCLE_DETAILS,
+                arguments: circle,
+              );
+            }
           },
           child: Text(
             "View Details",

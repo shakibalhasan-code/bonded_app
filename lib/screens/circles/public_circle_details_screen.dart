@@ -15,7 +15,8 @@ class PublicCircleDetailsScreen extends StatefulWidget {
   const PublicCircleDetailsScreen({Key? key}) : super(key: key);
 
   @override
-  State<PublicCircleDetailsScreen> createState() => _PublicCircleDetailsScreenState();
+  State<PublicCircleDetailsScreen> createState() =>
+      _PublicCircleDetailsScreenState();
 }
 
 class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
@@ -75,10 +76,18 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
             ClipRRect(
               borderRadius: BorderRadius.circular(24.r),
               child: Image.network(
-                circle.image,
+                circle.image.isNotEmpty ? circle.image : _getPlaceholderImage(circle.id),
                 width: double.infinity,
                 height: 220.h,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Image.network(
+                    _getPlaceholderImage(circle.id),
+                    height: 220.h,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  );
+                },
               ),
             ),
 
@@ -119,8 +128,7 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
                 SizedBox(width: 8.w),
                 Expanded(
                   child: Text(
-                    circle.address ??
-                        "Grand city St. 100, New York, United States.",
+                    circle.address,
                     style: GoogleFonts.inter(
                       fontSize: 14.sp,
                       color: Colors.grey[600],
@@ -208,60 +216,58 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
             SizedBox(height: 8.h),
 
             // Members List
-            if (circle.detailedMembers != null) ...[
-              CustomSearchField(
-                controller: searchController,
-                hintText: "Search members...",
-                onChanged: (val) => searchQuery.value = val,
-              ),
-              SizedBox(height: 16.h),
-              Obx(() {
-                final query = searchQuery.value.toLowerCase();
-                final filtered = circle.detailedMembers!
-                    .where((m) =>
+            CustomSearchField(
+              controller: searchController,
+              hintText: "Search members...",
+              onChanged: (val) => searchQuery.value = val,
+            ),
+            SizedBox(height: 16.h),
+            Obx(() {
+              final query = searchQuery.value.toLowerCase();
+              final filtered = circle.detailedMembers
+                  .where(
+                    (m) =>
                         m.name.toLowerCase().contains(query) ||
-                        m.role.toLowerCase().contains(query))
-                    .toList();
-                
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: filtered.take(3).length,
-                  itemBuilder: (context, index) {
-                    return CircleMemberTile(
-                      member: filtered[index],
-                    );
-                  },
-                );
-              }),
-            ],
+                        m.role.toLowerCase().contains(query),
+                  )
+                  .toList();
 
-            SizedBox(height: 40.h),
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: filtered.take(3).length,
+                itemBuilder: (context, index) {
+                  return CircleMemberTile(member: filtered[index]);
+                },
+              );
+            }),
 
-            // Join Button
-            ElevatedButton(
-              onPressed: () => circle.isJoined.value = true,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                minimumSize: Size(double.infinity, 56.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30.r),
-                ),
-              ),
-              child: Text(
-                "Join Circle",
-                style: GoogleFonts.inter(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
+          SizedBox(height: 40.h),
+
+          // Join Button
+          ElevatedButton(
+            onPressed: () => circle.isJoined.value = true,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              minimumSize: Size(double.infinity, 56.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30.r),
               ),
             ),
-            SizedBox(height: 40.h),
-          ],
-        ),
+            child: Text(
+              "Join Circle",
+              style: GoogleFonts.inter(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          SizedBox(height: 40.h),
+        ],
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildInterestChip(String label) {
@@ -470,7 +476,7 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
               ),
               SizedBox(height: 24.h),
               Text(
-                "Members (${circle.detailedMembers?.length ?? 0})",
+                "Members (${circle.detailedMembers.length})",
                 style: GoogleFonts.inter(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w700,
@@ -478,17 +484,18 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
                 ),
               ),
               SizedBox(height: 12.h),
-              if (circle.detailedMembers != null)
-                ListView.builder(
+              Obx(
+                () => ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: circle.detailedMembers!.take(3).length,
+                  itemCount: circle.detailedMembers.take(3).length,
                   itemBuilder: (context, index) {
                     return CircleMemberTile(
-                      member: circle.detailedMembers![index],
+                      member: circle.detailedMembers[index],
                     );
                   },
                 ),
+              ),
               SizedBox(height: 24.h),
               ElevatedButton(
                 onPressed: () => Get.back(),
@@ -757,5 +764,18 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
         ],
       ),
     );
+  }
+  String _getPlaceholderImage(String id) {
+    final List<String> placeholders = [
+      'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&q=80',
+      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&q=80',
+      'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=800&q=80',
+      'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80',
+      'https://images.unsplash.com/photo-1505236858219-8359eb29e329?w=800&q=80',
+      'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&q=80',
+      'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&q=80',
+    ];
+    int index = id.hashCode % placeholders.length;
+    return placeholders[index.abs()];
   }
 }

@@ -1,56 +1,47 @@
-import 'package:bonded_app/models/home_models.dart';
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
-import '../core/theme/app_colors.dart';
-import '../core/routes/app_routes.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
+import '../services/api_service.dart';
+import '../services/shared_prefs_service.dart';
+import '../core/constants/app_endpoints.dart';
 import '../models/circle_model.dart';
+import '../models/home_models.dart';
+import 'base_controller.dart';
 
-class CircleController extends GetxController {
-  final selectedTab = 0.obs; // 0: Public, 1: Private, 2: My Circle
-  final myCircleSubTab = 0.obs; // 0: Created Circle, 1: Joined Circle
+class CircleController extends BaseController {
+  final ApiService _apiService = ApiService();
 
-  final publicCircles = <CircleModel>[].obs;
-  final privateCircles = <CircleModel>[].obs;
-  final myCreatedCircles = <CircleModel>[].obs;
-  final myJoinedCircles = <CircleModel>[].obs;
+  // Observable lists for different circle views
+  var publicCircles = <CircleModel>[].obs;
+  var privateCircles = <CircleModel>[].obs;
+  var createdCircles = <CircleModel>[].obs;
+  var joinedCircles = <CircleModel>[].obs;
 
-  // Search State
-  final isSearchVisible = false.obs;
-  final searchQuery = "".obs;
-  late final TextEditingController searchController;
+  // Loading states
+  var isLoadingPublic = false.obs;
+  var isLoadingPrivate = false.obs;
+  var isLoadingCreated = false.obs;
+  var isLoadingJoined = false.obs;
 
-  List<CircleModel> get filteredPublicCircles => _filterCircles(publicCircles);
-  List<CircleModel> get filteredPrivateCircles => _filterCircles(privateCircles);
-  List<CircleModel> get filteredMyCreatedCircles => _filterCircles(myCreatedCircles);
-  List<CircleModel> get filteredMyJoinedCircles => _filterCircles(myJoinedCircles);
-  List<MemberModel> get filteredAvailableMembers => _filterMembers(availableMembers);
-
-  List<CircleModel> _filterCircles(List<CircleModel> circles) {
-    if (searchQuery.value.isEmpty) return circles;
-    return circles
-        .where((c) =>
-            c.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
-            c.description.toLowerCase().contains(searchQuery.value.toLowerCase()))
-        .toList();
-  }
-
-  List<MemberModel> _filterMembers(List<MemberModel> members) {
-    if (searchQuery.value.isEmpty) return members;
-    return members
-        .where((m) =>
-            m.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
-            m.role.toLowerCase().contains(searchQuery.value.toLowerCase()))
-        .toList();
-  }
+  // UI State
+  var selectedTab = 0.obs;
+  var myCircleSubTab = 0.obs;
+  var isSearchVisible = false.obs;
+  var searchQuery = ''.obs;
+  final searchController = TextEditingController();
 
   @override
   void onInit() {
     super.onInit();
-    searchController = TextEditingController();
-    _loadMockData();
-    _loadAvailableMembers();
+    // Initial fetch
+    fetchCircles(visibility: 'public');
+    fetchCircles(visibility: 'private');
+    fetchCircles(scope: 'created');
+    fetchCircles(scope: 'joined');
   }
 
   @override
@@ -59,441 +50,305 @@ class CircleController extends GetxController {
     super.onClose();
   }
 
-  final availableMembers = <MemberModel>[].obs;
-
   void changeTab(int index) {
     selectedTab.value = index;
-    clearSearch();
+    isSearchVisible.value = false;
+    searchQuery.value = '';
+    searchController.clear();
   }
 
   void changeMyCircleSubTab(int index) {
     myCircleSubTab.value = index;
-    clearSearch();
+    isSearchVisible.value = false;
+    searchQuery.value = '';
+    searchController.clear();
   }
 
   void toggleSearch() {
     isSearchVisible.value = !isSearchVisible.value;
     if (!isSearchVisible.value) {
-      clearSearch();
+      searchQuery.value = '';
+      searchController.clear();
     }
   }
 
-  void clearSearch() {
-    searchQuery.value = "";
-    searchController.clear();
-    isSearchVisible.value = false;
+  // Filtering Logic
+  List<CircleModel> get filteredPublicCircles {
+    if (searchQuery.value.isEmpty) return publicCircles;
+    return publicCircles.where((c) => 
+      c.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
+      c.description.toLowerCase().contains(searchQuery.value.toLowerCase())
+    ).toList();
   }
 
-  void _loadAvailableMembers() {
-    availableMembers.value = [
-      MemberModel(
-        id: '1',
-        name: 'Matthias Huckestein',
-        image: 'https://i.pravatar.cc/150?u=1',
-        role: 'Brunch lover, Wine Nights, Game Nights',
-        isCreator: true,
-      ),
-      MemberModel(
-        id: '2',
-        name: 'Samantha Uhlemann',
-        image: 'https://i.pravatar.cc/150?u=2',
-        role:
-            'Brunch lover, Wine Nights, Game Nights, Movie Lovers, Game Nights',
-      ),
-      MemberModel(
-        id: '3',
-        name: 'Maike Rother',
-        image: 'https://i.pravatar.cc/150?u=3',
-        role: 'Brunch lover, Wine Nights, Game Nights',
-      ),
-      MemberModel(
-        id: '4',
-        name: 'Josephin Stengl',
-        image: 'https://i.pravatar.cc/150?u=4',
-        role:
-            'Brunch lover, Wine Nights, Game Nights, Movie Lovers, Game Nights',
-      ),
-      MemberModel(
-        id: '5',
-        name: 'Azra Stolz',
-        image: 'https://i.pravatar.cc/150?u=5',
-        role:
-            'Brunch lover, Wine Nights, Game Nights, Movie Lovers, Game Nights',
-      ),
-      MemberModel(
-        id: '6',
-        name: 'Betty Günther',
-        image: 'https://i.pravatar.cc/150?u=6',
-        role:
-            'Brunch lover, Wine Nights, Game Nights, Movie Lovers, Game Nights',
-      ),
-      MemberModel(
-        id: '7',
-        name: 'Marie Spelmeyer',
-        image: 'https://i.pravatar.cc/150?u=7',
-        role:
-            'Brunch lover, Wine Nights, Game Nights, Movie Lovers, Game Nights',
-      ),
-      MemberModel(
-        id: '8',
-        name: 'Marten Demut',
-        image: 'https://i.pravatar.cc/150?u=8',
-        role:
-            'Brunch lover, Wine Nights, Game Nights, Movie Lovers, Game Nights',
-      ),
-      MemberModel(
-        id: '9',
-        name: 'Markus Kinzel',
-        image: 'https://i.pravatar.cc/150?u=9',
-        role:
-            'Brunch lover, Wine Nights, Game Nights, Movie Lovers, Game Nights',
-      ),
-      MemberModel(
-        id: '10',
-        name: 'Nevio Zschunke',
-        image: 'https://i.pravatar.cc/150?u=10',
-        role:
-            'Brunch lover, Wine Nights, Game Nights, Movie Lovers, Game Nights',
-      ),
-      MemberModel(
-        id: '11',
-        name: 'Neele Göhler',
-        image: 'https://i.pravatar.cc/150?u=11',
-        role:
-            'Brunch lover, Wine Nights, Game Nights, Movie Lovers, Game Nights',
-      ),
-    ];
+  List<CircleModel> get filteredPrivateCircles {
+    if (searchQuery.value.isEmpty) return privateCircles;
+    return privateCircles.where((c) => 
+      c.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
+      c.description.toLowerCase().contains(searchQuery.value.toLowerCase())
+    ).toList();
   }
 
-  void _loadMockData() {
-    final mockedDetailedMembers = availableMembers;
-
-    final sharedAvatars = [
-      'https://i.pravatar.cc/150?u=a',
-      'https://i.pravatar.cc/150?u=b',
-      'https://i.pravatar.cc/150?u=c',
-      'https://i.pravatar.cc/150?u=d',
-      'https://i.pravatar.cc/150?u=e',
-    ];
-
-    // Public Circles
-    publicCircles.value = [
-      CircleModel(
-        id: 'pub1',
-        name: "Weekend Hangout Circle",
-        description:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse fermentum, risus pellentesque eleifend pulvinar, tortor mauris dignissim felis, et mattis sapien diam non ex. Sed vitae convallis nulla, sit amet interdum urna. Proin luctus lorem diam, eget finibus nisi commodo ac. Mauris mattis in odio eget interdum. Nunc interdum dui eu mi mollis volutpat.",
-        image:
-            "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=870&auto=format&fit=crop",
-        memberAvatars: sharedAvatars,
-        tags: ["Brunch Lovers", "Wine Nights", "Game Nights", "Movie L"],
-        detailedMembers: mockedDetailedMembers,
-      ),
-      CircleModel(
-        id: 'pub2',
-        name: "Food Lovers Circle",
-        description:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse fermentum, risus pellentesque eleifend pulvinar, tortor mauris dignissim felis, et mattis sapien diam non ex. Sed vitae convallis nulla, sit amet interdum urna. Proin luctus lorem diam, eget finibus nisi commodo ac. Mauris mattis in odio eget interdum. Nunc interdum dui eu mi mollis volutpat.",
-        image:
-            "https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=870&auto=format&fit=crop",
-        memberAvatars: sharedAvatars,
-        tags: ["Foodies", "Coffee Dates", "Picnic & Outdoor Chill"],
-        detailedMembers: mockedDetailedMembers,
-      ),
-    ];
-
-    // Private Circles
-    privateCircles.value = [
-      CircleModel(
-        id: 'pri1',
-        name: "Weekend Hangout Circle",
-        description:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse fermentum, risus pellentesque eleifend pulvinar, tortor mauris dignissim felis, et mattis sapien diam non ex. Sed vitae convallis nulla, sit amet interdum urna. Proin luctus lorem diam, eget finibus nisi commodo ac. Mauris mattis in odio eget interdum. Nunc interdum dui eu mi mollis volutpat.",
-        image:
-            "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=870&auto=format&fit=crop",
-        memberAvatars: sharedAvatars,
-        tags: ["Hiking", "Sports", "Outdoor Fitness", "Dance", "Game"],
-        isLocked: true,
-        price: "\$5.00",
-        address: "Grand city St. 100, New York, United States.",
-        detailedMembers: mockedDetailedMembers,
-      ),
-    ];
-
-    // My Created Circles
-    myCreatedCircles.value = [
-      CircleModel(
-        id: 'myc1',
-        name: "Weekend Hangout Circle",
-        description:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse fermentum, risus pellentesque eleifend pulvinar, tortor mauris dignissim felis, et mattis sapien diam non ex. Sed vitae convallis nulla, sit amet interdum urna. Proin luctus lorem diam, eget finibus nisi commodo ac. Mauris mattis in odio eget interdum. Nunc interdum dui eu mi mollis volutpat.",
-        image:
-            "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=870&auto=format&fit=crop",
-        memberAvatars: sharedAvatars,
-        tags: ["Hiking", "Sports", "Outdoor Fitness", "Dance", "Game"],
-        isLocked: true,
-        isOwner: true,
-        price: "\$5.00",
-        address: "Grand city St. 100, New York, United States.",
-        detailedMembers: mockedDetailedMembers,
-      ),
-    ];
-
-    // My Joined Circles
-    final mockPosts = [
-      PostModel(
-        id: 'p1',
-        userName: 'anny_wilson',
-        userBio: 'Wine Nights, Game Nights',
-        userImage: 'https://i.pravatar.cc/150?u=anny',
-        postText: 'Wine Nights, Game Nights',
-        images: [
-          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=500&auto=format&fit=crop',
-          'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=500&auto=format&fit=crop',
-          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=500&auto=format&fit=crop',
-        ],
-        likesCount: 10389,
-        commentsCount: 5,
-        sharesCount: 7,
-        comments: [
-          CommentModel(
-            id: 'c1',
-            userName: 'Aniy Wilson',
-            userImage: 'https://i.pravatar.cc/150?u=aniyw',
-            text: 'Welcome! Really nice to meet you.',
-            timestamp: '1h',
-          ),
-          CommentModel(
-            id: 'c2',
-            userName: 'Robert Fox',
-            userImage: 'https://i.pravatar.cc/150?u=rob',
-            text: 'Can\'t wait to meet you',
-            timestamp: '22 m',
-          ),
-        ],
-      ),
-    ];
-
-    publicCircles.forEach((c) => c.posts.addAll(mockPosts));
-    privateCircles.forEach((c) => c.posts.addAll(mockPosts));
-    myCreatedCircles.forEach((c) => c.posts.addAll(mockPosts));
-    myJoinedCircles.value = [
-      CircleModel(
-        id: 'myj1',
-        name: "Beach Volleyball Circle",
-        description:
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse fermentum, risus pellentesque eleifend pulvinar, tortor mauris dignissim felis, et mattis sapien diam non ex. Sed vitae convallis nulla, sit amet interdum urna. Proin luctus lorem diam, eget finibus nisi commodo ac. Mauris mattis in odio eget interdum. Nunc interdum dui eu mi mollis volutpat.",
-        image:
-            "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        memberAvatars: sharedAvatars,
-        tags: ["Sports", "Fitness"],
-        isJoined: true,
-        isOwner: false,
-        detailedMembers: mockedDetailedMembers,
-        posts: mockPosts,
-      ),
-      CircleModel(
-        id: 'myj2',
-        name: "Tech & Startup Circle",
-        description:
-            "Join our community of developers, designers, and entrepreneurs. We discuss the latest in tech, share startup tips, and network with like-minded individuals.",
-        image:
-            "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1740&auto=format&fit=crop",
-        memberAvatars: sharedAvatars,
-        tags: ["Tech", "Networking", "Startups"],
-        isJoined: true,
-        isOwner: true,
-        detailedMembers: mockedDetailedMembers,
-        posts: mockPosts,
-      ),
-      CircleModel(
-        id: 'myj3',
-        name: "Digital Nomad Circle",
-        description:
-            "A group for those who work while traveling. Share tips on best co-working spaces, visas, and travel hacks.",
-        image:
-            "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?q=80&w=1740&auto=format&fit=crop",
-        memberAvatars: sharedAvatars,
-        tags: ["Travel", "Remote Work", "Lifestyle"],
-        isJoined: true,
-        isOwner: true,
-        detailedMembers: mockedDetailedMembers,
-        posts: mockPosts,
-      ),
-    ];
+  List<CircleModel> get filteredMyCreatedCircles {
+    if (searchQuery.value.isEmpty) return createdCircles;
+    return createdCircles.where((c) => 
+      c.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
+      c.description.toLowerCase().contains(searchQuery.value.toLowerCase())
+    ).toList();
   }
 
-  // Feed Interaction Methods
-  void toggleLikePost(PostModel post) {
-    if (post.reactionType.value != "none") {
-      updatePostReaction(post, "none");
-    } else {
-      updatePostReaction(post, "like");
+  List<CircleModel> get filteredMyJoinedCircles {
+    if (searchQuery.value.isEmpty) return joinedCircles;
+    return joinedCircles.where((c) => 
+      c.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
+      c.description.toLowerCase().contains(searchQuery.value.toLowerCase())
+    ).toList();
+  }
+
+  // Members related state
+  var availableMembers = <MemberModel>[
+    MemberModel(name: "John Doe", image: "https://i.pravatar.cc/150?u=john", isOwner: false),
+    MemberModel(name: "Jane Smith", image: "https://i.pravatar.cc/150?u=jane", isOwner: false),
+    MemberModel(name: "Mike Johnson", image: "https://i.pravatar.cc/150?u=mike", isOwner: false),
+    MemberModel(name: "Sarah Williams", image: "https://i.pravatar.cc/150?u=sarah", isOwner: false),
+    MemberModel(name: "David Brown", image: "https://i.pravatar.cc/150?u=david", isOwner: false),
+  ].obs;
+
+  List<MemberModel> get filteredAvailableMembers {
+    if (searchQuery.value.isEmpty) return availableMembers;
+    return availableMembers.where((m) => 
+      m.name.toLowerCase().contains(searchQuery.value.toLowerCase())
+    ).toList();
+  }
+
+  Future<void> fetchCircles({String? visibility, String? scope}) async {
+    try {
+      _setLoadingState(visibility, scope, true);
+      
+      final token = SharedPrefsService.getString('accessToken');
+      
+      // Build query params
+      final Map<String, String> params = {};
+      if (visibility != null) params['visibility'] = visibility;
+      if (scope != null) params['scope'] = scope;
+      
+      final queryString = params.entries
+          .map((e) => '${e.key}=${e.value}')
+          .join('&');
+      
+      final url = '${AppUrls.circles}?$queryString';
+      
+      final response = await _apiService.get(
+        url,
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final List<dynamic> circlesJson = data['data'];
+        final circles = circlesJson.map((c) => CircleModel.fromJson(c)).toList();
+        
+        _updateCircleList(visibility, scope, circles);
+      }
+    } catch (e) {
+      debugPrint("Error fetching circles ($visibility, $scope): $e");
+    } finally {
+      _setLoadingState(visibility, scope, false);
     }
   }
 
-  void updatePostReaction(PostModel post, String type) {
-    // If transitioning from none to a reaction
-    if (post.reactionType.value == "none" && type != "none") {
-      post.likesCount.value++;
-      post.isLiked.value = true;
+  Future<void> createCircle({
+    required Map<String, dynamic> circleData,
+    File? imageFile,
+  }) async {
+    try {
+      setLoading(true);
+      final token = SharedPrefsService.getString('accessToken');
+
+      final List<http.MultipartFile> files = [];
+      if (imageFile != null) {
+        final mimeType = lookupMimeType(imageFile.path) ?? 'image/jpeg';
+        final mimeParts = mimeType.split('/');
+        files.add(await http.MultipartFile.fromPath(
+          'image',
+          imageFile.path,
+          contentType: MediaType(mimeParts.first, mimeParts[1]),
+        ));
+      }
+
+      final response = await _apiService.multipartRequest(
+        'POST',
+        AppUrls.circles,
+        headers: {'Authorization': 'Bearer $token'},
+        fields: {
+          'data': jsonEncode(circleData),
+        },
+        files: files,
+      );
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        // Refresh lists
+        fetchCircles(visibility: 'public');
+        fetchCircles(visibility: 'private');
+        fetchCircles(scope: 'created');
+        
+        Get.back(); // Go back to previous screen
+        
+        // Use a small delay to ensure the screen transition is stable before showing snackbar
+        Future.delayed(const Duration(milliseconds: 500), () {
+          Get.snackbar(
+            'Success',
+            'Circle created successfully',
+            snackPosition: SnackPosition.TOP,
+            backgroundColor: Colors.green.withOpacity(0.9),
+            colorText: Colors.white,
+            icon: const Icon(Icons.check_circle, color: Colors.white),
+            margin: const EdgeInsets.all(15),
+            borderRadius: 12,
+            duration: const Duration(seconds: 3),
+            snackStyle: SnackStyle.FLOATING,
+          );
+        });
+      } else {
+        Get.snackbar(
+          'Error', 
+          data['message'] ?? 'Failed to create circle',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.red.withOpacity(0.9),
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      debugPrint("Error creating circle: $e");
+      Get.snackbar('Error', 'An unexpected error occurred');
+    } finally {
+      setLoading(false);
     }
-    // If transitioning from a reaction to none
-    else if (post.reactionType.value != "none" && type == "none") {
-      post.likesCount.value--;
-      post.isLiked.value = false;
+  }
+
+  void _setLoadingState(String? visibility, String? scope, bool value) {
+    if (scope == 'created') {
+      isLoadingCreated.value = value;
+    } else if (scope == 'joined') {
+      isLoadingJoined.value = value;
+    } else if (visibility == 'public') {
+      isLoadingPublic.value = value;
+    } else if (visibility == 'private') {
+      isLoadingPrivate.value = value;
     }
+  }
+
+  void _updateCircleList(String? visibility, String? scope, List<CircleModel> circles) {
+    if (scope == 'created') {
+      createdCircles.value = circles;
+    } else if (scope == 'joined') {
+      joinedCircles.value = circles;
+    } else if (visibility == 'public') {
+      publicCircles.value = circles;
+    } else if (visibility == 'private') {
+      privateCircles.value = circles;
+    }
+  }
+
+  // Placeholder methods for UI interaction
+  void editCircle(CircleModel circle) {
+    debugPrint("Edit circle: ${circle.name}");
+    // TODO: Implement edit logic
+  }
+
+  void deleteCircle(CircleModel circle) {
+    debugPrint("Delete circle: ${circle.name}");
+    // TODO: Implement delete logic
+  }
+
+  void lockCircle(CircleModel circle) {
+    debugPrint("Lock circle: ${circle.name}");
+    // TODO: Implement lock logic
+  }
+
+  void createPost(CircleModel circle, String text) {
+    if (text.isEmpty) return;
     
-    post.reactionType.value = type;
+    final newPost = PostModel(
+      id: DateTime.now().toString(),
+      userName: "Current User",
+      userImage: "https://i.pravatar.cc/150?u=me",
+      postText: text,
+      likesCount: 0,
+      commentsCount: 0,
+    );
+    
+    circle.posts.insert(0, newPost);
+    circle.postCount.value++;
+    Get.back(); // Close sheet
+    Get.snackbar("Success", "Post created successfully");
+  }
+
+  void toggleLikePost(PostModel post) {
+    post.isLiked.value = !post.isLiked.value;
+    if (post.isLiked.value) {
+      post.likesCount.value++;
+    } else {
+      post.likesCount.value--;
+    }
   }
 
   void toggleCommentInput(PostModel post) {
-    post.isCommenting.toggle();
+    post.isCommenting.value = !post.isCommenting.value;
   }
 
   void addComment(PostModel post, String text) {
     if (text.isEmpty) return;
-
+    // Dummy comment
     final newComment = CommentModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      userName: 'Me',
-      userImage: 'https://i.pravatar.cc/150?u=me',
+      id: DateTime.now().toString(),
+      userName: "Current User",
+      userImage: "https://i.pravatar.cc/150?u=me",
       text: text,
-      timestamp: 'Just now',
+      timestamp: "Just now",
     );
-
-    post.comments.add(newComment);
+    post.comments.insert(0, newComment);
     post.commentsCount.value++;
     post.isCommenting.value = false;
   }
 
+  void updatePostReaction(PostModel post, String type) {
+    post.reactionType.value = type;
+  }
+
   void toggleLikeComment(CommentModel comment) {
+    comment.isLiked.value = !comment.isLiked.value;
     if (comment.isLiked.value) {
-      comment.isLiked.value = false;
-      comment.likesCount.value--;
-    } else {
-      comment.isLiked.value = true;
       comment.likesCount.value++;
+    } else {
+      comment.likesCount.value--;
     }
   }
 
   void toggleReplyInput(CommentModel comment) {
-    comment.showReplyInput.toggle();
+    comment.showReplyInput.value = !comment.showReplyInput.value;
   }
 
   void addReply(CommentModel comment, String text) {
     if (text.isEmpty) return;
-
     final newReply = CommentModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      userName: 'Me',
-      userImage: 'https://i.pravatar.cc/150?u=me',
+      id: DateTime.now().toString(),
+      userName: "Current User",
+      userImage: "https://i.pravatar.cc/150?u=me",
       text: text,
-      timestamp: 'Just now',
+      timestamp: "Just now",
     );
-
     comment.replies.add(newReply);
     comment.showReplyInput.value = false;
   }
 
-  void editCircle(CircleModel circle) {
-    Get.snackbar(
-      "Action",
-      "Opening edit screen for ${circle.name}",
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColors.primary.withOpacity(0.1),
-    );
-  }
-
-  void deleteCircle(CircleModel circle) {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.r),
-        ),
-        title: Text(
-          "Delete Circle",
-          style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-        ),
-        content: Text(
-          "Are you sure you want to delete '${circle.name}'? This action cannot be undone.",
-          style: GoogleFonts.inter(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text("Cancel", style: GoogleFonts.inter(color: Colors.grey)),
-          ),
-          TextButton(
-            onPressed: () {
-              Get.back();
-              Get.snackbar(
-                "Deleted",
-                "Circle '${circle.name}' has been deleted",
-                snackPosition: SnackPosition.BOTTOM,
-                backgroundColor: Colors.red.withOpacity(0.1),
-              );
-            },
-            child: Text(
-              "Delete",
-              style: GoogleFonts.inter(
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void lockCircle(CircleModel circle) {
-    // Navigate to subscription plan for unlocking/locking logic
-    Get.toNamed(AppRoutes.SUBSCRIPTION_PLAN);
-
-    Get.snackbar(
-      "Subscription",
-      "Redirecting to subscription plan to manage circle status",
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColors.primary.withOpacity(0.1),
-    );
-  }
-
   void addMemberToCircle(CircleModel circle, MemberModel member) {
-    Get.snackbar(
-      "Success",
-      "${member.name} has been added to ${circle.name}",
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green.withOpacity(0.1),
-    );
-  }
-
-  void createPost(
-    CircleModel circle,
-    String text, {
-    List<String> images = const [],
-  }) {
-    if (text.isEmpty && images.isEmpty) return;
-
-    final newPost = PostModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      userName: 'Andrew Ainsley', // Matches the screenshot profile
-      userBio: 'Bonded User',
-      userImage: 'https://i.pravatar.cc/150?u=andrew',
-      postText: text,
-      images: images,
-      likesCount: 0,
-      commentsCount: 0,
-      sharesCount: 0,
-    );
-
-    circle.posts.insert(0, newPost);
-    Get.back(); // Close the sheet
-    Get.snackbar(
-      "Post Created",
-      "Your post has been shared in ${circle.name}",
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: AppColors.primary.withOpacity(0.1),
-    );
+    debugPrint("Adding ${member.name} to ${circle.name}");
+    // Simulate adding to circle
+    circle.detailedMembers.add(member);
+    circle.memberCount.value++;
+    Get.snackbar("Success", "${member.name} added to circle");
+    Get.back();
   }
 }

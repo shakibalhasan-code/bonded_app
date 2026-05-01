@@ -222,48 +222,44 @@ class _CirclePostItemState extends State<CirclePostItem> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           Obx(() {
-            // Defensive check for potential null or uninitialized state
-            if (widget.post.reactionType == null) {
-              return _buildActionButton(Icons.thumb_up_outlined, "Like", 
-                onTap: () => controller.toggleLikePost(widget.post));
-            }
-
             final reaction = widget.post.reactionType.value;
             IconData icon = Icons.thumb_up_outlined;
             Color color = AppColors.textHeading;
             String label = "Like";
             String emoji = "";
 
-            switch (reaction) {
-              case "like":
-                icon = Icons.thumb_up;
-                color = Colors.blue;
-                label = "Like";
-                break;
-              case "love":
-                emoji = "❤️";
-                label = "Love";
-                break;
-              case "care":
-                emoji = "🤗";
-                label = "Care";
-                break;
-              case "haha":
-                emoji = "😆";
-                label = "Haha";
-                break;
-              case "wow":
-                emoji = "😮";
-                label = "Wow";
-                break;
-              case "sad":
-                emoji = "😢";
-                label = "Sad";
-                break;
-              case "angry":
-                emoji = "😡";
-                label = "Angry";
-                break;
+            if (reaction != "none") {
+              switch (reaction) {
+                case "like":
+                  icon = Icons.thumb_up;
+                  color = Colors.blue;
+                  label = "Like";
+                  break;
+                case "love":
+                  emoji = "❤️";
+                  label = "Love";
+                  break;
+                case "care":
+                  emoji = "🤗";
+                  label = "Care";
+                  break;
+                case "haha":
+                  emoji = "😆";
+                  label = "Haha";
+                  break;
+                case "wow":
+                  emoji = "😮";
+                  label = "Wow";
+                  break;
+                case "sad":
+                  emoji = "😢";
+                  label = "Sad";
+                  break;
+                case "angry":
+                  emoji = "😡";
+                  label = "Angry";
+                  break;
+              }
             }
 
             return GestureDetector(

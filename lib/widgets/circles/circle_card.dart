@@ -43,10 +43,18 @@ class CircleCard extends StatelessWidget {
                     top: Radius.circular(20.r),
                   ),
                   child: Image.network(
-                    circle.image,
+                    circle.image.isNotEmpty ? circle.image : _getPlaceholderImage(circle.id),
                     height: 180.h,
                     width: double.infinity,
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Image.network(
+                        _getPlaceholderImage(circle.id),
+                        height: 180.h,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      );
+                    },
                   ),
                 ),
                 if (circle.isLocked)
@@ -116,7 +124,7 @@ class CircleCard extends StatelessWidget {
                   SizedBox(height: 16.h),
                   if (circle.isLocked)
                     _buildUnlockAction()
-                  else if (circle.isJoined.value && !circle.isOwner)
+                  else if (!circle.isJoined.value && !circle.isOwner)
                     AppButton(text: "Join Circle", onPressed: () {}),
                 ],
               ),
@@ -125,6 +133,21 @@ class CircleCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getPlaceholderImage(String id) {
+    final List<String> placeholders = [
+      'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&q=80', // Festival
+      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&q=80', // Event
+      'https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=800&q=80', // Party
+      'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=80', // Activity
+      'https://images.unsplash.com/photo-1505236858219-8359eb29e329?w=800&q=80', // Gathering
+      'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&q=80', // Nightlife
+      'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&q=80', // Concert
+    ];
+    // Use the circle ID to pick a consistent image from the list
+    int index = id.hashCode % placeholders.length;
+    return placeholders[index.abs()];
   }
 
   Widget _buildAvatarStack(List<String> avatars) {

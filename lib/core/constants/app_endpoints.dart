@@ -17,4 +17,5 @@ class AppUrls {
   static const String updateProfile = '/user/me';
   static const String updateAvatar = '/user/me/avatar';
   static const String getInterests = '/interests';
+  static const String circles = '/circles';
 }

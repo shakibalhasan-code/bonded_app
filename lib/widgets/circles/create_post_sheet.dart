@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/circle_model.dart';
 import '../../controllers/circle_controller.dart';
+import '../../controllers/auth_controller.dart';
 
 class CreatePostSheet extends StatelessWidget {
   final CircleModel circle;
@@ -53,23 +54,29 @@ class CreatePostSheet extends StatelessWidget {
           SizedBox(height: 16.h),
 
           // User Header
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 20.r,
-                backgroundImage: const NetworkImage('https://i.pravatar.cc/150?u=andrew'),
-              ),
-              SizedBox(width: 12.w),
-              Text(
-                "Andrew Ainsley",
-                style: GoogleFonts.inter(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
+          Obx(() {
+            final authController = Get.find<AuthController>();
+            final user = authController.currentUser.value;
+            if (user == null) return const SizedBox.shrink();
+            
+            return Row(
+              children: [
+                CircleAvatar(
+                  radius: 20.r,
+                  backgroundImage: NetworkImage(user.avatar ?? 'https://i.pravatar.cc/150?u=me'),
                 ),
-              ),
-            ],
-          ),
+                SizedBox(width: 12.w),
+                Text(
+                  user.fullName ?? user.username ?? "User",
+                  style: GoogleFonts.inter(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            );
+          }),
           SizedBox(height: 20.h),
 
           // Input

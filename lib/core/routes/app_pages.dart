@@ -48,6 +48,7 @@ import '../../screens/messages/chat_screen.dart';
 import '../../screens/bond/nearby_people_screen.dart';
 import '../../core/bindings/profile_binding.dart';
 import '../../core/bindings/auth_binding.dart';
+import '../../core/bindings/circle_binding.dart';
 import 'app_routes.dart';
 
 
@@ -90,7 +91,11 @@ class AppPages {
       name: AppRoutes.PROFILE_READY,
       page: () => const ProfileReadyScreen(),
     ),
-    GetPage(name: AppRoutes.MAIN, page: () => const MainWrapper()),
+    GetPage(
+      name: AppRoutes.MAIN, 
+      page: () => const MainWrapper(),
+      binding: CircleBinding(),
+    ),
     GetPage(
       name: '/home', // Alias for MAIN
       page: () => const MainWrapper(),
@@ -159,10 +164,12 @@ class AppPages {
     GetPage(
       name: AppRoutes.CREATE_CIRCLE,
       page: () => const CreateCircleScreen(),
+      binding: CircleBinding(),
     ),
     GetPage(
       name: AppRoutes.ALL_CIRCLES,
       page: () => const AllCirclesScreen(),
+      binding: CircleBinding(),
     ),
     GetPage(
       name: AppRoutes.BOND_PROFILE,
