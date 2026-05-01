@@ -19,4 +19,12 @@ class AppUrls {
   static const String updateAvatar = '/user/me/avatar';
   static const String getInterests = '/interests';
   static const String circles = '/circles';
+
+  // Bond Endpoints
+  static const String nearbyBonds = '/bonds/nearby';
+  static const String incomingRequests = '/bonds/requests/incoming';
+  static const String outgoingRequests = '/bonds/requests/outgoing';
+  static const String myBonds = '/bonds/connections';
+  static const String bondRequests = '/bonds/requests';
+  static const String bonds = '/bonds';
 }

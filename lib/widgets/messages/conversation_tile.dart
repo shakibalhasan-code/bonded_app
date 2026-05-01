@@ -23,16 +23,17 @@ class ConversationTile extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(20.r),
               child: conversation.user.avatar != null && conversation.user.avatar!.isNotEmpty
-                  ? Image.network(
-                      conversation.user.avatar!.startsWith('http')
-                          ? conversation.user.avatar!
-                          : 'https://bonded-backend.onrender.com/${conversation.user.avatar}',
-                      width: 60.w,
-                      height: 60.w,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
-                    )
-                  : _buildPlaceholder(),
+                      ? Image.network(
+                          conversation.user.avatar!.startsWith('http')
+                              ? conversation.user.avatar!
+                              : 'https://bonded-backend.onrender.com/${conversation.user.avatar}',
+                          width: 60.w,
+                          height: 60.w,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              _buildPlaceholder(conversation.user.fullName),
+                        )
+                      : _buildPlaceholder(conversation.user.fullName),
             ),
             SizedBox(width: 16.w),
 
@@ -42,7 +43,9 @@ class ConversationTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    conversation.user.fullName ?? conversation.user.username ?? "Unknown User",
+                    conversation.user.fullName ??
+                        conversation.user.username ??
+                        "Unknown User",
                     style: GoogleFonts.inter(
                       fontSize: 18.sp,
                       fontWeight: FontWeight.w700,
@@ -101,12 +104,12 @@ class ConversationTile extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholder() {
-    return Container(
+  Widget _buildPlaceholder(String? name) {
+    return Image.network(
+      'https://ui-avatars.com/api/?name=${name ?? 'User'}&background=F0EDFF&color=6200EE&bold=true',
       width: 60.w,
       height: 60.w,
-      color: Colors.grey[200],
-      child: Icon(Icons.person, color: Colors.grey[400]),
+      fit: BoxFit.cover,
     );
   }
 }

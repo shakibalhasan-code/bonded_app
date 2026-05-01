@@ -63,9 +63,10 @@ class BondProfileScreen extends StatelessWidget {
                                 width: 100.w,
                                 height: 100.w,
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                                errorBuilder: (context, error, stackTrace) =>
+                                    _buildPlaceholder(user.fullName),
                               )
-                            : _buildPlaceholder(),
+                            : _buildPlaceholder(user.fullName),
                       ),
                       if (user.selfieVerification == 'verified')
                         Positioned(
@@ -199,15 +200,12 @@ class BondProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholder() {
-    return Container(
+  Widget _buildPlaceholder(String? name) {
+    return Image.network(
+      'https://ui-avatars.com/api/?name=${name ?? 'User'}&background=F0EDFF&color=6200EE&bold=true',
       width: 100.w,
       height: 100.w,
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(20.r),
-      ),
-      child: Icon(Icons.person, color: Colors.grey[400], size: 40.sp),
+      fit: BoxFit.cover,
     );
   }
 

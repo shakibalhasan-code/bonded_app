@@ -178,37 +178,84 @@ class BondScreen extends StatelessWidget {
 
   Widget _buildRequestTab(BondController controller) {
     return RefreshIndicator(
-      onRefresh: controller.fetchIncomingRequests,
+      onRefresh: () async {
+        if (controller.showOutgoingRequests.value) {
+          await controller.fetchOutgoingRequests();
+        } else {
+          await controller.fetchIncomingRequests();
+        }
+      },
       child: Padding(
         padding: EdgeInsets.all(16.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Bond Request for you",
-              style: GoogleFonts.inter(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF1B0B3B),
-              ),
-            ),
-            SizedBox(height: 16.h),
-            Expanded(
-              child: Obx(
-                () => controller.isLoadingRequests.value
-                    ? const Center(child: CircularProgressIndicator())
-                    : controller.filteredBondRequests.isEmpty
-                    ? const Center(child: Text("No incoming requests"))
-                    : ListView.builder(
-                        itemCount: controller.filteredBondRequests.length,
-                        itemBuilder: (context, index) {
-                          return BondUserCard(
-                            connection: controller.filteredBondRequests[index],
-                            status: BondStatus.requested,
-                          );
-                        },
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Obx(
+                  () => Text(
+                    controller.showOutgoingRequests.value
+                        ? "Bond Request Sent"
+                        : "Bond Request for you",
+                    style: GoogleFonts.inter(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1B0B3B),
+                    ),
+                  ),
+                ),
+                Obx(
+                  () => TextButton(
+                    onPressed: () => controller.showOutgoingRequests.toggle(),
+                    child: Text(
+                      controller.showOutgoingRequests.value
+                          ? "View incoming"
+                          : "View sent",
+                      style: GoogleFonts.inter(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
                       ),
-              ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8.h),
+            Expanded(
+              child: Obx(() {
+                final isLoading = controller.showOutgoingRequests.value
+                    ? controller.isLoadingOutgoing.value
+                    : controller.isLoadingRequests.value;
+
+                if (isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final list = controller.filteredBondRequests;
+                if (list.isEmpty) {
+                  return Center(
+                    child: Text(
+                      controller.showOutgoingRequests.value
+                          ? "No outgoing requests"
+                          : "No incoming requests",
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: list.length,
+                  itemBuilder: (context, index) {
+                    return BondUserCard(
+                      connection: list[index],
+                      status: controller.showOutgoingRequests.value
+                          ? BondStatus.outgoing
+                          : BondStatus.requested,
+                    );
+                  },
+                );
+              }),
             ),
           ],
         ),

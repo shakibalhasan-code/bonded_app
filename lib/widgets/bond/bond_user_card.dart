@@ -11,11 +11,8 @@ class BondUserCard extends StatelessWidget {
   final BondConnectionModel connection;
   final BondStatus status;
 
-  const BondUserCard({
-    Key? key, 
-    required this.connection,
-    required this.status,
-  }) : super(key: key);
+  const BondUserCard({Key? key, required this.connection, required this.status})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -46,15 +43,16 @@ class BondUserCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12.r),
                   child: user.avatar != null && user.avatar!.isNotEmpty
                       ? Image.network(
-                          user.avatar!.startsWith('http') 
-                              ? user.avatar! 
+                          user.avatar!.startsWith('http')
+                              ? user.avatar!
                               : 'https://bonded-backend.onrender.com/${user.avatar}',
                           width: 60.w,
                           height: 60.w,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+                          errorBuilder: (context, error, stackTrace) =>
+                              _buildPlaceholder(user.fullName),
                         )
-                      : _buildPlaceholder(),
+                      : _buildPlaceholder(user.fullName),
                 ),
                 SizedBox(width: 12.w),
                 Expanded(
@@ -71,7 +69,8 @@ class BondUserCard extends StatelessWidget {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        user.interests?.map((i) => i.name).take(3).join(', ') ?? "No interests",
+                        user.interests?.map((i) => i.name).take(3).join(', ') ??
+                            "No interests",
                         style: GoogleFonts.inter(
                           fontSize: 12.sp,
                           color: Colors.grey[600],
@@ -82,14 +81,11 @@ class BondUserCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (status == BondStatus.bonded)
-                  _buildMessageIcon(user),
+                if (status == BondStatus.bonded) _buildMessageIcon(user),
               ],
             ),
             if (status != BondStatus.bonded) ...[
-              SizedBox(height: 16.h),
-              const Divider(),
-              SizedBox(height: 16.h),
+              SizedBox(height: 12.h),
               _buildActionRow(controller),
             ],
           ],
@@ -98,12 +94,12 @@ class BondUserCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholder() {
-    return Container(
+  Widget _buildPlaceholder(String? name) {
+    return Image.network(
+      'https://thumbs.dreamstime.com/b/portrait-black-woman-professional-smile-office-smart-casual-fashion-corporate-career-workplace-company-female-312731545.jpg',
       width: 60.w,
       height: 60.w,
-      color: Colors.grey[200],
-      child: Icon(Icons.person, color: Colors.grey[400]),
+      fit: BoxFit.cover,
     );
   }
 
@@ -116,12 +112,17 @@ class BondUserCard extends StatelessWidget {
               onPressed: () => controller.sendBondRequest(connection.user.id),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.r)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.r),
+                ),
                 padding: EdgeInsets.symmetric(vertical: 12.h),
               ),
               child: Text(
                 "Let’s Bond",
-                style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.white),
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
@@ -132,31 +133,68 @@ class BondUserCard extends StatelessWidget {
         children: [
           Expanded(
             child: ElevatedButton(
-              onPressed: () => controller.rejectBondRequest(connection.bondId ?? ""),
+              onPressed: () =>
+                  controller.rejectBondRequest(connection.bondId ?? ""),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFF0EDFF),
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.r)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.r),
+                ),
                 padding: EdgeInsets.symmetric(vertical: 12.h),
               ),
               child: Text(
                 "Reject",
-                style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: AppColors.primary),
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
               ),
             ),
           ),
           SizedBox(width: 12.w),
           Expanded(
             child: ElevatedButton(
-              onPressed: () => controller.acceptBondRequest(connection.bondId ?? ""),
+              onPressed: () =>
+                  controller.acceptBondRequest(connection.bondId ?? ""),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.r)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.r),
+                ),
                 padding: EdgeInsets.symmetric(vertical: 12.h),
               ),
               child: Text(
                 "Accept",
-                style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.white),
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    } else if (status == BondStatus.outgoing) {
+      return Row(
+        children: [
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () => controller.cancelBondRequest(connection.bondId ?? ""),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFAF7FF),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.r),
+                ),
+                padding: EdgeInsets.symmetric(vertical: 12.h),
+              ),
+              child: Text(
+                "Cancel Request",
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
               ),
             ),
           ),
@@ -175,7 +213,11 @@ class BondUserCard extends StatelessWidget {
           color: const Color(0xFFF0EDFF),
           shape: BoxShape.circle,
         ),
-        child: Icon(Icons.chat_bubble_outline, color: AppColors.primary, size: 20.sp),
+        child: Icon(
+          Icons.chat_bubble_outline,
+          color: AppColors.primary,
+          size: 20.sp,
+        ),
       ),
     );
   }

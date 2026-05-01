@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 import 'user_model.dart';
 
-enum BondStatus { nearby, requested, bonded, pending }
+enum BondStatus { nearby, requested, bonded, pending, outgoing }
 
 class BondConnectionModel {
   final String? bondId;
