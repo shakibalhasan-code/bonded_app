@@ -63,16 +63,38 @@ class MessagesScreen extends StatelessWidget {
           ),
           Expanded(
             child: Obx(
-              () => ListView.separated(
-                padding: EdgeInsets.only(top: 8.h, bottom: 100.h),
-                itemCount: controller.filteredConversations.length,
-                separatorBuilder: (context, index) => const Divider(height: 1),
-                itemBuilder: (context, index) {
-                  return ConversationTile(
-                    conversation: controller.filteredConversations[index],
-                  );
-                },
-              ),
+              () => controller.isLoading.value
+                  ? const Center(child: CircularProgressIndicator())
+                  : RefreshIndicator(
+                      onRefresh: controller.fetchConversations,
+                      child: controller.filteredConversations.isEmpty
+                          ? ListView(
+                              children: [
+                                SizedBox(height: 200.h),
+                                Center(
+                                  child: Text(
+                                    "No messages yet",
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14.sp,
+                                      color: Colors.grey[400],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : ListView.separated(
+                              padding: EdgeInsets.only(top: 8.h, bottom: 100.h),
+                              itemCount: controller.filteredConversations.length,
+                              separatorBuilder: (context, index) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                return ConversationTile(
+                                  conversation:
+                                      controller.filteredConversations[index],
+                                );
+                              },
+                            ),
+                    ),
             ),
           ),
         ],

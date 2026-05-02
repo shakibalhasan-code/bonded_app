@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../models/conversation_model.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/routes/app_routes.dart';
+import '../../core/constants/app_endpoints.dart';
 
 class ConversationTile extends StatelessWidget {
   final ConversationModel conversation;
@@ -19,21 +20,16 @@ class ConversationTile extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
         child: Row(
           children: [
-            // Avatar
             ClipRRect(
               borderRadius: BorderRadius.circular(20.r),
-              child: conversation.user.avatar != null && conversation.user.avatar!.isNotEmpty
-                      ? Image.network(
-                          conversation.user.avatar!.startsWith('http')
-                              ? conversation.user.avatar!
-                              : 'https://bonded-backend.onrender.com/${conversation.user.avatar}',
-                          width: 60.w,
-                          height: 60.w,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              _buildPlaceholder(conversation.user.fullName),
-                        )
-                      : _buildPlaceholder(conversation.user.fullName),
+              child: Image.network(
+                AppUrls.imageUrl(conversation.user.avatar),
+                width: 60.w,
+                height: 60.w,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    _buildPlaceholder(conversation.user.fullName),
+              ),
             ),
             SizedBox(width: 16.w),
 
@@ -89,7 +85,7 @@ class ConversationTile extends StatelessWidget {
                     ),
                   ),
                 Text(
-                  conversation.time,
+                  conversation.timeFormatted,
                   style: GoogleFonts.inter(
                     fontSize: 12.sp,
                     color: Colors.grey[500],

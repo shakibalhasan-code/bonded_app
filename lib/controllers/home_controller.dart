@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import '../models/home_models.dart';
+import '../services/socket_service.dart';
 
 class HomeController extends GetxController {
   // Mock data for Circle Highlights using models
@@ -9,6 +10,8 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     _loadMockData();
+    // Initialize Socket Connection
+    Get.find<SocketService>().initSocket();
   }
 
   void _loadMockData() {

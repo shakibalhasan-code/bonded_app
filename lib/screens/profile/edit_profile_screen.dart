@@ -60,13 +60,7 @@ class EditProfileScreen extends StatelessWidget {
                             );
                           } else {
                             final avatar = user?.avatar;
-                            imageProvider = NetworkImage(
-                              (avatar != null && avatar.isNotEmpty)
-                                  ? (avatar.startsWith('http')
-                                        ? avatar
-                                        : '${AppUrls.baseUrl.replaceAll('/api/v1', '')}/$avatar')
-                                  : 'https://i.pravatar.cc/150?u=${user?.email}',
-                            );
+                            imageProvider = NetworkImage(AppUrls.imageUrl(avatar));
                           }
                           return Container(
                             width: 100.w,
@@ -92,7 +86,7 @@ class EditProfileScreen extends StatelessWidget {
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
-                                Icons.edit,
+                                Icons.camera_alt,
                                 color: Colors.white,
                                 size: 16.sp,
                               ),
@@ -101,14 +95,35 @@ class EditProfileScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    SizedBox(height: 12.h),
-                    Text(
-                      "Profile Picture",
-                      style: GoogleFonts.inter(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    Obx(() => controller.profileImagePath.value.isNotEmpty
+                        ? Padding(
+                            padding: EdgeInsets.only(top: 12.h),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                IconButton(
+                                  onPressed: controller.uploadPickedAvatar,
+                                  icon: const Icon(Icons.check_circle, color: Colors.green),
+                                  iconSize: 32.sp,
+                                ),
+                                IconButton(
+                                  onPressed: () => controller.profileImagePath.value = '',
+                                  icon: const Icon(Icons.cancel, color: Colors.red),
+                                  iconSize: 32.sp,
+                                ),
+                              ],
+                            ),
+                          )
+                        : Padding(
+                            padding: EdgeInsets.only(top: 12.h),
+                            child: Text(
+                              "Profile Picture",
+                              style: GoogleFonts.inter(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          )),
                   ],
                 ),
               ),
@@ -247,8 +262,8 @@ class EditProfileScreen extends StatelessWidget {
                   text: controller.currentAddress.value.isEmpty
                       ? "Pick Location"
                       : controller.currentAddress.value,
-                  icon: Icons.my_location,
-                  //  trailingIcon: Icons.my_location,
+                  icon: Icons.map,
+                  trailingIcon: Icons.my_location,
                   onTrailingIconTap: controller.fetchCurrentLocation,
                   onTap: () => Get.to(() => const MapSelectionScreen()),
                 ),

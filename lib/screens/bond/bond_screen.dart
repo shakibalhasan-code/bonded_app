@@ -158,7 +158,15 @@ class BondScreen extends StatelessWidget {
                 () => controller.isLoadingNearby.value
                     ? const Center(child: CircularProgressIndicator())
                     : controller.filteredNearbyPeople.isEmpty
-                    ? const Center(child: Text("No one nearby found"))
+                    ? Center(
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: SizedBox(
+                            height: 400.h,
+                            child: const Center(child: Text("No one nearby found")),
+                          ),
+                        ),
+                      )
                     : ListView.builder(
                         itemCount: controller.filteredNearbyPeople.length,
                         itemBuilder: (context, index) {
@@ -236,10 +244,18 @@ class BondScreen extends StatelessWidget {
                 final list = controller.filteredBondRequests;
                 if (list.isEmpty) {
                   return Center(
-                    child: Text(
-                      controller.showOutgoingRequests.value
-                          ? "No outgoing requests"
-                          : "No incoming requests",
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: SizedBox(
+                        height: 400.h,
+                        child: Center(
+                          child: Text(
+                            controller.showOutgoingRequests.value
+                                ? "No outgoing requests"
+                                : "No incoming requests",
+                          ),
+                        ),
+                      ),
                     ),
                   );
                 }
@@ -285,7 +301,15 @@ class BondScreen extends StatelessWidget {
                 () => controller.isLoadingMyBonds.value
                     ? const Center(child: CircularProgressIndicator())
                     : controller.filteredMyBonds.isEmpty
-                    ? const Center(child: Text("You have no bonds yet"))
+                    ? Center(
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: SizedBox(
+                            height: 400.h,
+                            child: const Center(child: Text("You have no bonds yet")),
+                          ),
+                        ),
+                      )
                     : ListView.builder(
                         itemCount: controller.filteredMyBonds.length,
                         itemBuilder: (context, index) {

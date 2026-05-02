@@ -36,14 +36,26 @@ class ProfileController extends BaseController {
   @override
   void onInit() {
     super.onInit();
-    cityController.text = selectedCity.value;
     fetchInterests();
+    
     final authController = Get.find<AuthController>();
-    authController.fetchUserProfile().then((_) {
-      if (authController.currentUser.value != null) {
-        initializeControllers(authController.currentUser.value!);
+    
+    // 1. Listen for user changes and update controllers automatically
+    // This ensures that whenever the profile is fetched or updated, 
+    // the edit fields reflect the latest data.
+    ever(authController.currentUser, (UserModel? user) {
+      if (user != null) {
+        initializeControllers(user);
       }
     });
+
+    // 2. Immediate initialization if data already exists
+    if (authController.currentUser.value != null) {
+      initializeControllers(authController.currentUser.value!);
+    }
+    
+    // 3. Background refresh to ensure we have the absolute latest data
+    authController.fetchUserProfile();
   }
 
   void initializeControllers(UserModel user) {
@@ -52,8 +64,21 @@ class ProfileController extends BaseController {
     bioController.text = user.bio ?? '';
     phoneController.text = user.phone ?? '';
     selectedCountryCode.value = user.phoneCountryCode ?? '+1';
-    dateOfBirth.value = user.dateOfBirth ?? '';
-    selectedGender.value = user.gender?.capitalizeFirst ?? 'Male';
+    // Format date of birth to YYYY-MM-DD if it's an ISO string
+    if (user.dateOfBirth != null && user.dateOfBirth!.contains('T')) {
+      try {
+        final date = DateTime.parse(user.dateOfBirth!);
+        dateOfBirth.value = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+      } catch (e) {
+        dateOfBirth.value = user.dateOfBirth!;
+      }
+    } else {
+      dateOfBirth.value = user.dateOfBirth ?? '';
+    }
+
+    selectedGender.value = (user.gender != null && user.gender!.isNotEmpty) 
+        ? user.gender!.capitalizeFirst! 
+        : 'Male';
     selectedCountry.value = user.country ?? 'United States of America';
     selectedCity.value = user.city ?? 'New Jersey';
     cityController.text = user.city ?? '';
@@ -410,10 +435,30 @@ class ProfileController extends BaseController {
       );
 
       final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        // Update global user state with new avatar
+        final authController = Get.find<AuthController>();
+        authController.currentUser.value = UserModel.fromJson(data['data']['user']);
+      }
       return data['success'] == true;
     } catch (e) {
       debugPrint("Error updating avatar: $e");
       return false;
+    }
+  }
+
+  Future<void> uploadPickedAvatar() async {
+    if (profileImagePath.value.isEmpty) return;
+    
+    setLoading(true);
+    final success = await updateAvatar();
+    setLoading(false);
+
+    if (success) {
+      profileImagePath.value = '';
+      Get.snackbar('Success', 'Profile picture updated successfully');
+    } else {
+      Get.snackbar('Error', 'Failed to upload profile picture');
     }
   }
 }

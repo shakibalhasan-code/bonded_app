@@ -1,5 +1,7 @@
 class AppUrls {
-  static const String baseUrl = 'https://nwqs97k3-5002.asse.devtunnels.ms/api/v1';
+  static const String baseUrl =
+      'https://nwqs97k3-5002.asse.devtunnels.ms/api/v1';
+  static const String socket = 'https://nwqs97k3-5002.asse.devtunnels.ms';
 
   // Auth Endpoints
   static const String login = '/auth/login';
@@ -27,4 +29,16 @@ class AppUrls {
   static const String myBonds = '/bonds/connections';
   static const String bondRequests = '/bonds/requests';
   static const String bonds = '/bonds';
+
+  // Chat Endpoints
+  static const String directChat = '/chat/direct'; // POST /chat/direct/:userId
+  static const String conversations = '/chat/conversations';
+  static String conversationMessages(String id) =>
+      '/chat/conversations/$id/messages';
+  static String imageUrl(String? path) {
+    if (path == null || path.isEmpty) return 'https://i.pravatar.cc/150';
+    if (path.startsWith('http')) return path;
+    final serverUrl = baseUrl.split('/api/v1').first;
+    return '$serverUrl/$path';
+  }
 }

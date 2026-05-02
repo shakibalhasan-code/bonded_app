@@ -27,6 +27,7 @@ class UserModel {
   final int reviewCount;
   final UserPreferences? preferences;
   final List<String>? connectionType;
+  final String? stripeConnectAccountId;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -57,6 +58,7 @@ class UserModel {
     required this.reviewCount,
     this.preferences,
     this.connectionType,
+    this.stripeConnectAccountId,
     this.createdAt,
     this.updatedAt,
   });
@@ -98,6 +100,7 @@ class UserModel {
       connectionType: json['connectionType'] != null
           ? List<String>.from(json['connectionType'])
           : null,
+      stripeConnectAccountId: json['stripeConnectAccountId'],
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : null,
@@ -135,6 +138,7 @@ class UserModel {
       'reviewCount': reviewCount,
       'preferences': preferences?.toJson(),
       'connectionType': connectionType,
+      'stripeConnectAccountId': stripeConnectAccountId,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
     };

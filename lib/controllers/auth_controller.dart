@@ -6,6 +6,7 @@ import '../services/shared_prefs_service.dart';
 import '../core/constants/app_endpoints.dart';
 import '../core/routes/app_routes.dart';
 import '../models/user_model.dart';
+import '../services/socket_service.dart';
 import 'base_controller.dart';
 
 class AuthController extends BaseController {
@@ -83,12 +84,18 @@ class AuthController extends BaseController {
         final accessToken = authData['accessToken'];
         final refreshToken = authData['refreshToken'];
 
-        // Save tokens
+        // Save tokens and user ID
         await SharedPrefsService.saveString('accessToken', accessToken);
         await SharedPrefsService.saveString('refreshToken', refreshToken);
+        if (authData['user'] != null && authData['user']['_id'] != null) {
+          await SharedPrefsService.saveString('userId', authData['user']['_id']);
+        }
         
         userData.value = authData['user'];
         currentUser.value = UserModel.fromJson(authData['user']);
+        
+        // Initialize Socket
+        Get.find<SocketService>().initSocket(token: accessToken);
         
         Get.snackbar('Success', data['message'] ?? 'Login successful');
         Get.offAllNamed(AppRoutes.MAIN);
@@ -146,10 +153,13 @@ class AuthController extends BaseController {
         final accessToken = authData['accessToken'];
         final refreshToken = authData['refreshToken'];
         
-        // Save tokens
+        // Save tokens and user ID
         await SharedPrefsService.saveString('accessToken', accessToken);
         if (refreshToken != null) {
           await SharedPrefsService.saveString('refreshToken', refreshToken);
+        }
+        if (authData['user'] != null && authData['user']['_id'] != null) {
+          await SharedPrefsService.saveString('userId', authData['user']['_id']);
         }
         
         // Update user state
@@ -157,6 +167,9 @@ class AuthController extends BaseController {
         
         Get.snackbar('Success', data['message'] ?? 'Account verified successfully');
         
+        // Initialize Socket
+        Get.find<SocketService>().initSocket(token: accessToken);
+
         // Navigate based on profile completion
         if (authData['isCompleteProfile'] == true) {
           Get.offAllNamed(AppRoutes.MAIN);
