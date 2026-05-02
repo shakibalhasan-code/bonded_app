@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../models/event_model.dart';
 import '../../core/theme/app_colors.dart';
 
+import '../../core/constants/app_endpoints.dart';
+
 class EventCard extends StatelessWidget {
   final EventModel event;
   final VoidCallback onTap;
@@ -27,7 +29,7 @@ class EventCard extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             Image.network(
-              event.imageUrl,
+              AppUrls.imageUrl(event.imageUrl),
               fit: BoxFit.cover,
               loadingBuilder: (context, child, loadingProgress) {
                 if (loadingProgress == null) return child;

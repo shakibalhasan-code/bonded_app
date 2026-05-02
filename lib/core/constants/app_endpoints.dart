@@ -21,6 +21,8 @@ class AppUrls {
   static const String updateAvatar = '/user/me/avatar';
   static const String getInterests = '/interests';
   static const String circles = '/circles';
+  static const String events = '/events';
+  static const String myEvents = '/events/my-events';
 
   // Bond Endpoints
   static const String nearbyBonds = '/bonds/nearby';

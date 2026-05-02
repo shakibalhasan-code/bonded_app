@@ -67,6 +67,9 @@ class EventScreen extends StatelessWidget {
         ],
       ),
       body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
         if (controller.selectedTab.value == 0) {
           return _buildPublicEvents(controller);
         } else {

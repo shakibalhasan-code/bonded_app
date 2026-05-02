@@ -64,6 +64,8 @@ class EventModel {
   final String title;
   final String imageUrl;
   final String? address;
+  final String? city;
+  final String? country;
   final String? date;
   final String? time;
   final double? price;
@@ -77,12 +79,18 @@ class EventModel {
   final List<ReviewModel>? reviews;
   final List<VenueModel>? suggestedVenues;
   final Map<String, String>? socialMedia;
+  final bool isExternal;
+  final String? externalLink;
+  final int? totalSeats;
+  final int? remainingSeats;
 
   EventModel({
     required this.id,
     required this.title,
     required this.imageUrl,
     this.address,
+    this.city,
+    this.country,
     this.date,
     this.time,
     this.price,
@@ -96,7 +104,46 @@ class EventModel {
     this.reviews,
     this.suggestedVenues,
     this.socialMedia,
+    this.isExternal = false,
+    this.externalLink,
+    this.totalSeats,
+    this.remainingSeats,
   });
+
+  factory EventModel.fromJson(Map<String, dynamic> json) {
+    // Determine category from type
+    final eventData = json['event'] ?? {};
+    final typeStr = eventData['type'] ?? 'in-person';
+    EventCategory cat = EventCategory.inPerson;
+    if (typeStr == 'virtual') cat = EventCategory.virtual;
+    
+    // Parse startAt for date and time
+    String? date;
+    String? time;
+    if (json['startAt'] != null) {
+      final startAt = DateTime.parse(json['startAt']).toLocal();
+      date = "${startAt.day}/${startAt.month}/${startAt.year}";
+      time = "${startAt.hour.toString().padLeft(2, '0')}:${startAt.minute.toString().padLeft(2, '0')}";
+    }
+
+    return EventModel(
+      id: json['id'] ?? json['_id'] ?? '',
+      title: json['title'] ?? eventData['title'] ?? '',
+      imageUrl: json['image'] ?? eventData['coverImage'] ?? '',
+      address: json['location']?['address'] ?? eventData['location']?['address'] ?? eventData['address'],
+      city: json['location']?['city'] ?? eventData['location']?['city'] ?? eventData['city'],
+      country: json['location']?['country'] ?? eventData['location']?['country'] ?? eventData['country'],
+      date: date,
+      time: time,
+      price: (eventData['ticketPrice'] ?? 0).toDouble(),
+      category: cat,
+      description: eventData['description'],
+      isExternal: json['isExternal'] ?? false,
+      externalLink: json['externalLink'],
+      totalSeats: eventData['totalSeats'],
+      remainingSeats: eventData['remainingSeats'],
+    );
+  }
 }
 
 

@@ -4,8 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/event_model.dart';
+import '../../core/constants/app_endpoints.dart';
 import '../../core/routes/app_routes.dart';
-import '../../widgets/events/media_viewers.dart';
 
 class EventDetailsScreen extends StatelessWidget {
   const EventDetailsScreen({Key? key}) : super(key: key);
@@ -25,13 +25,6 @@ class EventDetailsScreen extends StatelessWidget {
       VenueModel(name: "Dreams Restaurant", location: "New York"),
       VenueModel(name: "Five Star Hotel", location: "New York"),
     ];
-
-    final Map<String, String> socialLinks = {
-      "whatsapp": "https://www.whatsapp.com/bondedapp",
-      "facebook": "https://www.facebook.com/bondedapp",
-      "twitter": "https://www.twitter.com/bondedapp",
-      "instagram": "https://www.instagram.com/bondedapp",
-    };
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -92,10 +85,43 @@ class EventDetailsScreen extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(20.r),
               child: Image.network(
-                event.imageUrl,
+                AppUrls.imageUrl(event.imageUrl),
                 width: double.infinity,
                 height: 200.h,
                 fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    height: 200.h,
+                    color: Colors.grey[100],
+                    child: const Center(child: CircularProgressIndicator()),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 200.h,
+                    width: double.infinity,
+                    color: const Color(0xFFFAF7FF),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.image_not_supported_outlined,
+                          color: AppColors.primary.withOpacity(0.5),
+                          size: 40.sp,
+                        ),
+                        SizedBox(height: 8.h),
+                        Text(
+                          "No Preview Available",
+                          style: GoogleFonts.inter(
+                            fontSize: 12.sp,
+                            color: AppColors.primary.withOpacity(0.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
             SizedBox(height: 16.h),
@@ -210,6 +236,17 @@ class EventDetailsScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 150.h,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: const Color(0xFFFAF7FF),
+                  height: 150.h,
+                  child: Center(
+                    child: Icon(
+                      Icons.map_outlined,
+                      color: AppColors.primary.withOpacity(0.5),
+                      size: 40.sp,
+                    ),
+                  ),
+                ),
               ),
             ),
             SizedBox(height: 8.h),
@@ -422,15 +459,26 @@ class EventDetailsScreen extends StatelessWidget {
       margin: EdgeInsets.only(right: 12.w),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16.r),
-        image: const DecorationImage(
-          image: NetworkImage(
-            "https://images.unsplash.com/photo-1492684223066-81342ee5ff30",
-          ),
-          fit: BoxFit.cover,
-        ),
+        color: Colors.grey[100],
       ),
-      child: isVideo
-          ? Center(
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.network(
+            "https://images.unsplash.com/photo-1492684223066-81342ee5ff30",
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              color: const Color(0xFFFAF7FF),
+              child: Icon(
+                Icons.image_not_supported_outlined,
+                color: AppColors.primary.withOpacity(0.5),
+                size: 24.sp,
+              ),
+            ),
+          ),
+          if (isVideo)
+            Center(
               child: Container(
                 padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
@@ -439,8 +487,9 @@ class EventDetailsScreen extends StatelessWidget {
                 ),
                 child: Icon(Icons.play_arrow, color: Colors.white, size: 18.sp),
               ),
-            )
-          : null,
+            ),
+        ],
+      ),
     );
   }
 }

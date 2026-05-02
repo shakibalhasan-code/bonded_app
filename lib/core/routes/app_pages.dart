@@ -49,6 +49,7 @@ import '../../screens/bond/nearby_people_screen.dart';
 import '../../core/bindings/profile_binding.dart';
 import '../../core/bindings/auth_binding.dart';
 import '../../core/bindings/circle_binding.dart';
+import '../../core/bindings/event_binding.dart';
 import 'app_routes.dart';
 
 
@@ -210,6 +211,7 @@ class AppPages {
     GetPage(
       name: AppRoutes.CREATE_EVENT,
       page: () => const CreateEventScreen(),
+      binding: EventBinding(),
     ),
     GetPage(
       name: AppRoutes.EVENT_KYC,

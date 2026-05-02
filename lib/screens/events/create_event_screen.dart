@@ -6,71 +6,35 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/routes/app_routes.dart';
+import '../../controllers/create_event_controller.dart';
 
-class CreateEventScreen extends StatefulWidget {
+class CreateEventScreen extends GetView<CreateEventController> {
   const CreateEventScreen({Key? key}) : super(key: key);
 
-  @override
-  State<CreateEventScreen> createState() => _CreateEventScreenState();
-}
-
-class _CreateEventScreenState extends State<CreateEventScreen> {
-  String? _coverImagePath;
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _fbController = TextEditingController();
-  final TextEditingController _twitterController = TextEditingController();
-  final TextEditingController _locationController = TextEditingController();
-  final TextEditingController _seatsController = TextEditingController();
-  final TextEditingController _virtualLinkController = TextEditingController();
-  final TextEditingController _priceController = TextEditingController();
-
-  bool _isVirtual = false;
-  bool _showPhone = true;
-  bool _showSocial = true;
-  String? _selectedCategory;
-  DateTime? _selectedDate;
-  TimeOfDay? _selectedTime;
-  bool _isPaid = false;
-
-  final List<String> _categories = [
+  final List<String> _categories = const [
     "Birthday Celebration",
     "Graduation",
     "Anniversary",
+    "Celebrations",
   ];
-  final List<String> _suggestedVenues = [
+
+  final List<String> _suggestedVenues = const [
     "Grand Place Hotel",
     "Sonny Restaurant",
     "Redfin Hotel",
     "Dreams Restaurant",
     "Five Star Hotel",
   ];
-  final Set<String> _addedVenues = {};
-
-  @override
-  void initState() {
-    super.initState();
-    final args = Get.arguments;
-    if (args != null && args is Map) {
-      if (args['isVirtual'] == true) {
-        _isVirtual = true;
-      }
-      if (args['category'] != null && _categories.contains(args['category'])) {
-        _selectedCategory = args['category'];
-      }
-    }
-  }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      setState(() => _coverImagePath = pickedFile.path);
+      controller.coverImagePath.value = pickedFile.path;
     }
   }
 
-  Future<void> _selectDate() async {
+  Future<void> _selectDate(BuildContext context) async {
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -79,32 +43,32 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(primary: AppColors.primary),
+            colorScheme: const ColorScheme.light(primary: AppColors.primary),
           ),
           child: child!,
         );
       },
     );
     if (pickedDate != null) {
-      setState(() => _selectedDate = pickedDate);
+      controller.selectedDate.value = pickedDate;
     }
   }
 
-  Future<void> _selectTime() async {
+  Future<void> _selectTime(BuildContext context) async {
     final pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(primary: AppColors.primary),
+            colorScheme: const ColorScheme.light(primary: AppColors.primary),
           ),
           child: child!,
         );
       },
     );
     if (pickedTime != null) {
-      setState(() => _selectedTime = pickedTime);
+      controller.selectedTime.value = pickedTime;
     }
   }
 
@@ -129,247 +93,252 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 24.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 20.h),
-            // Image Picker
-            GestureDetector(
-              onTap: _pickImage,
-              child: Container(
-                height: 180.h,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFAF7FF),
-                  borderRadius: BorderRadius.circular(16.r),
-                  border: Border.all(
-                    color: AppColors.primary.withOpacity(0.3),
-                    width: 1.5,
-                  ),
-                ),
-                child: _coverImagePath == null
-                    ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.image_outlined,
-                            color: Colors.grey[400],
-                            size: 48.sp,
-                          ),
-                          SizedBox(height: 12.h),
-                          Text(
-                            "Add event cover image",
-                            style: GoogleFonts.inter(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF1B0B3B),
-                            ),
-                          ),
-                        ],
-                      )
-                    : ClipRRect(
-                        borderRadius: BorderRadius.circular(16.r),
-                        child: Image.file(
-                          File(_coverImagePath!),
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                        ),
-                      ),
-              ),
-            ),
-            SizedBox(height: 24.h),
-
-            _buildLabel("Event Name"),
-            _buildTextField(_nameController, "Event Name"),
-            SizedBox(height: 24.h),
-
-            _buildLabel("Description"),
-            _buildTextField(
-              _descriptionController,
-              "Description...",
-              maxLines: 4,
-            ),
-            SizedBox(height: 24.h),
-
-            _buildLabel("Phone Number"),
-            Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 12.h,
-                  ),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 20.h),
+              // Image Picker
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 180.h,
+                  width: double.infinity,
                   decoration: BoxDecoration(
                     color: const Color(0xFFFAF7FF),
-                    borderRadius: BorderRadius.circular(12.r),
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(
+                      color: AppColors.primary.withOpacity(0.3),
+                      width: 1.5,
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      Text(
-                        "🇺🇸 +1",
-                        style: GoogleFonts.inter(fontSize: 14.sp),
-                      ),
-                      const Icon(Icons.keyboard_arrow_down),
-                    ],
-                  ),
+                  child: controller.coverImagePath.value.isEmpty
+                      ? Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.image_outlined,
+                              color: Colors.grey[400],
+                              size: 48.sp,
+                            ),
+                            SizedBox(height: 12.h),
+                            Text(
+                              "Add event cover image",
+                              style: GoogleFonts.inter(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF1B0B3B),
+                              ),
+                            ),
+                          ],
+                        )
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(16.r),
+                          child: Image.file(
+                            File(controller.coverImagePath.value),
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                          ),
+                        ),
                 ),
-                SizedBox(width: 12.w),
-                Expanded(child: _buildTextField(_phoneController, "1234567")),
-              ],
-            ),
-            SizedBox(height: 24.h),
-
-            _buildLabel("Add Social Media Links"),
-            _buildSocialInput(
-              Icons.facebook,
-              _fbController,
-              "Add Facebook Link",
-              Colors.blue,
-            ),
-            SizedBox(height: 12.h),
-            _buildSocialInput(
-              Icons.alternate_email,
-              _twitterController,
-              "Add Twitter Link",
-              Colors.lightBlue,
-            ),
-            SizedBox(height: 24.h),
-
-            _buildLabel("Show phone number to attendees?"),
-            Row(
-              children: [
-                _buildRadioButton(
-                  "Yes",
-                  _showPhone,
-                  (val) => setState(() => _showPhone = true),
-                ),
-                SizedBox(width: 24.w),
-                _buildRadioButton(
-                  "No",
-                  !_showPhone,
-                  (val) => setState(() => _showPhone = false),
-                ),
-              ],
-            ),
-            SizedBox(height: 24.h),
-
-            _buildLabel("Show social media links to attendees?"),
-            Row(
-              children: [
-                _buildRadioButton(
-                  "Yes",
-                  _showSocial,
-                  (val) => setState(() => _showSocial = true),
-                ),
-                SizedBox(width: 24.w),
-                _buildRadioButton(
-                  "No",
-                  !_showSocial,
-                  (val) => setState(() => _showSocial = false),
-                ),
-              ],
-            ),
-            SizedBox(height: 24.h),
-
-            _buildLabel("Event Category"),
-            _buildDropdown(),
-            SizedBox(height: 24.h),
-
-            _buildLabel("Date"),
-            _buildPickerField(
-              _selectedDate == null
-                  ? "DD/MM/YYYY"
-                  : "${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}",
-              Icons.calendar_month_outlined,
-              _selectDate,
-            ),
-            SizedBox(height: 24.h),
-
-            _buildLabel("Time"),
-            _buildPickerField(
-              _selectedTime == null
-                  ? "HH:MM"
-                  : "${_selectedTime!.format(context)}",
-              Icons.access_time,
-              _selectTime,
-            ),
-            SizedBox(height: 24.h),
-
-            if (!_isVirtual) ...[
-              _buildLabel("Location"),
-              _buildLocationField(),
+              ),
               SizedBox(height: 24.h),
 
-              _buildLabel("Suggested Venues"),
+              _buildLabel("Event Name"),
+              _buildTextField(controller.nameController, "Event Name"),
+              SizedBox(height: 24.h),
+
+              _buildLabel("Description"),
+              _buildTextField(
+                controller.descriptionController,
+                "Description...",
+                maxLines: 4,
+              ),
+              SizedBox(height: 24.h),
+
+              _buildLabel("Phone Number"),
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 12.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFAF7FF),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          "🇧🇩 +880",
+                          style: GoogleFonts.inter(fontSize: 14.sp),
+                        ),
+                        const Icon(Icons.keyboard_arrow_down),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(child: _buildTextField(controller.phoneController, "1234567")),
+                ],
+              ),
+              SizedBox(height: 24.h),
+
+              _buildLabel("Add Social Media Links"),
+              _buildSocialInput(
+                Icons.facebook,
+                controller.fbController,
+                "Add Facebook Link",
+                Colors.blue,
+              ),
               SizedBox(height: 12.h),
-              ..._suggestedVenues.map((v) => _buildVenueItem(v)).toList(),
+              _buildSocialInput(
+                Icons.alternate_email,
+                controller.twitterController,
+                "Add Twitter Link",
+                Colors.lightBlue,
+              ),
               SizedBox(height: 24.h),
-            ],
 
-            if (_isVirtual) ...[
-              _buildLabel("Add Virtual Link"),
-              _buildTextField(_virtualLinkController, "Enter Link"),
+              _buildLabel("Show phone number to attendees?"),
+              Row(
+                children: [
+                  _buildRadioButton(
+                    "Yes",
+                    controller.showPhone.value,
+                    (val) => controller.showPhone.value = true,
+                  ),
+                  SizedBox(width: 24.w),
+                  _buildRadioButton(
+                    "No",
+                    !controller.showPhone.value,
+                    (val) => controller.showPhone.value = false,
+                  ),
+                ],
+              ),
               SizedBox(height: 24.h),
-            ],
 
-            Row(
-              children: [
-                Checkbox(
-                  value: _isPaid,
-                  onChanged: (val) => setState(() => _isPaid = val!),
-                  activeColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4.r),
+              _buildLabel("Show social media links to attendees?"),
+              Row(
+                children: [
+                  _buildRadioButton(
+                    "Yes",
+                    controller.showSocial.value,
+                    (val) => controller.showSocial.value = true,
                   ),
-                ),
-                Text(
-                  "Is this a Paid event?",
-                  style: GoogleFonts.inter(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1B0B3B),
+                  SizedBox(width: 24.w),
+                  _buildRadioButton(
+                    "No",
+                    !controller.showSocial.value,
+                    (val) => controller.showSocial.value = false,
                   ),
-                ),
+                ],
+              ),
+              SizedBox(height: 24.h),
+
+              _buildLabel("Event Category"),
+              _buildDropdown(),
+              SizedBox(height: 24.h),
+
+              _buildLabel("Date"),
+              _buildPickerField(
+                controller.selectedDate.value == null
+                    ? "DD/MM/YYYY"
+                    : "${controller.selectedDate.value!.day}/${controller.selectedDate.value!.month}/${controller.selectedDate.value!.year}",
+                Icons.calendar_month_outlined,
+                () => _selectDate(context),
+              ),
+              SizedBox(height: 24.h),
+
+              _buildLabel("Time"),
+              _buildPickerField(
+                controller.selectedTime.value == null
+                    ? "HH:MM"
+                    : controller.selectedTime.value!.format(context),
+                Icons.access_time,
+                () => _selectTime(context),
+              ),
+              SizedBox(height: 24.h),
+
+              if (!controller.isVirtual.value) ...[
+                _buildLabel("Location"),
+                _buildLocationField(),
+                SizedBox(height: 24.h),
+
+                _buildLabel("Suggested Venues"),
+                SizedBox(height: 12.h),
+                ..._suggestedVenues.map((v) => _buildVenueItem(v)).toList(),
+                SizedBox(height: 24.h),
               ],
-            ),
-            if (_isPaid) ...[
+
+              if (controller.isVirtual.value) ...[
+                _buildLabel("Add Virtual Link"),
+                _buildTextField(controller.virtualLinkController, "Enter Link"),
+                SizedBox(height: 24.h),
+              ],
+
+              Row(
+                children: [
+                  Checkbox(
+                    value: controller.isPaid.value,
+                    onChanged: (val) => controller.isPaid.value = val!,
+                    activeColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
+                  ),
+                  Text(
+                    "Is this a Paid event?",
+                    style: GoogleFonts.inter(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1B0B3B),
+                    ),
+                  ),
+                ],
+              ),
+              if (controller.isPaid.value) ...[
+                SizedBox(height: 24.h),
+                _buildLabel("Ticket Price"),
+                _buildTextField(controller.priceController, "Ticket price"),
+              ],
               SizedBox(height: 24.h),
-              _buildLabel("Ticket Price"),
-              _buildTextField(_priceController, "Ticket price"),
-            ],
-            SizedBox(height: 24.h),
 
-            if (!_isVirtual) ...[
-              _buildLabel("Available Seats Quantity"),
-              _buildTextField(_seatsController, "Available seats"),
-            ],
-            SizedBox(height: 48.h),
+              if (!controller.isVirtual.value) ...[
+                _buildLabel("Available Seats Quantity"),
+                _buildTextField(controller.seatsController, "Available seats"),
+              ],
+              SizedBox(height: 48.h),
 
-            ElevatedButton(
-              onPressed: () => Get.toNamed(AppRoutes.EVENT_KYC),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary.withOpacity(0.05),
-                foregroundColor: AppColors.primary,
-                elevation: 0,
-                minimumSize: Size(double.infinity, 56.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30.r),
+              ElevatedButton(
+                onPressed: () => controller.createEvent(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  minimumSize: Size(double.infinity, 56.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.r),
+                  ),
+                ),
+                child: Text(
+                  "Create Event",
+                  style: GoogleFonts.inter(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              child: Text(
-                "Continue",
-                style: GoogleFonts.inter(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            SizedBox(height: 40.h),
-          ],
-        ),
-      ),
+              SizedBox(height: 40.h),
+            ],
+          ),
+        );
+      }),
     );
   }
 
@@ -473,7 +442,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           isExpanded: true,
-          value: _selectedCategory,
+          value: controller.selectedCategory.value,
           hint: Text(
             "Dropdown to select",
             style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[400]),
@@ -481,7 +450,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           items: _categories
               .map((c) => DropdownMenuItem(value: c, child: Text(c)))
               .toList(),
-          onChanged: (val) => setState(() => _selectedCategory = val),
+          onChanged: (val) => controller.selectedCategory.value = val,
         ),
       ),
     );
@@ -520,7 +489,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         borderRadius: BorderRadius.circular(12.r),
       ),
       child: TextField(
-        controller: _locationController,
+        controller: controller.locationController,
         decoration: InputDecoration(
           hintText: "Location",
           hintStyle: GoogleFonts.inter(
@@ -543,7 +512,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   }
 
   Widget _buildVenueItem(String venue) {
-    bool isAdded = _addedVenues.contains(venue);
+    // Note: Mock venues don't have full state in controller yet, just UI toggles here for now
+    // In a real app, this would be in the controller
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h),
       child: Row(
@@ -555,29 +525,20 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           ),
           SizedBox(
             height: 32.h,
-            child: ElevatedButton(
+            child: OutlinedButton(
               onPressed: () {
-                setState(() {
-                  if (isAdded)
-                    _addedVenues.remove(venue);
-                  else
-                    _addedVenues.add(venue);
-                });
+                controller.venueName.value = venue;
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isAdded ? Colors.green : Colors.white,
-                foregroundColor: isAdded ? Colors.white : AppColors.primary,
-                side: BorderSide(
-                  color: isAdded ? Colors.green : AppColors.primary,
-                ),
-                elevation: 0,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.r),
                 ),
                 padding: EdgeInsets.symmetric(horizontal: 16.w),
               ),
               child: Text(
-                isAdded ? "Added" : "Add",
+                "Add",
                 style: GoogleFonts.inter(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.bold,
@@ -590,3 +551,4 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     );
   }
 }
+

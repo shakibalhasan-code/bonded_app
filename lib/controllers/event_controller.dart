@@ -1,8 +1,14 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/event_model.dart';
+import '../services/api_service.dart';
+import '../core/constants/app_endpoints.dart';
 
 class EventController extends GetxController {
+  final ApiService _apiService = ApiService();
+  final RxBool isLoading = false.obs;
+
   final RxInt selectedTab = 0.obs; // 0: Events, 1: My Events
   final RxInt selectedCategory =
       0.obs; // 0: In-Person, 1: Virtual, 2: Highlights
@@ -33,9 +39,62 @@ class EventController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _loadMockEvents();
+    fetchEvents();
     _loadMockTickets();
     _loadMockTransactions();
+  }
+
+  Future<void> fetchEvents() async {
+    try {
+      isLoading.value = true;
+      events.clear();
+
+      if (selectedCategory.value == 2) {
+        // Load highlights from mock
+        _loadMockEvents();
+        events.value =
+            events.where((e) => e.category == EventCategory.highlights).toList();
+        return;
+      }
+
+      String type = 'in-person';
+      if (selectedCategory.value == 1) {
+        type = 'virtual';
+      }
+
+      final response = await _apiService.get("${AppUrls.events}?type=$type");
+      final data = jsonDecode(response.body);
+
+      if (data['success'] == true) {
+        final List<dynamic> eventList = data['data'];
+        events.value = eventList.map((e) => EventModel.fromJson(e)).toList();
+      }
+    } catch (e) {
+      debugPrint("Error fetching events: $e");
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> fetchMyEvents() async {
+    try {
+      isLoading.value = true;
+      final response = await _apiService.get(AppUrls.myEvents);
+      final data = jsonDecode(response.body);
+
+      if (data['success'] == true) {
+        final List<dynamic> eventList = data['data'];
+        events.value = eventList.map((e) {
+          final event = EventModel.fromJson(e);
+          // Mark as my event if needed, though myEvents endpoint usually implies it
+          return event;
+        }).toList();
+      }
+    } catch (e) {
+      debugPrint("Error fetching my events: $e");
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   void _loadMockEvents() {
@@ -172,43 +231,30 @@ class EventController extends GetxController {
   }
 
   List<EventModel> get filteredEvents {
-    if (selectedTab.value == 1) {
-      if (selectedMyEventTab.value == 0) {
-        return events.where((e) => e.isMyEvent).toList();
-      } else {
-        // Booked events - mocking with all events for now
-        return events.where((e) => !e.isMyEvent).toList();
-      }
-    }
-
-    EventCategory targetCategory;
-    switch (selectedCategory.value) {
-      case 0:
-        targetCategory = EventCategory.inPerson;
-        break;
-      case 1:
-        targetCategory = EventCategory.virtual;
-        break;
-      case 2:
-        targetCategory = EventCategory.highlights;
-        break;
-      default:
-        targetCategory = EventCategory.inPerson;
-    }
-
-    return events.where((e) => e.category == targetCategory).toList();
+    return events;
   }
 
   void changeTab(int tabIndex) {
     selectedTab.value = tabIndex;
+    if (tabIndex == 0) {
+      fetchEvents();
+    } else {
+      fetchMyEvents();
+    }
   }
 
   void changeCategory(int categoryIndex) {
     selectedCategory.value = categoryIndex;
+    if (categoryIndex < 3) {
+      fetchEvents();
+    }
   }
 
   void changeMyEventTab(int tabIndex) {
     selectedMyEventTab.value = tabIndex;
+    if (tabIndex < 2) {
+      fetchMyEvents();
+    }
   }
 
   void resetFilters() {
