@@ -1,34 +1,79 @@
+import 'dart:io';
+import 'package:bonded_app/widgets/circles/reaction_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/home_models.dart';
+import '../../models/circle_model.dart';
 import '../../controllers/circle_controller.dart';
+import 'package:intl/intl.dart';
+import '../events/media_viewers.dart';
 
-class CircleCommentItem extends StatelessWidget {
+class CircleCommentItem extends StatefulWidget {
   final CommentModel comment;
+  final CircleModel circle;
+  final PostModel post;
   final bool isReply;
 
   const CircleCommentItem({
     Key? key,
     required this.comment,
+    required this.circle,
+    required this.post,
     this.isReply = false,
   }) : super(key: key);
 
   @override
+  State<CircleCommentItem> createState() => _CircleCommentItemState();
+}
+
+class _CircleCommentItemState extends State<CircleCommentItem> {
+  final TextEditingController _replyController = TextEditingController();
+  File? _replyImage;
+  File? _replyVideo;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _replyImage = File(image.path);
+        _replyVideo = null;
+      });
+    }
+  }
+
+  Future<void> _pickVideo() async {
+    final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
+    if (video != null) {
+      setState(() {
+        _replyVideo = File(video.path);
+        _replyImage = null;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _replyController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final controller = Get.find<CircleController>();
-    final replyController = TextEditingController();
 
     return Padding(
-      padding: EdgeInsets.only(bottom: 16.h, left: isReply ? 38.w : 0),
+      padding: EdgeInsets.only(bottom: 16.h, left: widget.isReply ? 38.w : 0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
-            radius: isReply ? 12.r : 16.r,
-            backgroundImage: NetworkImage(comment.userImage),
+            radius: widget.isReply ? 12.r : 16.r,
+            backgroundImage: NetworkImage(widget.comment.userImage),
           ),
           SizedBox(width: 10.w),
           Expanded(
@@ -37,7 +82,10 @@ class CircleCommentItem extends StatelessWidget {
               children: [
                 // Comment Bubble
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 10.h,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF3EFFF), // Light purple bubble
                     borderRadius: BorderRadius.only(
@@ -51,7 +99,7 @@ class CircleCommentItem extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        comment.userName,
+                        widget.comment.userName,
                         style: GoogleFonts.inter(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.w700,
@@ -60,26 +108,88 @@ class CircleCommentItem extends StatelessWidget {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        comment.text,
+                        widget.comment.text,
                         style: GoogleFonts.inter(
                           fontSize: 13.sp,
                           color: AppColors.textHeading.withOpacity(0.9),
                           height: 1.4,
                         ),
                       ),
+                      if (widget.comment.media.isNotEmpty) ...[
+                        SizedBox(height: 8.h),
+                        ...widget.comment.media.map((m) {
+                          if (m.type == 'image') {
+                            return GestureDetector(
+                              onTap: () => Get.to(
+                                () =>
+                                    FullScreenImageViewer(imageUrl: m.fullUrl),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8.r),
+                                child: Image.network(
+                                  m.fullUrl,
+                                  height: 150.h,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                        height: 150.h,
+                                        width: double.infinity,
+                                        color: Colors.grey[200],
+                                        child: const Icon(Icons.error_outline),
+                                      ),
+                                ),
+                              ),
+                            );
+                          } else {
+                            return GestureDetector(
+                              onTap: () => Get.to(
+                                () => MockVideoPlayer(videoUrl: m.fullUrl),
+                              ),
+                              child: Container(
+                                height: 150.h,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: Colors.black,
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.videocam,
+                                      color: Colors.white70,
+                                      size: 40,
+                                    ),
+                                    const Positioned(
+                                      bottom: 8,
+                                      right: 8,
+                                      child: Icon(
+                                        Icons.play_circle_fill,
+                                        color: Colors.white70,
+                                        size: 24,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+                        }).toList(),
+                      ],
                     ],
                   ),
                 ),
-                
+
                 SizedBox(height: 6.h),
-                
+
                 // Action Buttons
                 Padding(
                   padding: EdgeInsets.only(left: 4.w),
                   child: Row(
                     children: [
                       Text(
-                        comment.timestamp,
+                        _formatTimestamp(widget.comment.timestamp),
                         style: GoogleFonts.inter(
                           fontSize: 11.sp,
                           color: Colors.grey[500],
@@ -87,60 +197,231 @@ class CircleCommentItem extends StatelessWidget {
                         ),
                       ),
                       SizedBox(width: 16.w),
-                      _buildActionButton("Like", onTap: () => controller.toggleLikeComment(comment)),
+                      Obx(() {
+                        final isLiked = widget.comment.isLiked.value;
+                        final type = widget.comment.reactionType.value;
+                        return GestureDetector(
+                          onTap: () =>
+                              controller.toggleLikeComment(widget.comment),
+                          onLongPressStart: (details) {
+                            _showReactionMenu(
+                              context,
+                              details.globalPosition,
+                              controller,
+                            );
+                          },
+                          child: Text(
+                            type == "none" ? "React" : "React",
+                            style: GoogleFonts.inter(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w600,
+                              color: isLiked
+                                  ? AppColors.primary
+                                  : Colors.grey[700],
+                            ),
+                          ),
+                        );
+                      }),
                       SizedBox(width: 16.w),
-                      _buildActionButton("Reply", onTap: () => controller.toggleReplyInput(comment)),
-                      SizedBox(width: 16.w),
-                      _buildActionButton("Share"),
+                      _buildActionButton(
+                        "Reply",
+                        onTap: () =>
+                            controller.toggleReplyInput(widget.comment),
+                      ),
                     ],
                   ),
                 ),
 
                 // Reply Input Field
-                Obx(() => comment.showReplyInput.value
-                    ? Padding(
-                        padding: EdgeInsets.only(top: 12.h),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: replyController,
-                                style: GoogleFonts.inter(fontSize: 12.sp),
-                                decoration: InputDecoration(
-                                  hintText: "Write a reply...",
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(20.r),
-                                    borderSide: BorderSide(color: Colors.grey[200]!),
+                Obx(
+                  () => widget.comment.showReplyInput.value
+                      ? Padding(
+                          padding: EdgeInsets.only(top: 12.h),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (_replyImage != null || _replyVideo != null)
+                                Padding(
+                                  padding: EdgeInsets.only(bottom: 8.h),
+                                  child: Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(
+                                          12.r,
+                                        ),
+                                        child: _replyImage != null
+                                            ? Image.file(
+                                                _replyImage!,
+                                                height: 60.h,
+                                                width: 60.w,
+                                                fit: BoxFit.cover,
+                                              )
+                                            : Container(
+                                                height: 60.h,
+                                                width: 60.w,
+                                                color: Colors.black12,
+                                                child: Icon(
+                                                  Icons.videocam,
+                                                  color: AppColors.primary,
+                                                ),
+                                              ),
+                                      ),
+                                      Positioned(
+                                        right: 0,
+                                        top: 0,
+                                        child: GestureDetector(
+                                          onTap: () => setState(() {
+                                            _replyImage = null;
+                                            _replyVideo = null;
+                                          }),
+                                          child: Container(
+                                            padding: EdgeInsets.all(2.w),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              Icons.close,
+                                              size: 14.sp,
+                                              color: Colors.red,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
+                              Row(
+                                children: [
+                                  IconButton(
+                                    onPressed: _pickImage,
+                                    icon: Icon(
+                                      Icons.image_outlined,
+                                      color: Colors.grey[600],
+                                      size: 20.sp,
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    constraints: BoxConstraints(),
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  IconButton(
+                                    onPressed: _pickVideo,
+                                    icon: Icon(
+                                      Icons.videocam_outlined,
+                                      color: Colors.grey[600],
+                                      size: 20.sp,
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    constraints: BoxConstraints(),
+                                  ),
+                                  SizedBox(width: 8.w),
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _replyController,
+                                      style: GoogleFonts.inter(fontSize: 12.sp),
+                                      decoration: InputDecoration(
+                                        hintText: "Write a reply...",
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 12.w,
+                                          vertical: 8.h,
+                                        ),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            20.r,
+                                          ),
+                                          borderSide: BorderSide(
+                                            color: Colors.grey[200]!,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      controller.addCommentToPost(
+                                        circle: widget.circle,
+                                        post: widget.post,
+                                        content: _replyController.text,
+                                        parentPostId: widget.comment.id,
+                                        imageFile: _replyImage,
+                                        videoFile: _replyVideo,
+                                      );
+                                      _replyController.clear();
+                                      setState(() {
+                                        _replyImage = null;
+                                        _replyVideo = null;
+                                      });
+                                    },
+                                    icon: Icon(
+                                      Icons.send,
+                                      color: AppColors.primary,
+                                      size: 18.sp,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                controller.addReply(comment, replyController.text);
-                                replyController.clear();
-                              },
-                              icon: Icon(Icons.send, color: AppColors.primary, size: 18.sp),
-                            ),
-                          ],
-                        ),
-                      )
-                    : const SizedBox.shrink()),
+                            ],
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
 
                 // Nested Replies
-                Obx(() => comment.replies.isNotEmpty
-                    ? Padding(
-                        padding: EdgeInsets.only(top: 12.h),
-                        child: Column(
-                          children: comment.replies
-                              .map((reply) => CircleCommentItem(comment: reply, isReply: true))
-                              .toList(),
-                        ),
-                      )
-                    : const SizedBox.shrink()),
+                Obx(
+                  () => widget.comment.replies.isNotEmpty
+                      ? Padding(
+                          padding: EdgeInsets.only(top: 12.h),
+                          child: Column(
+                            children: widget.comment.replies
+                                .map(
+                                  (reply) => CircleCommentItem(
+                                    comment: reply,
+                                    circle: widget.circle,
+                                    post: widget.post,
+                                    isReply: true,
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showReactionMenu(
+    BuildContext context,
+    Offset position,
+    CircleController controller,
+  ) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    const menuWidth = 320.0;
+
+    double leftPosition = position.dx - (menuWidth / 2);
+    if (leftPosition < 16.w) leftPosition = 16.w;
+    if (leftPosition + menuWidth > screenWidth - 16.w) {
+      leftPosition = screenWidth - menuWidth - 16.w;
+    }
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.transparent,
+      builder: (context) => Stack(
+        children: [
+          Positioned(
+            left: leftPosition,
+            top: position.dy - 80.h,
+            child: ReactionSelector(
+              onReactionSelected: (type) {
+                controller.updateCommentReaction(widget.comment, type);
+                Navigator.pop(context);
+              },
             ),
           ),
         ],
@@ -160,5 +441,15 @@ class CircleCommentItem extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatTimestamp(String timestamp) {
+    if (timestamp.isEmpty) return "";
+    try {
+      final dateTime = DateTime.parse(timestamp);
+      return DateFormat('d/M/y h:mm a').format(dateTime).toLowerCase();
+    } catch (e) {
+      return timestamp;
+    }
   }
 }

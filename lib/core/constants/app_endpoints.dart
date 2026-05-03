@@ -37,6 +37,15 @@ class AppUrls {
   static const String conversations = '/chat/conversations';
   static String conversationMessages(String id) =>
       '/chat/conversations/$id/messages';
+  // Circle Feed Endpoints
+  static String circleFeed(String circleId) => '/circles/$circleId/feed';
+  static String reactPost(String postId) => '/circles/posts/$postId/react';
+  static String commentPost(String circleId, String postId) =>
+      '/circles/$circleId/posts/$postId/comments';
+  static String sharePost(String postId) => '/circles/posts/$postId/share';
+  static String circleMembers(String circleId) => '/circles/$circleId/members';
+  static String circleEvents(String circleId) => '/circles/$circleId/events';
+
   static String imageUrl(String? path) {
     if (path == null || path.isEmpty) return 'https://i.pravatar.cc/150';
     if (path.startsWith('http')) return path;

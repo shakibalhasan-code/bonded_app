@@ -58,12 +58,14 @@ class CreatePostSheet extends StatelessWidget {
             final authController = Get.find<AuthController>();
             final user = authController.currentUser.value;
             if (user == null) return const SizedBox.shrink();
-            
+
             return Row(
               children: [
                 CircleAvatar(
                   radius: 20.r,
-                  backgroundImage: NetworkImage(user.avatar ?? 'https://i.pravatar.cc/150?u=me'),
+                  backgroundImage: NetworkImage(
+                    user.avatar ?? 'https://i.pravatar.cc/150?u=me',
+                  ),
                 ),
                 SizedBox(width: 12.w),
                 Text(
@@ -94,23 +96,26 @@ class CreatePostSheet extends StatelessWidget {
               hintStyle: GoogleFonts.inter(color: Colors.grey[400]),
             ),
           ),
-          
+
           const Divider(),
           SizedBox(height: 16.h),
 
           // Footer Actions
           Row(
             children: [
-              _buildActionIcon(Icons.mic_none),
+              // _buildActionIcon(Icons.mic_none),
               SizedBox(width: 20.w),
-              _buildActionIcon(Icons.sentiment_satisfied_alt_outlined),
+              //  _buildActionIcon(Icons.sentiment_satisfied_alt_outlined),
               SizedBox(width: 20.w),
               _buildActionIcon(Icons.image_outlined),
               SizedBox(width: 20.w),
               _buildActionIcon(Icons.videocam_outlined),
               const Spacer(),
               IconButton(
-                onPressed: () => controller.createPost(circle, textController.text),
+                onPressed: () => controller.createCirclePost(
+                  circle: circle,
+                  content: textController.text,
+                ),
                 icon: Icon(
                   Icons.send_rounded,
                   color: AppColors.primary,

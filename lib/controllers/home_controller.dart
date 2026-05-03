@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import '../models/home_models.dart';
+import '../models/event_model.dart';
 import '../services/socket_service.dart';
 
 class HomeController extends GetxController {
@@ -128,21 +129,25 @@ class HomeController extends GetxController {
   }
 
   // Mock data for Upcoming Events
-  final upcomingEvents = [
-    {
-      'title': 'National Music Festival',
-      'date': 'Mon, Dec 25',
-      'time': '18.00 - 23.00 PM',
-      'location': '2464 Royal Ln. Mesa, New Jersey 45463',
-      'image': 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=500&q=80',
-    },
-    {
-      'title': 'Jazz Music Fest',
-      'date': 'Mon, Dec 26',
-      'time': '18.00 - 23.00 PM',
-      'location': '8502 Preston Rd. Inglewood, Maine 9809',
-      'image': 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=500&q=80',
-    },
+  final RxList<EventModel> upcomingEvents = <EventModel>[
+    EventModel(
+      id: 'e1',
+      title: 'National Music Festival',
+      imageUrl: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=500&q=80',
+      date: 'Mon, Dec 25',
+      time: '18.00 - 23.00 PM',
+      address: '2464 Royal Ln. Mesa, New Jersey 45463',
+      category: EventCategory.inPerson,
+    ),
+    EventModel(
+      id: 'e2',
+      title: 'Jazz Music Fest',
+      imageUrl: 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=500&q=80',
+      date: 'Mon, Dec 26',
+      time: '18.00 - 23.00 PM',
+      address: '8502 Preston Rd. Inglewood, Maine 9809',
+      category: EventCategory.inPerson,
+    ),
   ].obs;
 
   // Mock data for People You May Know

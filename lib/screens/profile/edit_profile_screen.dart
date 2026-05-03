@@ -11,13 +11,26 @@ import '../../controllers/profile_controller.dart';
 import '../../core/theme/app_colors.dart';
 import 'map_selection_screen.dart';
 
-class EditProfileScreen extends StatelessWidget {
+class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = Get.find<ProfileController>();
+  State<EditProfileScreen> createState() => _EditProfileScreenState();
+}
 
+class _EditProfileScreenState extends State<EditProfileScreen> {
+  late ProfileController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<ProfileController>();
+    // Initialize the screen with API calling
+    controller.refreshProfileData();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -40,6 +53,10 @@ class EditProfileScreen extends StatelessWidget {
       body: Obx(() {
         final authController = Get.find<AuthController>();
         final user = authController.currentUser.value;
+
+        if (user == null || controller.isLoadingProfile.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
         return SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
@@ -212,7 +229,7 @@ class EditProfileScreen extends StatelessWidget {
               Obx(
                 () => _buildDropdown(
                   value: controller.selectedGender.value,
-                  items: ["Male", "Female", "Other"],
+                  items: ["Male", "Female", "Non-Binary", "Prefer Not to Say"],
                   onChanged: (val) => controller.selectedGender.value = val!,
                 ),
               ),
@@ -270,15 +287,6 @@ class EditProfileScreen extends StatelessWidget {
               ),
               SizedBox(height: 24.h),
 
-              _buildLabel("Profile Visibility"),
-              SizedBox(height: 12.h),
-              Obx(
-                () => _buildDropdown(
-                  value: controller.profileVisibility.value,
-                  items: ["Public", "Connections Only", "Private"],
-                  onChanged: (val) => controller.profileVisibility.value = val!,
-                ),
-              ),
               SizedBox(height: 32.h),
 
               _buildLabel("Connection Type"),
@@ -286,7 +294,7 @@ class EditProfileScreen extends StatelessWidget {
               ...[
                 "Small Group Hangouts",
                 "One-on-One Friendship",
-                "Event Based Meetup",
+                "Event Based Meetups",
               ].map((type) {
                 return Obx(() {
                   final isSelected = controller.selectedConnectionTypes

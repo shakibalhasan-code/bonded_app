@@ -9,6 +9,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+
 
 import 'base_controller.dart';
 import '../services/api_service.dart';
@@ -23,6 +25,7 @@ class ProfileController extends BaseController {
 
   // Profile Building State
   var profileImagePath = ''.obs;
+  var isLoadingProfile = false.obs;
   final fullNameController = TextEditingController();
   final usernameController = TextEditingController();
   final bioController = TextEditingController();
@@ -76,9 +79,13 @@ class ProfileController extends BaseController {
       dateOfBirth.value = user.dateOfBirth ?? '';
     }
 
-    selectedGender.value = (user.gender != null && user.gender!.isNotEmpty) 
-        ? user.gender!.capitalizeFirst! 
-        : 'Male';
+    final genderDisplayMap = {
+      'male': 'Male',
+      'female': 'Female',
+      'non-binary': 'Non-Binary',
+      'prefer-not-to-say': 'Prefer Not to Say'
+    };
+    selectedGender.value = genderDisplayMap[user.gender?.toLowerCase()] ?? 'Male';
     selectedCountry.value = user.country ?? 'United States of America';
     selectedCity.value = user.city ?? 'New Jersey';
     cityController.text = user.city ?? '';
@@ -94,10 +101,12 @@ class ProfileController extends BaseController {
     selectedConnectionTypes.clear();
     if (user.connectionType != null) {
       for (var typeSlug in user.connectionType!) {
-        // Special case for one-on-one-friendship
+        // Special case for one-on-one-friendship and plurals
         String displayName;
         if (typeSlug == 'one_on_one_friendship') {
           displayName = 'One-on-One Friendship';
+        } else if (typeSlug == 'event_based_meetups') {
+          displayName = 'Event Based Meetups';
         } else {
           displayName = typeSlug
               .split('_')
@@ -109,7 +118,17 @@ class ProfileController extends BaseController {
     }
 
     notificationsEnabled.value = user.preferences?.notifications ?? true;
-    profileVisibility.value = 'Public'; // Default or from user model if available
+  }
+
+  Future<void> refreshProfileData() async {
+    try {
+      isLoadingProfile.value = true;
+      final authController = Get.find<AuthController>();
+      await authController.fetchUserProfile();
+      // initializeControllers will be called by 'ever' listener
+    } finally {
+      isLoadingProfile.value = false;
+    }
   }
 
   @override
@@ -150,7 +169,6 @@ class ProfileController extends BaseController {
 
   // New Profile UI States
   var notificationsEnabled = true.obs;
-  var profileVisibility = 'Public'.obs;
   var selectedConnectionType = 'Networking'.obs;
 
   Map<String, List<Interest>> get interestsByCategory {
@@ -314,6 +332,21 @@ class ProfileController extends BaseController {
       phoneError.value = "";
     }
 
+    if (selectedInterests.length < 5) {
+      Get.snackbar('Interests Required', 'Please select at least 5 interests', backgroundColor: Colors.orange, colorText: Colors.white);
+      isValid = false;
+    }
+
+    if (selectedInterests.length > 10) {
+      Get.snackbar('Too Many Interests', 'You can select up to 10 interests', backgroundColor: Colors.orange, colorText: Colors.white);
+      isValid = false;
+    }
+
+    if (selectedConnectionTypes.isEmpty) {
+      Get.snackbar('Connection Type Required', 'Please select at least one connection type', backgroundColor: Colors.orange, colorText: Colors.white);
+      isValid = false;
+    }
+
     return isValid;
   }
 
@@ -335,47 +368,99 @@ class ProfileController extends BaseController {
 
   // Update Profile API Call
   Future<void> updateProfile({bool isInitialFlow = true}) async {
+    if (!validateProfileFields()) return;
+    
     try {
       setLoading(true);
+      final authController = Get.find<AuthController>();
+      final user = authController.currentUser.value;
 
       // 1. Upload Avatar first if available
       if (profileImagePath.value.isNotEmpty) {
         final avatarSuccess = await updateAvatar();
         if (!avatarSuccess) {
           Get.snackbar('Error', 'Failed to upload profile picture');
+          setLoading(false);
           return;
         }
       }
 
-      // 2. Then Update Profile
+      // 2. Prepare Partial Body
       final token = SharedPrefsService.getString('accessToken');
+      final body = <String, dynamic>{};
 
-      // Use slugs directly as they are already stored in selectedInterests
-      final interestsSlugs = selectedInterests.toList();
+      if (fullNameController.text != user?.fullName) body["fullName"] = fullNameController.text;
+      if (usernameController.text != user?.username) body["username"] = usernameController.text;
+      if (bioController.text != user?.bio) body["bio"] = bioController.text;
+      // Handle Phone & Country Code (Must be provided together per backend schema)
+      bool phoneChanged = phoneController.text != user?.phone;
+      bool countryCodeChanged = selectedCountryCode.value != user?.phoneCountryCode;
 
+      if (phoneChanged || countryCodeChanged) {
+        body["phone"] = phoneController.text;
+        body["phoneCountryCode"] = selectedCountryCode.value;
+      }
+      
+      // Compare Date of Birth
+      String? userDOB;
+      if (user?.dateOfBirth != null && user!.dateOfBirth!.contains('T')) {
+        try {
+          final date = DateTime.parse(user.dateOfBirth!);
+          userDOB = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+        } catch (_) {}
+      } else {
+        userDOB = user?.dateOfBirth;
+      }
+      if (dateOfBirth.value != userDOB) body["dateOfBirth"] = dateOfBirth.value;
+
+      final genderMap = {
+        'Male': 'male',
+        'Female': 'female',
+        'Non-Binary': 'non-binary',
+        'Prefer Not to Say': 'prefer-not-to-say'
+      };
+      final genderVal = genderMap[selectedGender.value] ?? selectedGender.value.toLowerCase();
+      if (genderVal != user?.gender?.toLowerCase()) body["gender"] = genderVal;
+      
+      if (selectedCountry.value != user?.country) body["country"] = selectedCountry.value;
+      if (cityController.text != user?.city) body["city"] = cityController.text;
+      
+      if (currentAddress.value != user?.address) body["address"] = currentAddress.value;
+
+      // Location Comparison (New Backend Format: {longitude, latitude})
+      final currentLat = user?.location?.coordinates[1];
+      final currentLng = user?.location?.coordinates[0];
+      if (latitude.value != currentLat || longitude.value != currentLng) {
+        body["location"] = {
+          "longitude": longitude.value,
+          "latitude": latitude.value
+        };
+      }
+
+      // Connection Types
       final connectionTypeSlugs = selectedConnectionTypes
           .map((e) => e.toLowerCase().replaceAll(' ', '_').replaceAll('-', '_'))
-          .toList();
+          .map((e) => e == 'event_based_meetup' ? 'event_based_meetups' : e) // Align with plural in backend
+          .toList()..sort();
+      final userConnectionTypes = (user?.connectionType ?? <String>[]).toList()..sort();
+      
+      if (!listEquals(connectionTypeSlugs, userConnectionTypes)) {
+        body["connectionType"] = connectionTypeSlugs;
+      }
 
-      final body = {
-        "fullName": fullNameController.text,
-        "username": usernameController.text,
-        "bio": bioController.text,
-        "phoneCountryCode": selectedCountryCode.value,
-        "phone": phoneController.text,
-        "dateOfBirth": dateOfBirth.value,
-        "gender": selectedGender.value.toLowerCase(),
-        "country": selectedCountry.value,
-        "city": cityController.text,
-        "connectionType": connectionTypeSlugs,
-        "visibility": profileVisibility.value.toLowerCase(),
-        "location": {
-          "type": "Point",
-          "coordinates": [longitude.value, latitude.value]
-        },
-        "address": currentAddress.value,
-        "interests": interestsSlugs,
-      };
+      // Interests
+      final interestsSlugs = selectedInterests.toList()..sort();
+      final userInterestsSlugs = (user?.interests?.map((e) => e.slug).toList() ?? <String>[])..sort();
+      
+      if (!listEquals(interestsSlugs, userInterestsSlugs)) {
+        body["interests"] = interestsSlugs;
+      }
+
+      if (body.isEmpty && profileImagePath.value.isEmpty) {
+        setLoading(false);
+        if (!isInitialFlow) Get.back();
+        return;
+      }
 
       final response = await _apiService.patch(
         AppUrls.updateProfile,
@@ -459,6 +544,34 @@ class ProfileController extends BaseController {
       Get.snackbar('Success', 'Profile picture updated successfully');
     } else {
       Get.snackbar('Error', 'Failed to upload profile picture');
+    }
+  }
+
+  Future<void> updatePreferences({bool? notifications, bool? emailUpdates, bool? locationSharing}) async {
+    try {
+      final token = SharedPrefsService.getString('accessToken');
+      final body = {
+        "preferences": {
+          if (notifications != null) "notifications": notifications,
+          if (emailUpdates != null) "emailUpdates": emailUpdates,
+          if (locationSharing != null) "locationSharing": locationSharing,
+        }
+      };
+
+      final response = await _apiService.patch(
+        AppUrls.updateProfile,
+        headers: {'Authorization': 'Bearer $token'},
+        body: body,
+      );
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final authController = Get.find<AuthController>();
+        authController.currentUser.value = UserModel.fromJson(data['data']['user']);
+        if (notifications != null) notificationsEnabled.value = notifications;
+      }
+    } catch (e) {
+      debugPrint("Error updating preferences: $e");
     }
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/circle_model.dart';
+import '../../services/shared_prefs_service.dart';
 
 class CircleMemberTile extends StatelessWidget {
   final MemberModel member;
@@ -79,27 +80,29 @@ class CircleMemberTile extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(
-            height: 32.h,
-            child: OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.primary),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16.r),
+          if (!member.isOwner && member.id != SharedPrefsService.getString('userId'))
+            SizedBox(
+              height: 32.h,
+              child: OutlinedButton(
+                onPressed: () {},
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: member.isBonded ? AppColors.primary : Colors.white,
+                  side: const BorderSide(color: AppColors.primary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
                 ),
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-              ),
-              child: Text(
-                "Bond",
-                style: GoogleFonts.inter(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
+                child: Text(
+                  member.isBonded ? "Bonded" : "Bond",
+                  style: GoogleFonts.inter(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.w700,
+                    color: member.isBonded ? Colors.white : AppColors.primary,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

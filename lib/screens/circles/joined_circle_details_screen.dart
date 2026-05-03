@@ -24,6 +24,15 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
   final List<String> _tabs = ["Circle Feed", "Circle Events", "Circle Members"];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final CircleModel circle = Get.arguments;
+      Get.find<CircleController>().fetchCircleFeed(circle);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final CircleModel circle = Get.arguments;
 
@@ -118,154 +127,161 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
           SizedBox(width: 8.w),
         ],
       ),
-      body: Column(
-        children: [
-          // Content Type Chips
-          SizedBox(height: 12.h),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: EdgeInsets.symmetric(horizontal: 24.w),
-            child: Row(
+      body: Obx(() {
+        final controller = Get.find<CircleController>();
+        return Stack(
+          children: [
+            Column(
               children: [
-                // if (_selectedTabIndex == 0) ...[
-                //   Container(
-                //     padding: EdgeInsets.symmetric(
-                //       horizontal: 20.w,
-                //       vertical: 10.h,
-                //     ),
-                //     decoration: BoxDecoration(
-                //       color: const Color(0xFFFAF7FF),
-                //       borderRadius: BorderRadius.circular(20.r),
-                //       border: Border.all(color: Colors.grey[200]!),
-                //     ),
-                //     child: Text(
-                //       "Today",
-                //       style: GoogleFonts.inter(
-                //         fontSize: 14.sp,
-                //         color: Colors.grey[500],
-                //         fontWeight: FontWeight.w500,
-                //       ),
-                //     ),
-                //   ),
-                //   SizedBox(width: 12.w),
-                // ],
-                ...List.generate(
-                  _tabs.length,
-                  (index) => Padding(
-                    padding: EdgeInsets.only(right: 12.w),
-                    child: GestureDetector(
-                      onTap: () => setState(() => _selectedTabIndex = index),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 20.w,
-                          vertical: 10.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _selectedTabIndex == index
-                              ? AppColors.primary
-                              : const Color(0xFFFAF7FF),
-                          borderRadius: BorderRadius.circular(20.r),
-                          border: Border.all(
-                            color: _selectedTabIndex == index
-                                ? AppColors.primary
-                                : Colors.grey[200]!,
-                          ),
-                        ),
-                        child: Text(
-                          _tabs[index],
-                          style: GoogleFonts.inter(
-                            fontSize: 14.sp,
-                            color: _selectedTabIndex == index
-                                ? Colors.white
-                                : Colors.grey[600],
-                            fontWeight: _selectedTabIndex == index
-                                ? FontWeight.w600
-                                : FontWeight.w500,
+                // Content Type Chips
+                SizedBox(height: 12.h),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.symmetric(horizontal: 24.w),
+                  child: Row(
+                    children: [
+                      ...List.generate(
+                        _tabs.length,
+                        (index) => Padding(
+                          padding: EdgeInsets.only(right: 12.w),
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() => _selectedTabIndex = index);
+                              if (index == 0) controller.fetchCircleFeed(circle);
+                              if (index == 1) controller.fetchCircleEvents(circle);
+                              if (index == 2) controller.fetchCircleMembers(circle);
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 20.w,
+                                vertical: 10.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _selectedTabIndex == index
+                                    ? AppColors.primary
+                                    : const Color(0xFFFAF7FF),
+                                borderRadius: BorderRadius.circular(20.r),
+                                border: Border.all(
+                                  color: _selectedTabIndex == index
+                                      ? AppColors.primary
+                                      : Colors.grey[200]!,
+                                ),
+                              ),
+                              child: Text(
+                                _tabs[index],
+                                style: GoogleFonts.inter(
+                                  fontSize: 14.sp,
+                                  color: _selectedTabIndex == index
+                                      ? Colors.white
+                                      : Colors.grey[600],
+                                  fontWeight: _selectedTabIndex == index
+                                      ? FontWeight.w600
+                                      : FontWeight.w500,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
+                SizedBox(height: 16.h),
+
+                // Main Content Area
+                Expanded(child: _buildMainContent(circle)),
               ],
             ),
-          ),
-          SizedBox(height: 16.h),
-
-          // Main Content Area
-          Expanded(child: _buildMainContent(circle)),
-        ],
-      ),
+            if (controller.isLoading.value)
+              Container(
+                color: Colors.black.withOpacity(0.2),
+                child: const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+          ],
+        );
+      }),
     );
   }
 
   Widget _buildMainContent(CircleModel circle) {
+    final controller = Get.find<CircleController>();
     switch (_selectedTabIndex) {
       case 0: // Feed
-        return Obx(() {
-          if (circle.posts.isEmpty) {
-            return _buildEmptyState("No posts yet.");
-          }
-          return ListView.builder(
-            padding: EdgeInsets.only(bottom: 20.h),
-            itemCount: circle.posts.length,
-            itemBuilder: (context, index) {
-              return CirclePostItem(post: circle.posts[index]);
-            },
-          );
-        });
+        return Obx(() => RefreshIndicator(
+          onRefresh: () => controller.fetchCircleFeed(circle),
+          child: circle.posts.isEmpty
+              ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    SizedBox(height: 100.h),
+                    _buildEmptyState("No posts yet."),
+                  ],
+                )
+              : ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.only(bottom: 20.h),
+                  itemCount: circle.posts.length,
+                  itemBuilder: (context, index) {
+                    return CirclePostItem(post: circle.posts[index], circle: circle);
+                  },
+                ),
+        ));
       case 1: // Events
-        return _buildEventsView();
+        return Obx(() => RefreshIndicator(
+          onRefresh: () => controller.fetchCircleEvents(circle),
+          child: _buildEventsView(circle),
+        ));
       case 2: // Members
-        return _buildMembersView(circle);
+        return Obx(() => RefreshIndicator(
+          onRefresh: () => controller.fetchCircleMembers(circle),
+          child: _buildMembersView(circle),
+        ));
       default:
         return const SizedBox.shrink();
     }
   }
 
-  Widget _buildEventsView() {
-    // Mock events for now
-    final mockEvents = [
-      {
-        'title': 'Weekend Brunch Meetup',
-        'image':
-            'https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=870&auto=format&fit=crop',
-        'date': 'Oct 12, 2024',
-        'time': '10:00 AM',
-        'location': 'Grand Central Cafe, NY',
-      },
-      {
-        'title': 'Wine & Cheese Night',
-        'image':
-            'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=870&auto=format&fit=crop',
-        'date': 'Oct 15, 2024',
-        'time': '07:00 PM',
-        'location': 'The Vineyard Lounge, NY',
-      },
-    ];
+  Widget _buildEventsView(CircleModel circle) {
+    if (circle.events.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(height: 100.h),
+          _buildEmptyState("No events scheduled for this circle."),
+        ],
+      );
+    }
 
     return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.symmetric(horizontal: 8.w),
-      itemCount: mockEvents.length,
+      itemCount: circle.events.length,
       itemBuilder: (context, index) {
-        return UpcomingEventCard(data: mockEvents[index]);
+        return UpcomingEventCard(event: circle.events[index]);
       },
     );
   }
 
   Widget _buildMembersView(CircleModel circle) {
-    return Obx(() {
-      if (circle.detailedMembers.isEmpty) {
-        return _buildEmptyState("No members information available.");
-      }
-      return ListView.builder(
-        padding: EdgeInsets.symmetric(horizontal: 24.w),
-        itemCount: circle.detailedMembers.length,
-        itemBuilder: (context, index) {
-          return CircleMemberTile(member: circle.detailedMembers[index]);
-        },
+    if (circle.detailedMembers.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(height: 100.h),
+          _buildEmptyState("No members information available."),
+        ],
       );
-    });
+    }
+    return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.symmetric(horizontal: 24.w),
+      itemCount: circle.detailedMembers.length,
+      itemBuilder: (context, index) {
+        return CircleMemberTile(member: circle.detailedMembers[index]);
+      },
+    );
   }
 
   Widget _buildEmptyState(String message) {

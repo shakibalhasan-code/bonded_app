@@ -42,7 +42,7 @@ class HomeScreen extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: controller.upcomingEvents.length,
               itemBuilder: (context, index) {
-                return UpcomingEventCard(data: controller.upcomingEvents[index]);
+                return UpcomingEventCard(event: controller.upcomingEvents[index]);
               },
             )),
             

@@ -1,3 +1,5 @@
+import 'package:bonded_app/core/constants/app_endpoints.dart';
+
 enum EventCategory { inPerson, virtual, highlights }
 
 class HostModel {
@@ -22,7 +24,8 @@ class HostModel {
     required this.imageUrl,
     this.firstName = 'Maria T.',
     this.hostedEventsCount = 12,
-    this.bio = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+    this.bio =
+        'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
     this.phoneNumber = '+49-5410-81030619',
     this.facebookUrl = 'https://www.facebook.com/bondedapp',
     this.twitterUrl = 'https://www.twitter.com/bondedapp',
@@ -112,27 +115,39 @@ class EventModel {
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
     // Determine category from type
-    final eventData = json['event'] ?? {};
+    final eventData =
+        json['event'] ?? json; // Fallback to root for circle events
     final typeStr = eventData['type'] ?? 'in-person';
     EventCategory cat = EventCategory.inPerson;
     if (typeStr == 'virtual') cat = EventCategory.virtual;
-    
-    // Parse startAt for date and time
-    String? date;
-    String? time;
-    if (json['startAt'] != null) {
+
+    // Parse startAt for date and time, or use eventDate/eventTime if available
+    String? date = json['eventDate'] ?? eventData['eventDate'];
+    String? time = json['eventTime'] ?? eventData['eventTime'];
+
+    if (date == null && json['startAt'] != null) {
       final startAt = DateTime.parse(json['startAt']).toLocal();
       date = "${startAt.day}/${startAt.month}/${startAt.year}";
-      time = "${startAt.hour.toString().padLeft(2, '0')}:${startAt.minute.toString().padLeft(2, '0')}";
+      time =
+          "${startAt.hour.toString().padLeft(2, '0')}:${startAt.minute.toString().padLeft(2, '0')}";
     }
 
     return EventModel(
       id: json['id'] ?? json['_id'] ?? '',
       title: json['title'] ?? eventData['title'] ?? '',
-      imageUrl: json['image'] ?? eventData['coverImage'] ?? '',
-      address: json['location']?['address'] ?? eventData['location']?['address'] ?? eventData['address'],
-      city: json['location']?['city'] ?? eventData['location']?['city'] ?? eventData['city'],
-      country: json['location']?['country'] ?? eventData['location']?['country'] ?? eventData['country'],
+      imageUrl: AppUrls.imageUrl(json['coverImage'] ?? eventData['coverImage']),
+      address:
+          json['location']?['address'] ??
+          eventData['location']?['address'] ??
+          eventData['address'],
+      city:
+          json['location']?['city'] ??
+          eventData['location']?['city'] ??
+          eventData['city'],
+      country:
+          json['location']?['country'] ??
+          eventData['location']?['country'] ??
+          eventData['country'],
       date: date,
       time: time,
       price: (eventData['ticketPrice'] ?? 0).toDouble(),
@@ -145,7 +160,6 @@ class EventModel {
     );
   }
 }
-
 
 class HighlightModel {
   final String id;

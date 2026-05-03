@@ -1,37 +1,46 @@
 import 'package:get/get.dart';
 import 'user_model.dart';
 import 'home_models.dart';
+import 'event_model.dart';
 import '../services/shared_prefs_service.dart';
+import '../core/constants/app_endpoints.dart';
 
 class MemberModel {
+  final String id;
   final String name;
   final String image;
   final String role;
   final bool isOwner;
+  final bool isBonded;
 
   MemberModel({
+    required this.id,
     required this.name,
     required this.image,
     this.role = 'Member',
     required this.isOwner,
+    this.isBonded = false,
   });
 
   factory MemberModel.fromJson(Map<String, dynamic> json) {
-    return MemberModel(
-      name: json['name'] ?? '',
-      image: json['image'] ?? 'https://i.pravatar.cc/150?u=${json['name']}',
-      role: json['role'] ?? 'Member',
-      isOwner: json['isOwner'] ?? false,
-    );
-  }
+    final user = json['user'];
+    String name = "Unknown";
+    String image = "https://i.pravatar.cc/150";
+    String id = json['_id'] ?? '';
 
-  Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'image': image,
-      'role': role,
-      'isOwner': isOwner,
-    };
+    if (user is Map) {
+      name = user['fullName'] ?? "Unknown";
+      image = AppUrls.imageUrl(user['avatar']);
+    }
+
+    return MemberModel(
+      id: id,
+      name: name,
+      image: image,
+      role: json['role'] ?? 'Member',
+      isOwner: json['isCreator'] ?? false,
+      isBonded: json['isBonded'] ?? false,
+    );
   }
 }
 
@@ -66,6 +75,7 @@ class CircleModel {
   final List<String> memberAvatars;
   final RxList<MemberModel> detailedMembers;
   final RxList<PostModel> posts;
+  final RxList<EventModel> events;
 
   CircleModel({
     required this.id,
@@ -96,11 +106,13 @@ class CircleModel {
     this.memberAvatars = const [],
     List<MemberModel>? members,
     List<PostModel>? postsList,
+    List<EventModel>? eventsList,
   }) : memberCount = memberCountValue.obs,
        postCount = postCountValue.obs,
        isJoined = isJoinedValue.obs,
        detailedMembers = (members ?? <MemberModel>[]).obs,
-       posts = (postsList ?? <PostModel>[]).obs;
+       posts = (postsList ?? <PostModel>[]).obs,
+       events = (eventsList ?? <EventModel>[]).obs;
 
   bool get isOwner {
     final currentUserId = SharedPrefsService.getString('userId');
@@ -136,7 +148,7 @@ class CircleModel {
       address: json['address'] ?? 'Not Specified',
       createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
       updatedAt: DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
-      image: json['image'] ?? 'https://images.unsplash.com/photo-1529156069898-49953e39b30f?w=800&q=80',
+      image: AppUrls.imageUrl(json['image'] ?? 'https://images.unsplash.com/photo-1529156069898-49953e39b30f?w=800&q=80'),
       isJoinedValue: json['isJoined'] ?? false,
       isLocked: json['isLocked'] ?? false,
       memberAvatars: List<String>.from(json['memberAvatars'] ?? []),

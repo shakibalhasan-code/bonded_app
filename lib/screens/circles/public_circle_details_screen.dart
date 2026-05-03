@@ -76,7 +76,9 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
             ClipRRect(
               borderRadius: BorderRadius.circular(24.r),
               child: Image.network(
-                circle.image.isNotEmpty ? circle.image : _getPlaceholderImage(circle.id),
+                circle.image.isNotEmpty
+                    ? circle.image
+                    : _getPlaceholderImage(circle.id),
                 width: double.infinity,
                 height: 220.h,
                 fit: BoxFit.cover,
@@ -242,32 +244,32 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
               );
             }),
 
-          SizedBox(height: 40.h),
+            SizedBox(height: 40.h),
 
-          // Join Button
-          ElevatedButton(
-            onPressed: () => circle.isJoined.value = true,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              minimumSize: Size(double.infinity, 56.h),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30.r),
+            // Join Button
+            ElevatedButton(
+              onPressed: () => circle.isJoined.value = true,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                minimumSize: Size(double.infinity, 56.h),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.r),
+                ),
+              ),
+              child: Text(
+                "Join Circle",
+                style: GoogleFonts.inter(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
               ),
             ),
-            child: Text(
-              "Join Circle",
-              style: GoogleFonts.inter(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          SizedBox(height: 40.h),
-        ],
+            SizedBox(height: 40.h),
+          ],
+        ),
       ),
-    ),
-  );
+    );
   }
 
   Widget _buildInterestChip(String label) {
@@ -405,7 +407,10 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
               padding: EdgeInsets.only(bottom: 20.h),
               itemCount: circle.posts.length,
               itemBuilder: (context, index) {
-                return CirclePostItem(post: circle.posts[index]);
+                return CirclePostItem(
+                  post: circle.posts[index],
+                  circle: circle,
+                );
               },
             ),
           ),
@@ -765,6 +770,7 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
       ),
     );
   }
+
   String _getPlaceholderImage(String id) {
     final List<String> placeholders = [
       'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&q=80',

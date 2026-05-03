@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:bonded_app/models/event_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -75,69 +76,116 @@ class CircleController extends BaseController {
   // Filtering Logic
   List<CircleModel> get filteredPublicCircles {
     if (searchQuery.value.isEmpty) return publicCircles;
-    return publicCircles.where((c) => 
-      c.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
-      c.description.toLowerCase().contains(searchQuery.value.toLowerCase())
-    ).toList();
+    return publicCircles
+        .where(
+          (c) =>
+              c.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
+              c.description.toLowerCase().contains(
+                searchQuery.value.toLowerCase(),
+              ),
+        )
+        .toList();
   }
 
   List<CircleModel> get filteredPrivateCircles {
     if (searchQuery.value.isEmpty) return privateCircles;
-    return privateCircles.where((c) => 
-      c.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
-      c.description.toLowerCase().contains(searchQuery.value.toLowerCase())
-    ).toList();
+    return privateCircles
+        .where(
+          (c) =>
+              c.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
+              c.description.toLowerCase().contains(
+                searchQuery.value.toLowerCase(),
+              ),
+        )
+        .toList();
   }
 
   List<CircleModel> get filteredMyCreatedCircles {
     if (searchQuery.value.isEmpty) return createdCircles;
-    return createdCircles.where((c) => 
-      c.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
-      c.description.toLowerCase().contains(searchQuery.value.toLowerCase())
-    ).toList();
+    return createdCircles
+        .where(
+          (c) =>
+              c.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
+              c.description.toLowerCase().contains(
+                searchQuery.value.toLowerCase(),
+              ),
+        )
+        .toList();
   }
 
   List<CircleModel> get filteredMyJoinedCircles {
     if (searchQuery.value.isEmpty) return joinedCircles;
-    return joinedCircles.where((c) => 
-      c.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
-      c.description.toLowerCase().contains(searchQuery.value.toLowerCase())
-    ).toList();
+    return joinedCircles
+        .where(
+          (c) =>
+              c.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
+              c.description.toLowerCase().contains(
+                searchQuery.value.toLowerCase(),
+              ),
+        )
+        .toList();
   }
 
   // Members related state
   var availableMembers = <MemberModel>[
-    MemberModel(name: "John Doe", image: "https://i.pravatar.cc/150?u=john", isOwner: false),
-    MemberModel(name: "Jane Smith", image: "https://i.pravatar.cc/150?u=jane", isOwner: false),
-    MemberModel(name: "Mike Johnson", image: "https://i.pravatar.cc/150?u=mike", isOwner: false),
-    MemberModel(name: "Sarah Williams", image: "https://i.pravatar.cc/150?u=sarah", isOwner: false),
-    MemberModel(name: "David Brown", image: "https://i.pravatar.cc/150?u=david", isOwner: false),
+    MemberModel(
+      id: "1",
+      name: "John Doe",
+      image: "https://i.pravatar.cc/150?u=john",
+      isOwner: false,
+    ),
+    MemberModel(
+      id: "2",
+      name: "Jane Smith",
+      image: "https://i.pravatar.cc/150?u=jane",
+      isOwner: false,
+    ),
+    MemberModel(
+      id: "3",
+      name: "Mike Johnson",
+      image: "https://i.pravatar.cc/150?u=mike",
+      isOwner: false,
+    ),
+    MemberModel(
+      id: "4",
+      name: "Sarah Williams",
+      image: "https://i.pravatar.cc/150?u=sarah",
+      isOwner: false,
+    ),
+    MemberModel(
+      id: "5",
+      name: "David Brown",
+      image: "https://i.pravatar.cc/150?u=david",
+      isOwner: false,
+    ),
   ].obs;
 
   List<MemberModel> get filteredAvailableMembers {
     if (searchQuery.value.isEmpty) return availableMembers;
-    return availableMembers.where((m) => 
-      m.name.toLowerCase().contains(searchQuery.value.toLowerCase())
-    ).toList();
+    return availableMembers
+        .where(
+          (m) => m.name.toLowerCase().contains(searchQuery.value.toLowerCase()),
+        )
+        .toList();
   }
 
   Future<void> fetchCircles({String? visibility, String? scope}) async {
     try {
       _setLoadingState(visibility, scope, true);
-      
+
       final token = SharedPrefsService.getString('accessToken');
-      
+
       // Build query params
       final Map<String, String> params = {};
       if (visibility != null) params['visibility'] = visibility;
       if (scope != null) params['scope'] = scope;
-      
+
       final queryString = params.entries
           .map((e) => '${e.key}=${e.value}')
           .join('&');
-      
+
       final url = '${AppUrls.circles}?$queryString';
-      
+
       final response = await _apiService.get(
         url,
         headers: {'Authorization': 'Bearer $token'},
@@ -146,8 +194,10 @@ class CircleController extends BaseController {
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
         final List<dynamic> circlesJson = data['data'];
-        final circles = circlesJson.map((c) => CircleModel.fromJson(c)).toList();
-        
+        final circles = circlesJson
+            .map((c) => CircleModel.fromJson(c))
+            .toList();
+
         _updateCircleList(visibility, scope, circles);
       }
     } catch (e) {
@@ -169,20 +219,20 @@ class CircleController extends BaseController {
       if (imageFile != null) {
         final mimeType = lookupMimeType(imageFile.path) ?? 'image/jpeg';
         final mimeParts = mimeType.split('/');
-        files.add(await http.MultipartFile.fromPath(
-          'image',
-          imageFile.path,
-          contentType: MediaType(mimeParts.first, mimeParts[1]),
-        ));
+        files.add(
+          await http.MultipartFile.fromPath(
+            'image',
+            imageFile.path,
+            contentType: MediaType(mimeParts.first, mimeParts[1]),
+          ),
+        );
       }
 
       final response = await _apiService.multipartRequest(
         'POST',
         AppUrls.circles,
         headers: {'Authorization': 'Bearer $token'},
-        fields: {
-          'data': jsonEncode(circleData),
-        },
+        fields: {'data': jsonEncode(circleData)},
         files: files,
       );
 
@@ -192,9 +242,9 @@ class CircleController extends BaseController {
         fetchCircles(visibility: 'public');
         fetchCircles(visibility: 'private');
         fetchCircles(scope: 'created');
-        
+
         Get.back(); // Go back to previous screen
-        
+
         // Use a small delay to ensure the screen transition is stable before showing snackbar
         Future.delayed(const Duration(milliseconds: 500), () {
           Get.snackbar(
@@ -212,7 +262,7 @@ class CircleController extends BaseController {
         });
       } else {
         Get.snackbar(
-          'Error', 
+          'Error',
           data['message'] ?? 'Failed to create circle',
           snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red.withOpacity(0.9),
@@ -249,7 +299,11 @@ class CircleController extends BaseController {
     }
   }
 
-  void _updateCircleList(String? visibility, String? scope, List<CircleModel> circles) {
+  void _updateCircleList(
+    String? visibility,
+    String? scope,
+    List<CircleModel> circles,
+  ) {
     if (scope == 'created') {
       createdCircles.value = circles;
     } else if (scope == 'joined') {
@@ -258,6 +312,247 @@ class CircleController extends BaseController {
       publicCircles.value = circles;
     } else if (visibility == 'private') {
       privateCircles.value = circles;
+    }
+  }
+
+  Future<void> fetchCircleFeed(CircleModel circle) async {
+    try {
+      final token = SharedPrefsService.getString('accessToken');
+      final url = AppUrls.circleFeed(circle.id);
+
+      final response = await _apiService.get(
+        url,
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final List<dynamic> postsJson = data['data'];
+        final posts = postsJson.map((p) => PostModel.fromJson(p)).toList();
+        circle.posts.assignAll(posts);
+      }
+    } catch (e) {
+      debugPrint("Error fetching circle feed: $e");
+    }
+  }
+
+  Future<void> fetchCircleMembers(CircleModel circle) async {
+    try {
+      final token = SharedPrefsService.getString('accessToken');
+      final url = AppUrls.circleMembers(circle.id);
+
+      final response = await _apiService.get(
+        url,
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final List<dynamic> membersJson = data['data'];
+        final members = membersJson
+            .map((m) => MemberModel.fromJson(m))
+            .toList();
+        circle.detailedMembers.assignAll(members);
+      }
+    } catch (e) {
+      debugPrint("Error fetching circle members: $e");
+    }
+  }
+
+  Future<void> fetchCircleEvents(CircleModel circle) async {
+    try {
+      final token = SharedPrefsService.getString('accessToken');
+      final url = AppUrls.circleEvents(circle.id);
+
+      final response = await _apiService.get(
+        url,
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final List<dynamic> eventsJson = data['data'];
+        final events = eventsJson.map((e) => EventModel.fromJson(e)).toList();
+        circle.events.assignAll(events);
+      }
+    } catch (e) {
+      debugPrint("Error fetching circle events: $e");
+    }
+  }
+
+  Future<void> _reactToId(
+    String id,
+    RxString reactionTypeObs,
+    RxBool isLikedObs,
+    RxInt likesCountObs, {
+    String? specificType,
+  }) async {
+    final originalType = reactionTypeObs.value;
+    final originalIsLiked = isLikedObs.value;
+    final originalCount = likesCountObs.value;
+
+    try {
+      final token = SharedPrefsService.getString('accessToken');
+      final url = AppUrls.reactPost(id);
+
+      // Determine new state
+      final bool wasLiked = originalIsLiked;
+      final String nextType = specificType ?? (wasLiked ? "none" : "like");
+
+      http.Response response;
+      if (nextType == "none") {
+        response = await _apiService.delete(
+          url,
+          headers: {'Authorization': 'Bearer $token'},
+        );
+      } else {
+        response = await _apiService.post(
+          url,
+          headers: {'Authorization': 'Bearer $token'},
+          body: {'reactionType': nextType},
+        );
+      }
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        reactionTypeObs.value = nextType;
+        if (nextType == "none") {
+          isLikedObs.value = false;
+          if (likesCountObs.value > 0) likesCountObs.value--;
+        } else {
+          if (!isLikedObs.value) {
+            likesCountObs.value++;
+          }
+          isLikedObs.value = true;
+        }
+      }
+    } catch (e) {
+      debugPrint("Error reacting: $e");
+      // Rollback
+      reactionTypeObs.value = originalType;
+      isLikedObs.value = originalIsLiked;
+      likesCountObs.value = originalCount;
+    }
+  }
+
+  Future<void> updatePostReaction(PostModel post, String type) async {
+    try {
+      final token = SharedPrefsService.getString('accessToken');
+      final url = AppUrls.reactPost(post.id);
+
+      http.Response response;
+      if (type == "none") {
+        response = await _apiService.delete(
+          url,
+          headers: {'Authorization': 'Bearer $token'},
+        );
+      } else {
+        response = await _apiService.post(
+          url,
+          headers: {'Authorization': 'Bearer $token'},
+          body: {'reactionType': type},
+        );
+      }
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        post.reactionType.value = type;
+        if (type == "none") {
+          post.isLiked.value = false;
+          if (post.likesCount.value > 0) post.likesCount.value--;
+        } else {
+          if (!post.isLiked.value) post.likesCount.value++;
+          post.isLiked.value = true;
+        }
+      }
+    } catch (e) {
+      debugPrint("Error updating reaction: $e");
+    }
+  }
+
+  Future<void> sharePost(CircleModel circle, PostModel post) async {
+    try {
+      setLoading(true);
+      final token = SharedPrefsService.getString('accessToken');
+      final url = AppUrls.sharePost(post.id);
+
+      final response = await _apiService.post(
+        url,
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        // Refresh feed auto
+        fetchCircleFeed(circle);
+        Get.snackbar("Success", "Post shared successfully");
+      }
+    } catch (e) {
+      debugPrint("Error sharing post: $e");
+      Get.snackbar("Error", "Failed to share post");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  Future<void> addCommentToPost({
+    required CircleModel circle,
+    required PostModel post,
+    required String content,
+    String? parentPostId,
+    File? imageFile,
+    File? videoFile,
+  }) async {
+    try {
+      setLoading(true);
+      final token = SharedPrefsService.getString('accessToken');
+      final url = AppUrls.commentPost(circle.id, parentPostId ?? post.id);
+
+      final List<http.MultipartFile> files = [];
+      if (imageFile != null) {
+        final mimeType = lookupMimeType(imageFile.path) ?? 'image/jpeg';
+        final mimeParts = mimeType.split('/');
+        files.add(
+          await http.MultipartFile.fromPath(
+            'image',
+            imageFile.path,
+            contentType: MediaType(mimeParts.first, mimeParts[1]),
+          ),
+        );
+      }
+      if (videoFile != null) {
+        final mimeType = lookupMimeType(videoFile.path) ?? 'video/mp4';
+        final mimeParts = mimeType.split('/');
+        files.add(
+          await http.MultipartFile.fromPath(
+            'video',
+            videoFile.path,
+            contentType: MediaType(mimeParts.first, mimeParts[1]),
+          ),
+        );
+      }
+
+      final Map<String, dynamic> bodyData = {'content': content};
+
+      final response = await _apiService.multipartRequest(
+        'POST',
+        url,
+        headers: {'Authorization': 'Bearer $token'},
+        fields: {'data': jsonEncode(bodyData)},
+        files: files,
+      );
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        fetchCircleFeed(circle);
+        post.isCommenting.value = false;
+        Get.snackbar("Success", "Comment added successfully");
+      }
+    } catch (e) {
+      debugPrint("Error adding comment: $e");
+      Get.snackbar("Error", "Failed to add comment");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -277,31 +572,69 @@ class CircleController extends BaseController {
     // TODO: Implement lock logic
   }
 
-  void createPost(CircleModel circle, String text) {
-    if (text.isEmpty) return;
-    
-    final newPost = PostModel(
-      id: DateTime.now().toString(),
-      userName: "Current User",
-      userImage: "https://i.pravatar.cc/150?u=me",
-      postText: text,
-      likesCount: 0,
-      commentsCount: 0,
-    );
-    
-    circle.posts.insert(0, newPost);
-    circle.postCount.value++;
-    Get.back(); // Close sheet
-    Get.snackbar("Success", "Post created successfully");
+  Future<void> createCirclePost({
+    required CircleModel circle,
+    required String content,
+    List<File>? images,
+    File? video,
+  }) async {
+    try {
+      setLoading(true);
+      final token = SharedPrefsService.getString('accessToken');
+      final url = '${AppUrls.circles}/${circle.id}/posts';
+
+      final List<http.MultipartFile> files = [];
+      if (images != null) {
+        for (var image in images) {
+          final mimeType = lookupMimeType(image.path) ?? 'image/jpeg';
+          final mimeParts = mimeType.split('/');
+          files.add(
+            await http.MultipartFile.fromPath(
+              'images',
+              image.path,
+              contentType: MediaType(mimeParts.first, mimeParts[1]),
+            ),
+          );
+        }
+      }
+      if (video != null) {
+        final mimeType = lookupMimeType(video.path) ?? 'video/mp4';
+        final mimeParts = mimeType.split('/');
+        files.add(
+          await http.MultipartFile.fromPath(
+            'video',
+            video.path,
+            contentType: MediaType(mimeParts.first, mimeParts[1]),
+          ),
+        );
+      }
+
+      final response = await _apiService.multipartRequest(
+        'POST',
+        url,
+        headers: {'Authorization': 'Bearer $token'},
+        fields: {
+          'data': jsonEncode({'content': content}),
+        },
+        files: files,
+      );
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        fetchCircleFeed(circle);
+        Get.back(); // Close sheet
+        Get.snackbar("Success", "Post created successfully");
+      }
+    } catch (e) {
+      debugPrint("Error creating post: $e");
+      Get.snackbar("Error", "Failed to create post");
+    } finally {
+      setLoading(false);
+    }
   }
 
   void toggleLikePost(PostModel post) {
-    post.isLiked.value = !post.isLiked.value;
-    if (post.isLiked.value) {
-      post.likesCount.value++;
-    } else {
-      post.likesCount.value--;
-    }
+    _reactToId(post.id, post.reactionType, post.isLiked, post.likesCount);
   }
 
   void toggleCommentInput(PostModel post) {
@@ -323,17 +656,25 @@ class CircleController extends BaseController {
     post.isCommenting.value = false;
   }
 
-  void updatePostReaction(PostModel post, String type) {
-    post.reactionType.value = type;
-  }
+  // This is handled by updatePostReaction now
 
   void toggleLikeComment(CommentModel comment) {
-    comment.isLiked.value = !comment.isLiked.value;
-    if (comment.isLiked.value) {
-      comment.likesCount.value++;
-    } else {
-      comment.likesCount.value--;
-    }
+    _reactToId(
+      comment.id,
+      comment.reactionType,
+      comment.isLiked,
+      comment.likesCount,
+    );
+  }
+
+  void updateCommentReaction(CommentModel comment, String type) {
+    _reactToId(
+      comment.id,
+      comment.reactionType,
+      comment.isLiked,
+      comment.likesCount,
+      specificType: type,
+    );
   }
 
   void toggleReplyInput(CommentModel comment) {

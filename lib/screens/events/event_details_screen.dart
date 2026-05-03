@@ -8,11 +8,12 @@ import '../../core/constants/app_endpoints.dart';
 import '../../core/routes/app_routes.dart';
 
 class EventDetailsScreen extends StatelessWidget {
-  const EventDetailsScreen({Key? key}) : super(key: key);
+  final EventModel? event;
+  const EventDetailsScreen({Key? key, this.event}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final EventModel event = Get.arguments;
+    final EventModel event = this.event ?? Get.arguments;
 
     // Mock data for the flow
     final mockDescription =

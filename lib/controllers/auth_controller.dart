@@ -340,4 +340,14 @@ class AuthController extends BaseController {
       debugPrint("Error fetching user profile: $e");
     }
   }
+
+  // Logout
+  void logout() {
+    SharedPrefsService.delete('accessToken');
+    SharedPrefsService.delete('refreshToken');
+    SharedPrefsService.delete('userId');
+    currentUser.value = null;
+    userData.clear();
+    Get.offAllNamed(AppRoutes.LOGIN);
+  }
 }

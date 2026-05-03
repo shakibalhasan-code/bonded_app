@@ -1,17 +1,21 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/home_models.dart';
+import '../../models/circle_model.dart';
 import '../../controllers/circle_controller.dart';
 import 'circle_comment_item.dart';
 import 'reaction_selector.dart';
 
 class CirclePostItem extends StatefulWidget {
   final PostModel post;
+  final CircleModel circle;
 
-  const CirclePostItem({Key? key, required this.post}) : super(key: key);
+  const CirclePostItem({Key? key, required this.post, required this.circle}) : super(key: key);
 
   @override
   State<CirclePostItem> createState() => _CirclePostItemState();
@@ -20,6 +24,29 @@ class CirclePostItem extends StatefulWidget {
 class _CirclePostItemState extends State<CirclePostItem> {
   int _currentImageIndex = 0;
   final PageController _pageController = PageController();
+  File? _commentImage;
+  File? _commentVideo;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _commentImage = File(image.path);
+        _commentVideo = null;
+      });
+    }
+  }
+
+  Future<void> _pickVideo() async {
+    final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
+    if (video != null) {
+      setState(() {
+        _commentVideo = File(video.path);
+        _commentImage = null;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,15 +88,29 @@ class _CirclePostItemState extends State<CirclePostItem> {
                 padding: EdgeInsets.symmetric(horizontal: 20.w),
                 itemCount: widget.post.comments.length,
                 itemBuilder: (context, index) {
-                  return CircleCommentItem(comment: widget.post.comments[index]);
+                  return CircleCommentItem(
+                    comment: widget.post.comments[index],
+                    circle: widget.circle,
+                    post: widget.post,
+                  );
                 },
               )),
           
           // Comment Input
           Obx(() => widget.post.isCommenting.value
-              ? _buildCommentInput(commentController, (text) {
-                  controller.addComment(widget.post, text);
+              ? _buildCommentInput(commentController, (text, image, video) {
+                  controller.addCommentToPost(
+                    circle: widget.circle,
+                    post: widget.post,
+                    content: text,
+                    imageFile: image,
+                    videoFile: video,
+                  );
                   commentController.clear();
+                  setState(() {
+                    _commentImage = null;
+                    _commentVideo = null;
+                  });
                 })
               : const SizedBox.shrink()),
         ],
@@ -223,41 +264,41 @@ class _CirclePostItemState extends State<CirclePostItem> {
         children: [
           Obx(() {
             final reaction = widget.post.reactionType.value;
-            IconData icon = Icons.thumb_up_outlined;
-            Color color = AppColors.textHeading;
-            String label = "Like";
+            IconData icon = widget.post.isLiked.value ? Icons.thumb_up : Icons.thumb_up_outlined;
+            Color color = widget.post.isLiked.value ? AppColors.primary : AppColors.textHeading;
+            String label = "React";
             String emoji = "";
 
             if (reaction != "none") {
               switch (reaction) {
                 case "like":
                   icon = Icons.thumb_up;
-                  color = Colors.blue;
-                  label = "Like";
+                  color = AppColors.primary;
+                  label = "React";
                   break;
                 case "love":
                   emoji = "❤️";
-                  label = "Love";
+                  label = "React";
                   break;
                 case "care":
                   emoji = "🤗";
-                  label = "Care";
+                  label = "React";
                   break;
                 case "haha":
                   emoji = "😆";
-                  label = "Haha";
+                  label = "React";
                   break;
                 case "wow":
                   emoji = "😮";
-                  label = "Wow";
+                  label = "React";
                   break;
                 case "sad":
                   emoji = "😢";
-                  label = "Sad";
+                  label = "React";
                   break;
                 case "angry":
                   emoji = "😡";
-                  label = "Angry";
+                  label = "React";
                   break;
               }
             }
@@ -276,7 +317,7 @@ class _CirclePostItemState extends State<CirclePostItem> {
                     style: GoogleFonts.inter(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
-                      color: reaction == "love" ? Colors.red : (emoji.isNotEmpty ? AppColors.primary : color),
+                      color: reaction != "none" ? AppColors.primary : color,
                     ),
                   ),
                 ],
@@ -285,7 +326,8 @@ class _CirclePostItemState extends State<CirclePostItem> {
           }),
           _buildActionButton(Icons.chat_bubble_outline, "Comment",
               onTap: () => controller.toggleCommentInput(widget.post)),
-          _buildActionButton(Icons.share_outlined, "Share"),
+          _buildActionButton(Icons.share_outlined, "Share",
+              onTap: () => _showShareBottomSheet(context, controller)),
         ],
       ),
     );
@@ -342,32 +384,140 @@ class _CirclePostItemState extends State<CirclePostItem> {
     );
   }
 
-  Widget _buildCommentInput(TextEditingController controller, Function(String) onAdd) {
-    return Padding(
-      padding: EdgeInsets.all(20.w),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: controller,
-              style: GoogleFonts.inter(fontSize: 13.sp),
-              decoration: InputDecoration(
-                hintText: "Write a comment...",
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20.r),
-                  borderSide: BorderSide(color: Colors.grey[200]!),
+  Widget _buildCommentInput(TextEditingController controller, Function(String, File?, File?) onAdd) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_commentImage != null || _commentVideo != null)
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12.r),
+                  child: _commentImage != null
+                      ? Image.file(_commentImage!, height: 80.h, width: 80.w, fit: BoxFit.cover)
+                      : Container(
+                          height: 80.h,
+                          width: 80.w,
+                          color: Colors.black12,
+                          child: Icon(Icons.videocam, color: AppColors.primary),
+                        ),
                 ),
-              ),
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  child: GestureDetector(
+                    onTap: () => setState(() {
+                      _commentImage = null;
+                      _commentVideo = null;
+                    }),
+                    child: Container(
+                      padding: EdgeInsets.all(2.w),
+                      decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                      child: Icon(Icons.close, size: 16.sp, color: Colors.red),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          SizedBox(width: 8.w),
-          IconButton(
-            onPressed: () => onAdd(controller.text),
-            icon: Icon(Icons.send, color: AppColors.primary, size: 22.sp),
+        Padding(
+          padding: EdgeInsets.all(20.w),
+          child: Row(
+            children: [
+              IconButton(
+                onPressed: _pickImage,
+                icon: Icon(Icons.image_outlined, color: Colors.grey[600], size: 22.sp),
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(),
+              ),
+              SizedBox(width: 8.w),
+              IconButton(
+                onPressed: _pickVideo,
+                icon: Icon(Icons.videocam_outlined, color: Colors.grey[600], size: 22.sp),
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: TextField(
+                  controller: controller,
+                  style: GoogleFonts.inter(fontSize: 13.sp),
+                  decoration: InputDecoration(
+                    hintText: "Write a comment...",
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20.r),
+                      borderSide: BorderSide(color: Colors.grey[200]!),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 8.w),
+              IconButton(
+                onPressed: () => onAdd(controller.text, _commentImage, _commentVideo),
+                icon: Icon(Icons.send, color: AppColors.primary, size: 22.sp),
+              ),
+            ],
           ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  void _showShareBottomSheet(BuildContext context, CircleController controller) {
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.all(24.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2.r)),
+            ),
+            SizedBox(height: 24.h),
+            Text(
+              "Share Post",
+              style: GoogleFonts.inter(fontSize: 18.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1B0B3B)),
+            ),
+            SizedBox(height: 16.h),
+            Text(
+              "Shared a post from ${widget.post.userName}. Download Bonded to view more.",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[600]),
+            ),
+            SizedBox(height: 32.h),
+            ElevatedButton(
+              onPressed: () {
+                Get.back();
+                controller.sharePost(widget.circle, widget.post);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                minimumSize: Size(double.infinity, 56.h),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.r)),
+              ),
+              child: Text(
+                "Share Now",
+                style: GoogleFonts.inter(fontSize: 16.sp, fontWeight: FontWeight.w700, color: Colors.white),
+              ),
+            ),
+            SizedBox(height: 12.h),
+            TextButton(
+              onPressed: () => Get.back(),
+              child: Text("Cancel", style: GoogleFonts.inter(color: Colors.grey[600], fontWeight: FontWeight.w600)),
+            ),
+            SizedBox(height: 10.h),
+          ],
+        ),
       ),
     );
   }
