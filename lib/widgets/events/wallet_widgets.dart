@@ -6,8 +6,15 @@ import '../../core/theme/app_colors.dart';
 
 class WalletDashboardCard extends StatefulWidget {
   final double balance;
+  final bool isConnected;
+  final VoidCallback onConnect;
 
-  const WalletDashboardCard({Key? key, required this.balance}) : super(key: key);
+  const WalletDashboardCard({
+    Key? key,
+    required this.balance,
+    this.isConnected = false,
+    required this.onConnect,
+  }) : super(key: key);
 
   @override
   State<WalletDashboardCard> createState() => _WalletDashboardCardState();
@@ -56,7 +63,9 @@ class _WalletDashboardCardState extends State<WalletDashboardCard> {
                   GestureDetector(
                     onTap: () => setState(() => _isMasked = !_isMasked),
                     child: Icon(
-                      _isMasked ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      _isMasked
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
                       color: Colors.white,
                       size: 20.sp,
                     ),
@@ -65,29 +74,40 @@ class _WalletDashboardCardState extends State<WalletDashboardCard> {
               ),
               Row(
                 children: [
-                   Icon(Icons.credit_card, color: Colors.white70, size: 20.sp),
-                   SizedBox(width: 8.w),
-                   Text("VISA", style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.sp)),
-                   SizedBox(width: 8.w),
-                   // Mastercard logo simulation
-                   Container(
-                     width: 16.w, height: 16.w,
-                     decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
-                   ),
-                   Transform.translate(
-                     offset: Offset(-8.w, 0),
-                     child: Container(
-                       width: 16.w, height: 16.w,
-                       decoration: BoxDecoration(color: Colors.orange.withOpacity(0.8), shape: BoxShape.circle),
-                     ),
-                   ),
+                  Icon(Icons.credit_card, color: Colors.white70, size: 20.sp),
+                  SizedBox(width: 8.w),
+                  Text("VISA",
+                      style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.sp)),
+                  SizedBox(width: 8.w),
+                  // Mastercard logo simulation
+                  Container(
+                    width: 16.w,
+                    height: 16.w,
+                    decoration: const BoxDecoration(
+                        color: Colors.red, shape: BoxShape.circle),
+                  ),
+                  Transform.translate(
+                    offset: Offset(-8.w, 0),
+                    child: Container(
+                      width: 16.w,
+                      height: 16.w,
+                      decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.8),
+                          shape: BoxShape.circle),
+                    ),
+                  ),
                 ],
               ),
             ],
           ),
           SizedBox(height: 16.h),
           Text(
-            _isMasked ? "\$ ••••••••" : "\$${widget.balance.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}",
+            _isMasked
+                ? "\$ ••••••••"
+                : "\$${widget.balance.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}",
             style: GoogleFonts.inter(
               fontSize: 32.sp,
               fontWeight: FontWeight.w800,
@@ -96,7 +116,7 @@ class _WalletDashboardCardState extends State<WalletDashboardCard> {
           ),
           SizedBox(height: 24.h),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: widget.isConnected ? () {} : widget.onConnect,
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: AppColors.primary,
@@ -109,10 +129,10 @@ class _WalletDashboardCardState extends State<WalletDashboardCard> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.logout, size: 18),
+                Icon(widget.isConnected ? Icons.logout : Icons.link, size: 18),
                 SizedBox(width: 8.w),
                 Text(
-                  "Withdraw",
+                  widget.isConnected ? "Withdraw" : "Connect Stripe",
                   style: GoogleFonts.inter(
                     fontWeight: FontWeight.w700,
                     fontSize: 14.sp,

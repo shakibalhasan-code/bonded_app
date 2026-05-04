@@ -14,7 +14,6 @@ import 'package:mime/mime.dart';
 import 'dart:io';
 
 import '../controllers/auth_controller.dart';
-import '../services/shared_prefs_service.dart';
 
 class ChatMessage {
   final String id;
@@ -119,24 +118,18 @@ class ChatController extends GetxController {
 
   Future<void> initChat(UserModel user) async {
     isLoading.value = true;
+    messages.clear(); // Clear old messages
     
     try {
-      // 1. Get or create conversation
-      final response = await _apiService.post('${AppUrls.directChat}/${user.id}');
+      final response = await _apiService.post('${AppUrls.directChat}/${user.id}', {});
       final data = jsonDecode(response.body);
       
       if (data['success'] == true) {
         conversationId = data['data']['_id'];
         log('ChatController: Conversation ID: $conversationId');
         
-        // 2. Join conversation via socket
         _joinConversation();
-        
-        // 3. Setup listeners
         _setupSocketListeners();
-        
-        // 4. Fetch initial messages (or they might come from join ack)
-        // The guide says conversation:join returns history in ack
       } else {
         Get.snackbar('Error', data['message'] ?? 'Failed to start chat');
       }
@@ -156,8 +149,6 @@ class ChatController extends GetxController {
       'limit': 50
     }, ack: (response) {
       debugPrint('SOCKET_DEBUG: conversation:join ACK response:');
-      debugPrint(const JsonEncoder.withIndent('  ').convert(response));
-      
       if (response['success'] == true) {
         final List history = response['data']['messages'] ?? [];
         final currentUserId = _getCurrentUserId();
@@ -168,15 +159,16 @@ class ChatController extends GetxController {
     });
   }
 
+  bool _isSocketListenersSetup = false;
   void _setupSocketListeners() {
+    if (_isSocketListenersSetup) return;
+    _isSocketListenersSetup = true;
+
     _socketService.on('conversation:message:new', (data) {
-      debugPrint('SOCKET_DEBUG: conversation:message:new received:');
-      debugPrint(const JsonEncoder.withIndent('  ').convert(data));
-      
+      debugPrint('SOCKET_DEBUG: conversation:message:new received');
       final currentUserId = _getCurrentUserId();
       final newMessage = ChatMessage.fromJson(data['message'], currentUserId);
       
-      // Avoid duplicates if we sent it and got it back via event (though guide says backend handles this)
       if (!messages.any((m) => m.id == newMessage.id)) {
         messages.add(newMessage);
         _scrollToBottom();
@@ -184,9 +176,6 @@ class ChatController extends GetxController {
     });
 
     _socketService.on('conversation:typing', (data) {
-      debugPrint('SOCKET_DEBUG: conversation:typing received:');
-      debugPrint(const JsonEncoder.withIndent('  ').convert(data));
-      
       if (data['conversationId'] == conversationId && data['userId'] != _getCurrentUserId()) {
         isOtherUserTyping.value = data['isTyping'] ?? false;
       }

@@ -200,6 +200,20 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                       Obx(() {
                         final isLiked = widget.comment.isLiked.value;
                         final type = widget.comment.reactionType.value;
+                        String label = "React";
+                        String emoji = "";
+                        Color reactionColor = isLiked ? AppColors.primary : Colors.grey[700]!;
+                        if (type != "none") {
+                          switch (type) {
+                            case "like": label = "Liked"; reactionColor = Colors.blue; break;
+                            case "love": label = "Loved"; emoji = "❤️"; reactionColor = Colors.red; break;
+                            case "care": label = "Cared"; emoji = "🤗"; reactionColor = Colors.orange; break;
+                            case "haha": label = "Haha"; emoji = "😆"; reactionColor = Colors.orange; break;
+                            case "wow": label = "Wow"; emoji = "😮"; reactionColor = Colors.orange; break;
+                            case "sad": label = "Sad"; emoji = "😢"; reactionColor = Colors.orange; break;
+                            case "angry": label = "Angry"; emoji = "😡"; reactionColor = Colors.redAccent; break;
+                          }
+                        }
                         return GestureDetector(
                           onTap: () =>
                               controller.toggleLikeComment(widget.comment),
@@ -210,15 +224,21 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                               controller,
                             );
                           },
-                          child: Text(
-                            type == "none" ? "React" : "React",
-                            style: GoogleFonts.inter(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                              color: isLiked
-                                  ? AppColors.primary
-                                  : Colors.grey[700],
-                            ),
+                          child: Row(
+                            children: [
+                              if (emoji.isNotEmpty) ...[
+                                Text(emoji, style: TextStyle(fontSize: 12.sp)),
+                                SizedBox(width: 4.w),
+                              ],
+                              Text(
+                                label,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: reactionColor,
+                                ),
+                              ),
+                            ],
                           ),
                         );
                       }),

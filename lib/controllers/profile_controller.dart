@@ -464,8 +464,8 @@ class ProfileController extends BaseController {
 
       final response = await _apiService.patch(
         AppUrls.updateProfile,
-        headers: {'Authorization': 'Bearer $token'},
         body: body,
+        headers: {'Authorization': 'Bearer $token'},
       );
 
       final data = jsonDecode(response.body);
@@ -560,8 +560,8 @@ class ProfileController extends BaseController {
 
       final response = await _apiService.patch(
         AppUrls.updateProfile,
-        headers: {'Authorization': 'Bearer $token'},
         body: body,
+        headers: {'Authorization': 'Bearer $token'},
       );
 
       final data = jsonDecode(response.body);

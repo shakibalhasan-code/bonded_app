@@ -219,38 +219,47 @@ class EventScreen extends StatelessWidget {
             ETicketCard(ticket: controller.tickets[index]),
       );
     } else {
-      return SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const WalletDashboardCard(balance: 958476.50),
-            SizedBox(height: 32.h),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Transaction History",
-                  style: GoogleFonts.inter(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1B0B3B),
+      return Obx(() {
+        if (controller.isCheckingStripe.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              WalletDashboardCard(
+                balance: 958476.50,
+                isConnected: controller.isStripeConnected.value,
+                onConnect: () => controller.connectStripe(),
+              ),
+              SizedBox(height: 32.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Transaction History",
+                    style: GoogleFonts.inter(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1B0B3B),
+                    ),
                   ),
-                ),
-                Icon(
-                  Icons.file_download_outlined,
-                  color: AppColors.primary,
-                  size: 24.sp,
-                ),
-              ],
-            ),
-            SizedBox(height: 16.h),
-            ...controller.transactions
-                .map((tr) => TransactionTile(transaction: tr))
-                .toList(),
-          ],
-        ),
-      );
+                  Icon(
+                    Icons.file_download_outlined,
+                    color: AppColors.primary,
+                    size: 24.sp,
+                  ),
+                ],
+              ),
+              SizedBox(height: 16.h),
+              ...controller.transactions
+                  .map((tr) => TransactionTile(transaction: tr))
+                  .toList(),
+            ],
+          ),
+        );
+      });
     }
   }
 

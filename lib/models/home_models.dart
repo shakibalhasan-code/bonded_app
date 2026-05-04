@@ -92,9 +92,11 @@ class CommentModel {
       timestamp: json['createdAt'] ?? '',
       likesCount: json['reactionCount'] ?? 0,
       isLiked: json['myReaction'] != null,
-      reactionType: (json['myReaction'] is Map)
-          ? (json['myReaction']['reactionType'] ?? "none")
-          : "none",
+      reactionType: json['myReaction'] is String
+          ? json['myReaction']
+          : (json['myReaction'] is Map
+              ? (json['myReaction']['reactionType'] ?? "none")
+              : "none"),
       parentPost: json['parentPost'],
       depth: json['depth'] ?? 0,
       isAuthor: json['isAuthor'] ?? false,
@@ -185,9 +187,11 @@ class PostModel {
       commentsCount: json['commentCount'] ?? 0,
       sharesCount: json['shareCount'] ?? 0,
       isLiked: json['myReaction'] != null,
-      reactionType: (json['myReaction'] is Map)
-          ? (json['myReaction']['reactionType'] ?? "none")
-          : "none",
+      reactionType: json['myReaction'] is String
+          ? json['myReaction']
+          : (json['myReaction'] is Map
+              ? (json['myReaction']['reactionType'] ?? "none")
+              : "none"),
       circleId: json['circle'],
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       comments: (json['previewComments'] as List?)

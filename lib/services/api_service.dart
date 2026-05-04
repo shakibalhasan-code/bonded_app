@@ -18,49 +18,98 @@ class ApiService {
   ApiService({this.baseUrl = AppUrls.baseUrl});
 
   // GET request
-  Future<http.Response> get(String endpoint, {Map<String, String>? headers}) async {
-    return _performRequest(() => http.get(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: _mergeHeaders(headers),
-    ), endpoint, 'GET', null, headers);
+  Future<http.Response> get(
+    String endpoint, {
+    Map<String, String>? headers,
+  }) async {
+    return _performRequest(
+      () => http.get(
+        Uri.parse('$baseUrl$endpoint'),
+        headers: _mergeHeaders(headers),
+      ),
+      endpoint,
+      'GET',
+      null,
+      headers,
+    );
   }
 
   // POST request
-  Future<http.Response> post(String endpoint, {dynamic body, Map<String, String>? headers}) async {
+  Future<http.Response> post(
+    String endpoint,
+    Map<dynamic, dynamic> map, {
+    dynamic body,
+    Map<String, String>? headers,
+  }) async {
     final encodedBody = body != null ? jsonEncode(body) : null;
-    return _performRequest(() => http.post(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: _mergeHeaders(headers),
-      body: encodedBody,
-    ), endpoint, 'POST', encodedBody, headers);
+    return _performRequest(
+      () => http.post(
+        Uri.parse('$baseUrl$endpoint'),
+        headers: _mergeHeaders(headers),
+        body: encodedBody,
+      ),
+      endpoint,
+      'POST',
+      encodedBody,
+      headers,
+    );
   }
 
   // PUT request
-  Future<http.Response> put(String endpoint, {dynamic body, Map<String, String>? headers}) async {
+  Future<http.Response> put(
+    String endpoint, {
+    dynamic body,
+    Map<String, String>? headers,
+  }) async {
     final encodedBody = body != null ? jsonEncode(body) : null;
-    return _performRequest(() => http.put(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: _mergeHeaders(headers),
-      body: encodedBody,
-    ), endpoint, 'PUT', encodedBody, headers);
+    return _performRequest(
+      () => http.put(
+        Uri.parse('$baseUrl$endpoint'),
+        headers: _mergeHeaders(headers),
+        body: encodedBody,
+      ),
+      endpoint,
+      'PUT',
+      encodedBody,
+      headers,
+    );
   }
 
   // PATCH request
-  Future<http.Response> patch(String endpoint, {dynamic body, Map<String, String>? headers}) async {
+  Future<http.Response> patch(
+    String endpoint, {
+    dynamic body,
+    Map<String, String>? headers,
+  }) async {
     final encodedBody = body != null ? jsonEncode(body) : null;
-    return _performRequest(() => http.patch(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: _mergeHeaders(headers),
-      body: encodedBody,
-    ), endpoint, 'PATCH', encodedBody, headers);
+    return _performRequest(
+      () => http.patch(
+        Uri.parse('$baseUrl$endpoint'),
+        headers: _mergeHeaders(headers),
+        body: encodedBody,
+      ),
+      endpoint,
+      'PATCH',
+      encodedBody,
+      headers,
+    );
   }
 
   // DELETE request
-  Future<http.Response> delete(String endpoint, {Map<String, String>? headers}) async {
-    return _performRequest(() => http.delete(
-      Uri.parse('$baseUrl$endpoint'),
-      headers: _mergeHeaders(headers),
-    ), endpoint, 'DELETE', null, headers);
+  Future<http.Response> delete(
+    String endpoint, {
+    Map<String, String>? headers,
+  }) async {
+    return _performRequest(
+      () => http.delete(
+        Uri.parse('$baseUrl$endpoint'),
+        headers: _mergeHeaders(headers),
+      ),
+      endpoint,
+      'DELETE',
+      null,
+      headers,
+    );
   }
 
   // Internal helper to perform request and handle retries
@@ -73,15 +122,22 @@ class ApiService {
   ) async {
     final url = '$baseUrl$endpoint';
     _logRequest(method, url, _mergeHeaders(originalHeaders), body);
-    
+
     var response = await requestFn();
     _logResponse(response);
 
-    if (response.statusCode == 401 && endpoint != AppUrls.refreshAccessToken && endpoint != AppUrls.login) {
+    if (response.statusCode == 401 &&
+        endpoint != AppUrls.refreshAccessToken &&
+        endpoint != AppUrls.login) {
       final success = await _refreshAccessToken();
       if (success) {
         // Retry with new headers
-        _logRequest('$method (Retry)', url, _mergeHeaders(originalHeaders), body);
+        _logRequest(
+          '$method (Retry)',
+          url,
+          _mergeHeaders(originalHeaders),
+          body,
+        );
         response = await requestFn();
         _logResponse(response);
       }
@@ -156,16 +212,35 @@ class ApiService {
     }
   }
 
-  void _logRequest(String method, String url, Map<String, String> headers, String? body) {
+  void _logRequest(
+    String method,
+    String url,
+    Map<String, String> headers,
+    String? body,
+  ) {
     debugPrint('--> $method $url');
-    // debugPrint('Headers: $headers');
-    if (body != null) debugPrint('Body: $body');
+    debugPrint('Headers: $headers');
+    if (body != null) {
+      try {
+        final decoded = jsonDecode(body);
+        final pretty = const JsonEncoder.withIndent('  ').convert(decoded);
+        debugPrint('Body: $pretty');
+      } catch (_) {
+        debugPrint('Body: $body');
+      }
+    }
     debugPrint('--> END $method');
   }
 
   void _logResponse(http.Response response) {
     debugPrint('<-- ${response.statusCode} ${response.request?.url}');
-    // debugPrint('Response: ${response.body}');
+    try {
+      final decoded = jsonDecode(response.body);
+      final pretty = const JsonEncoder.withIndent('  ').convert(decoded);
+      debugPrint('Response: $pretty');
+    } catch (_) {
+      debugPrint('Response: ${response.body}');
+    }
     debugPrint('<-- END HTTP');
   }
 
@@ -179,19 +254,19 @@ class ApiService {
   }) async {
     final url = '$baseUrl$endpoint';
     final mergedHeaders = _mergeHeaders(headers);
-    mergedHeaders.remove('Content-Type'); 
-    
+    mergedHeaders.remove('Content-Type');
+
     _logRequest('$method (Multipart)', url, mergedHeaders, fields.toString());
 
     final request = http.MultipartRequest(method, Uri.parse(url));
     request.headers.addAll(mergedHeaders);
-    
+
     if (fields != null) request.fields.addAll(fields);
     if (files != null) request.files.addAll(files);
 
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
-    
+
     return _handleResponse(response);
   }
 }

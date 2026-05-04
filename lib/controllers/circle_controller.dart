@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:bonded_app/core/theme/app_colors.dart';
 import 'package:bonded_app/models/event_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
@@ -47,7 +50,6 @@ class CircleController extends BaseController {
 
   @override
   void onClose() {
-    searchController.dispose();
     super.onClose();
   }
 
@@ -127,38 +129,7 @@ class CircleController extends BaseController {
   }
 
   // Members related state
-  var availableMembers = <MemberModel>[
-    MemberModel(
-      id: "1",
-      name: "John Doe",
-      image: "https://i.pravatar.cc/150?u=john",
-      isOwner: false,
-    ),
-    MemberModel(
-      id: "2",
-      name: "Jane Smith",
-      image: "https://i.pravatar.cc/150?u=jane",
-      isOwner: false,
-    ),
-    MemberModel(
-      id: "3",
-      name: "Mike Johnson",
-      image: "https://i.pravatar.cc/150?u=mike",
-      isOwner: false,
-    ),
-    MemberModel(
-      id: "4",
-      name: "Sarah Williams",
-      image: "https://i.pravatar.cc/150?u=sarah",
-      isOwner: false,
-    ),
-    MemberModel(
-      id: "5",
-      name: "David Brown",
-      image: "https://i.pravatar.cc/150?u=david",
-      isOwner: false,
-    ),
-  ].obs;
+  var availableMembers = <MemberModel>[].obs;
 
   List<MemberModel> get filteredAvailableMembers {
     if (searchQuery.value.isEmpty) return availableMembers;
@@ -173,8 +144,6 @@ class CircleController extends BaseController {
     try {
       _setLoadingState(visibility, scope, true);
 
-      final token = SharedPrefsService.getString('accessToken');
-
       // Build query params
       final Map<String, String> params = {};
       if (visibility != null) params['visibility'] = visibility;
@@ -186,10 +155,7 @@ class CircleController extends BaseController {
 
       final url = '${AppUrls.circles}?$queryString';
 
-      final response = await _apiService.get(
-        url,
-        headers: {'Authorization': 'Bearer $token'},
-      );
+      final response = await _apiService.get(url);
 
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
@@ -213,7 +179,6 @@ class CircleController extends BaseController {
   }) async {
     try {
       setLoading(true);
-      final token = SharedPrefsService.getString('accessToken');
 
       final List<http.MultipartFile> files = [];
       if (imageFile != null) {
@@ -231,7 +196,6 @@ class CircleController extends BaseController {
       final response = await _apiService.multipartRequest(
         'POST',
         AppUrls.circles,
-        headers: {'Authorization': 'Bearer $token'},
         fields: {'data': jsonEncode(circleData)},
         files: files,
       );
@@ -317,13 +281,9 @@ class CircleController extends BaseController {
 
   Future<void> fetchCircleFeed(CircleModel circle) async {
     try {
-      final token = SharedPrefsService.getString('accessToken');
       final url = AppUrls.circleFeed(circle.id);
 
-      final response = await _apiService.get(
-        url,
-        headers: {'Authorization': 'Bearer $token'},
-      );
+      final response = await _apiService.get(url);
 
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
@@ -338,13 +298,9 @@ class CircleController extends BaseController {
 
   Future<void> fetchCircleMembers(CircleModel circle) async {
     try {
-      final token = SharedPrefsService.getString('accessToken');
       final url = AppUrls.circleMembers(circle.id);
 
-      final response = await _apiService.get(
-        url,
-        headers: {'Authorization': 'Bearer $token'},
-      );
+      final response = await _apiService.get(url);
 
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
@@ -361,13 +317,9 @@ class CircleController extends BaseController {
 
   Future<void> fetchCircleEvents(CircleModel circle) async {
     try {
-      final token = SharedPrefsService.getString('accessToken');
       final url = AppUrls.circleEvents(circle.id);
 
-      final response = await _apiService.get(
-        url,
-        headers: {'Authorization': 'Bearer $token'},
-      );
+      final response = await _apiService.get(url);
 
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
@@ -392,7 +344,6 @@ class CircleController extends BaseController {
     final originalCount = likesCountObs.value;
 
     try {
-      final token = SharedPrefsService.getString('accessToken');
       final url = AppUrls.reactPost(id);
 
       // Determine new state
@@ -401,15 +352,11 @@ class CircleController extends BaseController {
 
       http.Response response;
       if (nextType == "none") {
-        response = await _apiService.delete(
-          url,
-          headers: {'Authorization': 'Bearer $token'},
-        );
+        response = await _apiService.delete(url);
       } else {
         response = await _apiService.post(
           url,
-          headers: {'Authorization': 'Bearer $token'},
-          body: {'reactionType': nextType},
+          {'reactionType': nextType},
         );
       }
 
@@ -437,20 +384,15 @@ class CircleController extends BaseController {
 
   Future<void> updatePostReaction(PostModel post, String type) async {
     try {
-      final token = SharedPrefsService.getString('accessToken');
       final url = AppUrls.reactPost(post.id);
 
       http.Response response;
       if (type == "none") {
-        response = await _apiService.delete(
-          url,
-          headers: {'Authorization': 'Bearer $token'},
-        );
+        response = await _apiService.delete(url);
       } else {
         response = await _apiService.post(
           url,
-          headers: {'Authorization': 'Bearer $token'},
-          body: {'reactionType': type},
+          {'reactionType': type},
         );
       }
 
@@ -473,13 +415,9 @@ class CircleController extends BaseController {
   Future<void> sharePost(CircleModel circle, PostModel post) async {
     try {
       setLoading(true);
-      final token = SharedPrefsService.getString('accessToken');
       final url = AppUrls.sharePost(post.id);
 
-      final response = await _apiService.post(
-        url,
-        headers: {'Authorization': 'Bearer $token'},
-      );
+      final response = await _apiService.post(url, {});
 
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
@@ -505,7 +443,6 @@ class CircleController extends BaseController {
   }) async {
     try {
       setLoading(true);
-      final token = SharedPrefsService.getString('accessToken');
       final url = AppUrls.commentPost(circle.id, parentPostId ?? post.id);
 
       final List<http.MultipartFile> files = [];
@@ -537,7 +474,6 @@ class CircleController extends BaseController {
       final response = await _apiService.multipartRequest(
         'POST',
         url,
-        headers: {'Authorization': 'Bearer $token'},
         fields: {'data': jsonEncode(bodyData)},
         files: files,
       );
@@ -580,7 +516,6 @@ class CircleController extends BaseController {
   }) async {
     try {
       setLoading(true);
-      final token = SharedPrefsService.getString('accessToken');
       final url = '${AppUrls.circles}/${circle.id}/posts';
 
       final List<http.MultipartFile> files = [];
@@ -612,7 +547,6 @@ class CircleController extends BaseController {
       final response = await _apiService.multipartRequest(
         'POST',
         url,
-        headers: {'Authorization': 'Bearer $token'},
         fields: {
           'data': jsonEncode({'content': content}),
         },
@@ -641,65 +575,160 @@ class CircleController extends BaseController {
     post.isCommenting.value = !post.isCommenting.value;
   }
 
-  void addComment(PostModel post, String text) {
-    if (text.isEmpty) return;
-    // Dummy comment
-    final newComment = CommentModel(
-      id: DateTime.now().toString(),
-      userName: "Current User",
-      userImage: "https://i.pravatar.cc/150?u=me",
-      text: text,
-      timestamp: "Just now",
-    );
-    post.comments.insert(0, newComment);
-    post.commentsCount.value++;
-    post.isCommenting.value = false;
-  }
-
-  // This is handled by updatePostReaction now
-
-  void toggleLikeComment(CommentModel comment) {
-    _reactToId(
-      comment.id,
-      comment.reactionType,
-      comment.isLiked,
-      comment.likesCount,
-    );
-  }
-
-  void updateCommentReaction(CommentModel comment, String type) {
-    _reactToId(
-      comment.id,
-      comment.reactionType,
-      comment.isLiked,
-      comment.likesCount,
-      specificType: type,
-    );
-  }
-
   void toggleReplyInput(CommentModel comment) {
     comment.showReplyInput.value = !comment.showReplyInput.value;
   }
 
-  void addReply(CommentModel comment, String text) {
-    if (text.isEmpty) return;
-    final newReply = CommentModel(
-      id: DateTime.now().toString(),
-      userName: "Current User",
-      userImage: "https://i.pravatar.cc/150?u=me",
-      text: text,
-      timestamp: "Just now",
-    );
-    comment.replies.add(newReply);
-    comment.showReplyInput.value = false;
+  void toggleLikeComment(CommentModel comment) {
+    _reactToId(comment.id, comment.reactionType, comment.isLiked, comment.likesCount);
   }
 
-  void addMemberToCircle(CircleModel circle, MemberModel member) {
-    debugPrint("Adding ${member.name} to ${circle.name}");
-    // Simulate adding to circle
-    circle.detailedMembers.add(member);
-    circle.memberCount.value++;
-    Get.snackbar("Success", "${member.name} added to circle");
-    Get.back();
+  Future<void> updateCommentReaction(CommentModel comment, String type) async {
+    try {
+      final url = AppUrls.reactPost(comment.id); // Assuming backend uses the same endpoint logic for comment reactions
+
+      http.Response response;
+      if (type == "none") {
+        response = await _apiService.delete(url);
+      } else {
+        response = await _apiService.post(
+          url,
+          {'reactionType': type},
+        );
+      }
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        comment.reactionType.value = type;
+        if (type == "none") {
+          comment.isLiked.value = false;
+          if (comment.likesCount.value > 0) comment.likesCount.value--;
+        } else {
+          if (!comment.isLiked.value) comment.likesCount.value++;
+          comment.isLiked.value = true;
+        }
+      }
+    } catch (e) {
+      debugPrint("Error updating comment reaction: $e");
+    }
+  }
+
+  Future<void> addMemberToCircle(CircleModel circle, MemberModel member) async {
+    try {
+      setLoading(true);
+      final url = '${AppUrls.circles}/${circle.id}/members';
+      final response = await _apiService.post(url, {'userId': member.id});
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        Get.snackbar("Success", "Member added successfully");
+        fetchCircleMembers(circle);
+      } else {
+        Get.snackbar("Error", data['message'] ?? "Failed to add member");
+      }
+    } catch (e) {
+      debugPrint("Error adding member: $e");
+      Get.snackbar("Error", "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  Future<void> joinCircle(CircleModel circle) async {
+    try {
+      setLoading(true);
+      final url = AppUrls.joinCircle(circle.id);
+
+      final response = await _apiService.post(url, {});
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        circle.isJoined.value = true;
+        // Refresh joined list
+        fetchCircles(scope: 'joined');
+        Get.snackbar(
+          "Success",
+          data['message'] ?? "Joined circle successfully",
+          backgroundColor: Colors.green.withOpacity(0.9),
+          colorText: Colors.white,
+        );
+      } else {
+        // Check if locked
+        if (data['message'].toString().contains('locked')) {
+          _showLockedWarning();
+        } else {
+          Get.snackbar(
+            "Error",
+            data['message'] ?? "Failed to join circle",
+            backgroundColor: Colors.red.withOpacity(0.9),
+            colorText: Colors.white,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("Error joining circle: $e");
+      Get.snackbar(
+        "Error",
+        "An unexpected error occurred",
+        backgroundColor: Colors.red.withOpacity(0.9),
+        colorText: Colors.white,
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  void _showLockedWarning() {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.lock_outline, color: Colors.amber, size: 48.sp),
+              SizedBox(height: 16.h),
+              Text(
+                "Circle Locked",
+                style: GoogleFonts.inter(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textHeading,
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                "This circle is locked. New members cannot join right now.",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 14.sp,
+                  color: Colors.grey[600],
+                ),
+              ),
+              SizedBox(height: 24.h),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Get.back(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                  ),
+                  child: const Text(
+                    "OK",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

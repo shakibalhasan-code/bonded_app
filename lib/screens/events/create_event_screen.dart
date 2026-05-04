@@ -54,7 +54,7 @@ class CreateEventScreen extends GetView<CreateEventController> {
     }
   }
 
-  Future<void> _selectTime(BuildContext context) async {
+  Future<void> _selectTime(BuildContext context, {bool isStart = true}) async {
     final pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
@@ -68,7 +68,11 @@ class CreateEventScreen extends GetView<CreateEventController> {
       },
     );
     if (pickedTime != null) {
-      controller.selectedTime.value = pickedTime;
+      if (isStart) {
+        controller.selectedTime.value = pickedTime;
+      } else {
+        controller.selectedEndTime.value = pickedTime;
+      }
     }
   }
 
@@ -96,6 +100,25 @@ class CreateEventScreen extends GetView<CreateEventController> {
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
+        }
+        if (controller.isLocating.value) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(),
+                SizedBox(height: 16.h),
+                Text(
+                  "Locating your location...",
+                  style: GoogleFonts.inter(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+          );
         }
         return SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -184,7 +207,12 @@ class CreateEventScreen extends GetView<CreateEventController> {
                     ),
                   ),
                   SizedBox(width: 12.w),
-                  Expanded(child: _buildTextField(controller.phoneController, "1234567")),
+                  Expanded(
+                    child: _buildTextField(
+                      controller.phoneController,
+                      "1234567",
+                    ),
+                  ),
                 ],
               ),
               SizedBox(height: 24.h),
@@ -255,13 +283,40 @@ class CreateEventScreen extends GetView<CreateEventController> {
               ),
               SizedBox(height: 24.h),
 
-              _buildLabel("Time"),
-              _buildPickerField(
-                controller.selectedTime.value == null
-                    ? "HH:MM"
-                    : controller.selectedTime.value!.format(context),
-                Icons.access_time,
-                () => _selectTime(context),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildLabel("Start Time"),
+                        _buildPickerField(
+                          controller.selectedTime.value == null
+                              ? "HH:MM"
+                              : controller.selectedTime.value!.format(context),
+                          Icons.access_time,
+                          () => _selectTime(context, isStart: true),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 16.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildLabel("End Time"),
+                        _buildPickerField(
+                          controller.selectedEndTime.value == null
+                              ? "HH:MM"
+                              : controller.selectedEndTime.value!.format(context),
+                          Icons.access_time,
+                          () => _selectTime(context, isStart: false),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: 24.h),
 
@@ -272,7 +327,22 @@ class CreateEventScreen extends GetView<CreateEventController> {
 
                 _buildLabel("Suggested Venues"),
                 SizedBox(height: 12.h),
-                ..._suggestedVenues.map((v) => _buildVenueItem(v)).toList(),
+                Obx(() {
+                  if (controller.isLoadingVenues.value) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (controller.suggestedVenues.isEmpty) {
+                    return Text(
+                      "No suggested venues found nearby",
+                      style: GoogleFonts.inter(fontSize: 12.sp, color: Colors.grey),
+                    );
+                  }
+                  return Column(
+                    children: controller.suggestedVenues.asMap().entries.map((entry) {
+                      return _buildVenueItem(entry.value, entry.key);
+                    }).toList(),
+                  );
+                }),
                 SizedBox(height: 24.h),
               ],
 
@@ -316,7 +386,7 @@ class CreateEventScreen extends GetView<CreateEventController> {
               SizedBox(height: 48.h),
 
               ElevatedButton(
-                onPressed: () => controller.createEvent(),
+                onPressed: () => controller.createEvent(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -496,10 +566,13 @@ class CreateEventScreen extends GetView<CreateEventController> {
             fontSize: 14.sp,
             color: Colors.grey[400],
           ),
-          suffixIcon: Icon(
-            Icons.location_on,
-            color: AppColors.primary,
-            size: 20.sp,
+          suffixIcon: IconButton(
+            icon: Icon(
+              Icons.my_location,
+              color: AppColors.primary,
+              size: 20.sp,
+            ),
+            onPressed: () => controller.getCurrentLocation(),
           ),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
@@ -511,44 +584,66 @@ class CreateEventScreen extends GetView<CreateEventController> {
     );
   }
 
-  Widget _buildVenueItem(String venue) {
-    // Note: Mock venues don't have full state in controller yet, just UI toggles here for now
-    // In a real app, this would be in the controller
+  Widget _buildVenueItem(Map<String, dynamic> venueData, int index) {
+    final venueName = venueData['venueName'] ?? '';
     return Padding(
       padding: EdgeInsets.only(bottom: 12.h),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            venue,
-            style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[700]),
-          ),
-          SizedBox(
-            height: 32.h,
-            child: OutlinedButton(
-              onPressed: () {
-                controller.venueName.value = venue;
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: const BorderSide(color: AppColors.primary),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  venueName,
+                  style: GoogleFonts.inter(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF1B0B3B),
+                  ),
                 ),
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-              ),
-              child: Text(
-                "Add",
-                style: GoogleFonts.inter(
-                  fontSize: 12.sp,
-                  fontWeight: FontWeight.bold,
+                Text(
+                  venueData['address'] ?? '',
+                  style: GoogleFonts.inter(
+                    fontSize: 12.sp,
+                    color: Colors.grey[600],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
+              ],
             ),
           ),
+          SizedBox(width: 12.w),
+          Obx(() {
+            final isSelected = controller.selectedVenueIndex.value == index;
+            return SizedBox(
+              height: 32.h,
+              child: ElevatedButton(
+                onPressed: () => controller.selectVenue(index),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isSelected ? AppColors.primary : Colors.white,
+                  foregroundColor: isSelected ? Colors.white : AppColors.primary,
+                  elevation: 0,
+                  side: BorderSide(color: AppColors.primary, width: 1.w),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                ),
+                child: Text(
+                  isSelected ? "Added" : "Add",
+                  style: GoogleFonts.inter(
+                    fontSize: 12.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            );
+          }),
         ],
       ),
     );
   }
 }
-

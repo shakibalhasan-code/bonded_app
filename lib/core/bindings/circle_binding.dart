@@ -5,7 +5,7 @@ import '../../controllers/profile_controller.dart';
 class CircleBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut(() => CircleController());
-    Get.lazyPut(() => ProfileController());
+    Get.put(CircleController(), permanent: true);
+    Get.lazyPut(() => ProfileController(), fenix: true);
   }
 }

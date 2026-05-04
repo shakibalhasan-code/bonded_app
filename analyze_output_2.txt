@@ -1,0 +1,312 @@
+Analyzing bonded_app...                                         
+
+   info • Don't invoke 'print' in production code • check_syntax.dart:11:3 • avoid_print
+warning • Unused import: 'dart:io' • lib/controllers/chat_controller.dart:14:8 • unused_import
+warning • Unused import: '../services/shared_prefs_service.dart' • lib/controllers/circle_controller.dart:13:8 • unused_import
+   info • Unnecessary override • lib/controllers/circle_controller.dart:52:8 • unnecessary_overrides
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/controllers/circle_controller.dart:218:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/controllers/circle_controller.dart:232:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/controllers/circle_controller.dart:246:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/controllers/circle_controller.dart:620:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/controllers/circle_controller.dart:631:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/controllers/circle_controller.dart:641:37 • deprecated_member_use
+warning • The declaration '_getFormattedStartsAt' isn't referenced • lib/controllers/create_event_controller.dart:318:10 • unused_element
+warning • The operand can't be 'null', so the condition is always 'false' • lib/controllers/home_controller.dart:60:27 • unnecessary_null_comparison
+warning • The operand can't be 'null', so the condition is always 'false' • lib/controllers/home_controller.dart:69:28 • unnecessary_null_comparison
+warning • The operand can't be 'null', so the condition is always 'true' • lib/controllers/home_controller.dart:74:32 • unnecessary_null_comparison
+warning • Unused import: '../screens/auth/welcome_screen.dart' • lib/controllers/onboarding_controller.dart:6:8 • unused_import
+   info • Use the null-aware marker '?' rather than a null check via an 'if' • lib/controllers/profile_controller.dart:555:11 • use_null_aware_elements
+   info • Use the null-aware marker '?' rather than a null check via an 'if' • lib/controllers/profile_controller.dart:556:11 • use_null_aware_elements
+   info • Use the null-aware marker '?' rather than a null check via an 'if' • lib/controllers/profile_controller.dart:557:11 • use_null_aware_elements
+   info • The constant name 'INITIAL' isn't a lowerCamelCase identifier • lib/core/routes/app_pages.dart:60:16 • constant_identifier_names
+   info • The constant name 'INITIAL' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:2:16 • constant_identifier_names
+   info • The constant name 'ONBOARDING' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:3:16 • constant_identifier_names
+   info • The constant name 'WELCOME' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:4:16 • constant_identifier_names
+   info • The constant name 'SIGNUP' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:5:16 • constant_identifier_names
+   info • The constant name 'LOGIN' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:6:16 • constant_identifier_names
+   info • The constant name 'VERIFICATION' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:7:16 • constant_identifier_names
+   info • The constant name 'PROFILE_READY' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:8:16 • constant_identifier_names
+   info • The constant name 'MAIN' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:9:16 • constant_identifier_names
+   info • The constant name 'SUBSCRIPTION_PLAN' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:10:16 • constant_identifier_names
+   info • The constant name 'PAYMENT_METHOD' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:11:16 • constant_identifier_names
+   info • The constant name 'ADD_CARD' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:12:16 • constant_identifier_names
+   info • The constant name 'NOTIFICATION' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:13:16 • constant_identifier_names
+   info • The constant name 'FORGOT_PASSWORD' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:14:16 • constant_identifier_names
+   info • The constant name 'RESET_PASSWORD' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:15:16 • constant_identifier_names
+   info • The constant name 'PROFILE_BUILDING' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:19:16 • constant_identifier_names
+   info • The constant name 'ADD_LOCATION' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:20:16 • constant_identifier_names
+   info • The constant name 'CHOOSE_INTEREST' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:21:16 • constant_identifier_names
+   info • The constant name 'CONNECTION_TYPE' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:22:16 • constant_identifier_names
+   info • The constant name 'PICTURE_VERIFICATION' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:23:16 • constant_identifier_names
+   info • The constant name 'KYC_DOCUMENT' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:24:16 • constant_identifier_names
+   info • The constant name 'PUBLIC_CIRCLE_DETAILS' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:25:16 • constant_identifier_names
+   info • The constant name 'JOINED_CIRCLE_DETAILS' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:26:16 • constant_identifier_names
+   info • The constant name 'CIRCLE_MEMBERS' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:27:16 • constant_identifier_names
+   info • The constant name 'ADD_MEMBERS' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:28:16 • constant_identifier_names
+   info • The constant name 'CREATE_CIRCLE' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:29:16 • constant_identifier_names
+   info • The constant name 'ALL_CIRCLES' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:30:16 • constant_identifier_names
+   info • The constant name 'BOND_PROFILE' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:31:16 • constant_identifier_names
+   info • The constant name 'CHAT' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:32:16 • constant_identifier_names
+   info • The constant name 'NEARBY_PEOPLE' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:33:16 • constant_identifier_names
+   info • The constant name 'EVENT_HIGHLIGHT_DETAILS' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:34:16 • constant_identifier_names
+   info • The constant name 'EVENT_DETAILS' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:35:16 • constant_identifier_names
+   info • The constant name 'REVIEWS' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:36:16 • constant_identifier_names
+   info • The constant name 'WRITE_REVIEW' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:37:16 • constant_identifier_names
+   info • The constant name 'HOST_DETAILS' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:38:16 • constant_identifier_names
+   info • The constant name 'BOOK_EVENT' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:39:16 • constant_identifier_names
+   info • The constant name 'CREATE_EVENT' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:40:16 • constant_identifier_names
+   info • The constant name 'EVENT_KYC' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:41:16 • constant_identifier_names
+   info • The constant name 'EVENT_FILTER' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:42:16 • constant_identifier_names
+   info • The constant name 'PROFILE' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:43:16 • constant_identifier_names
+   info • The constant name 'EDIT_PROFILE' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:44:16 • constant_identifier_names
+   info • The constant name 'SECURITY' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:45:16 • constant_identifier_names
+   info • The constant name 'TERMS_OF_SERVICE' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:46:16 • constant_identifier_names
+   info • The constant name 'ABOUT_US' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:47:16 • constant_identifier_names
+   info • The constant name 'PRIVACY_POLICY' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:48:16 • constant_identifier_names
+   info • The constant name 'CONTACT_US' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:49:16 • constant_identifier_names
+   info • The constant name 'DELETE_ACCOUNT' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:50:16 • constant_identifier_names
+   info • The constant name 'DELETE_ACCOUNT_OTP' isn't a lowerCamelCase identifier • lib/core/routes/app_routes.dart:51:16 • constant_identifier_names
+warning • Unused import: 'package:get/get.dart' • lib/models/bond_user_model.dart:1:8 • unused_import
+warning • Unused import: 'dart:convert' • lib/models/user_model.dart:1:8 • unused_import
+warning • Unused import: '../../core/routes/app_routes.dart' • lib/screens/auth/forgot_password_screen.dart:7:8 • unused_import
+   info • Parameter 'key' could be a super parameter • lib/screens/auth/forgot_password_screen.dart:14:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/screens/auth/login_screen.dart:15:9 • use_super_parameters
+warning • Unused import: '../../widgets/auth/signup_success_dialog.dart' • lib/screens/auth/otp_verification_screen.dart:9:8 • unused_import
+   info • Parameter 'key' could be a super parameter • lib/screens/auth/otp_verification_screen.dart:12:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/auth/otp_verification_screen.dart:210:50 • deprecated_member_use
+warning • Unused import: '../../core/routes/app_routes.dart' • lib/screens/auth/reset_password_screen.dart:7:8 • unused_import
+   info • Parameter 'key' could be a super parameter • lib/screens/auth/reset_password_screen.dart:14:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/screens/auth/welcome_screen.dart:14:9 • use_super_parameters
+warning • Unused import: '../../models/bond_user_model.dart' • lib/screens/bond/bond_profile_screen.dart:7:8 • unused_import
+   info • Parameter 'key' could be a super parameter • lib/screens/bond/bond_profile_screen.dart:12:9 • use_super_parameters
+warning • The value of the local variable 'isNearby' isn't used • lib/screens/bond/bond_profile_screen.dart:215:11 • unused_local_variable
+   info • Parameter 'key' could be a super parameter • lib/screens/bond/bond_screen.dart:15:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/screens/bond/nearby_people_screen.dart:10:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/screens/circles/add_members_screen.dart:11:9 • use_super_parameters
+   info • Use a 'SizedBox' to add whitespace to a layout • lib/screens/circles/add_members_screen.dart:114:11 • sized_box_for_whitespace
+   info • Parameter 'key' could be a super parameter • lib/screens/circles/all_circles_screen.dart:12:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/screens/circles/circle_members_screen.dart:11:9 • use_super_parameters
+warning • Unused import: '../../widgets/circles/circle_selection_dialog.dart' • lib/screens/circles/circles_screen.dart:12:8 • unused_import
+   info • Parameter 'key' could be a super parameter • lib/screens/circles/circles_screen.dart:15:9 • use_super_parameters
+warning • Unused import: '../../widgets/custom_search_field.dart' • lib/screens/circles/create_circle_screen.dart:11:8 • unused_import
+   info • Parameter 'key' could be a super parameter • lib/screens/circles/create_circle_screen.dart:16:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/circles/create_circle_screen.dart:94:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/circles/create_circle_screen.dart:141:57 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/circles/create_circle_screen.dart:210:63 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/circles/create_circle_screen.dart:249:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/circles/create_circle_screen.dart:251:67 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/circles/create_circle_screen.dart:305:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/circles/create_circle_screen.dart:464:59 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/circles/create_circle_screen.dart:468:59 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/circles/joined_circle_details_screen.dart:15:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/circles/joined_circle_details_screen.dart:197:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/circles/joined_circle_details_screen.dart:359:54 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/circles/joined_circle_details_screen.dart:484:54 • deprecated_member_use
+warning • The receiver can't be null, so the null-aware operator '?.' is unnecessary • lib/screens/circles/joined_circle_details_screen.dart:580:51 • invalid_null_aware_operator
+warning • The operand can't be 'null', so the condition is always 'true' • lib/screens/circles/joined_circle_details_screen.dart:588:42 • unnecessary_null_comparison
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/circles/joined_circle_details_screen.dart:592:52 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • lib/screens/circles/joined_circle_details_screen.dart:595:53 • unnecessary_non_null_assertion
+   info • Parameter 'key' could be a super parameter • lib/screens/circles/public_circle_details_screen.dart:15:9 • use_super_parameters
+warning • Dead code • lib/screens/circles/public_circle_details_screen.dart:114:37 • dead_code
+warning • The left operand can't be null, so the right operand is never executed • lib/screens/circles/public_circle_details_screen.dart:114:40 • dead_null_aware_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/circles/public_circle_details_screen.dart:279:34 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/circles/public_circle_details_screen.dart:618:54 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/circles/public_circle_details_screen.dart:727:54 • deprecated_member_use
+warning • Unused import: '../../models/event_model.dart' • lib/screens/events/book_event_screen.dart:6:8 • unused_import
+   info • Parameter 'key' could be a super parameter • lib/screens/events/book_event_screen.dart:9:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/book_event_screen.dart:53:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/book_event_screen.dart:138:41 • deprecated_member_use
+warning • Unused import: '../../core/routes/app_routes.dart' • lib/screens/events/create_event_screen.dart:8:8 • unused_import
+   info • Parameter 'key' could be a super parameter • lib/screens/events/create_event_screen.dart:12:9 • use_super_parameters
+warning • The value of the field '_suggestedVenues' isn't used • lib/screens/events/create_event_screen.dart:21:22 • unused_field
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/create_event_screen.dart:139:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/create_event_screen.dart:469:30 • deprecated_member_use
+   info • 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre • lib/screens/events/create_event_screen.dart:489:11 • deprecated_member_use
+   info • 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre • lib/screens/events/create_event_screen.dart:490:11 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/events/event_details_screen.dart:12:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/event_details_screen.dart:55:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/event_details_screen.dart:111:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/event_details_screen.dart:119:54 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/event_details_screen.dart:246:48 • deprecated_member_use
+   info • Unnecessary use of 'toList' in a spread • lib/screens/events/event_details_screen.dart:271:54 • unnecessary_to_list_in_spreads
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/event_details_screen.dart:435:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/event_details_screen.dart:476:42 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/event_details_screen.dart:486:44 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/events/event_filter_screen.dart:10:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/event_filter_screen.dart:72:56 • deprecated_member_use
+   info • Statements in an if should be enclosed in a block • lib/screens/events/event_filter_screen.dart:131:31 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/events/event_filter_screen.dart:157:31 • curly_braces_in_flow_control_structures
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/event_filter_screen.dart:224:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/event_filter_screen.dart:291:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/event_filter_screen.dart:333:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/event_filter_screen.dart:415:50 • deprecated_member_use
+   info • The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/screens/events/event_highlight_details_screen.dart:1:8 • unnecessary_import
+warning • Unused import: '../../core/theme/app_colors.dart' • lib/screens/events/event_highlight_details_screen.dart:6:8 • unused_import
+   info • Parameter 'key' could be a super parameter • lib/screens/events/event_highlight_details_screen.dart:11:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/event_highlight_details_screen.dart:153:44 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/events/event_kyc_screen.dart:11:9 • use_super_parameters
+   info • Statements in an if should be enclosed in a block • lib/screens/events/event_kyc_screen.dart:26:22 • curly_braces_in_flow_control_structures
+   info • Statements in an if should be enclosed in a block • lib/screens/events/event_kyc_screen.dart:27:14 • curly_braces_in_flow_control_structures
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/event_kyc_screen.dart:86:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/event_kyc_screen.dart:131:42 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/events/event_screen.dart:18:9 • use_super_parameters
+   info • Unnecessary use of 'toList' in a spread • lib/screens/events/event_screen.dart:258:20 • unnecessary_to_list_in_spreads
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/event_screen.dart:356:54 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/event_screen.dart:412:40 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/events/host_details_screen.dart:8:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/screens/events/reviews_screen.dart:9:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/reviews_screen.dart:38:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/reviews_screen.dart:86:76 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/events/write_review_screen.dart:8:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/events/write_review_screen.dart:104:58 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/home/home_screen.dart:12:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/screens/main_wrapper.dart:16:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main_wrapper.dart:56:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main_wrapper.dart:59:42 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/main_wrapper.dart:64:39 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/messages/chat_screen.dart:14:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/messages/chat_screen.dart:164:58 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/messages/chat_screen.dart:256:33 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/messages/messages_screen.dart:14:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/screens/notification/notification_screen.dart:10:9 • use_super_parameters
+   info • Unnecessary use of 'toList' in a spread • lib/screens/notification/notification_screen.dart:70:20 • unnecessary_to_list_in_spreads
+   info • Parameter 'key' could be a super parameter • lib/screens/onboarding/onboarding_screen.dart:12:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/onboarding/onboarding_screen.dart:51:49 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/profile/about_us_screen.dart:8:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/about_us_screen.dart:39:42 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/profile/add_location_screen.dart:13:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/screens/profile/choose_interest_screen.dart:11:9 • use_super_parameters
+   info • Unnecessary use of 'toList' in a spread • lib/screens/profile/choose_interest_screen.dart:125:24 • unnecessary_to_list_in_spreads
+warning • Unused import: '../../core/routes/app_routes.dart' • lib/screens/profile/connection_type_screen.dart:8:8 • unused_import
+   info • Parameter 'key' could be a super parameter • lib/screens/profile/connection_type_screen.dart:11:9 • use_super_parameters
+   info • Unnecessary use of 'toList' in a spread • lib/screens/profile/connection_type_screen.dart:107:16 • unnecessary_to_list_in_spreads
+   info • Parameter 'key' could be a super parameter • lib/screens/profile/contact_us_screen.dart:9:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/contact_us_screen.dart:101:51 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/contact_us_screen.dart:123:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/contact_us_screen.dart:134:40 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/profile/delete_account_otp_screen.dart:9:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/delete_account_otp_screen.dart:134:53 • deprecated_member_use
+warning • Unused import: '../../core/theme/app_colors.dart' • lib/screens/profile/delete_account_screen.dart:5:8 • unused_import
+   info • Parameter 'key' could be a super parameter • lib/screens/profile/delete_account_screen.dart:10:9 • use_super_parameters
+warning • The receiver can't be null, so the null-aware operator '?.' is unnecessary • lib/screens/profile/edit_profile_screen.dart:79:48 • invalid_null_aware_operator
+   info • Unnecessary use of 'toList' in a spread • lib/screens/profile/edit_profile_screen.dart:359:18 • unnecessary_to_list_in_spreads
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/edit_profile_screen.dart:426:52 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/profile/kyc_document_screen.dart:14:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/kyc_document_screen.dart:127:42 • deprecated_member_use
+warning • The declaration '_showCompletionDialog' isn't referenced • lib/screens/profile/kyc_document_screen.dart:170:8 • unused_element
+   info • Parameter 'key' could be a super parameter • lib/screens/profile/map_selection_screen.dart:12:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/map_selection_screen.dart:56:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/map_selection_screen.dart:84:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/map_selection_screen.dart:125:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/map_selection_screen.dart:128:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/map_selection_screen.dart:142:50 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/map_selection_screen.dart:182:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/map_selection_screen.dart:242:35 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/profile/picture_verification_screen.dart:14:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/picture_verification_screen.dart:205:40 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/profile/privacy_policy_screen.dart:7:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/screens/profile/profile_building_screen.dart:15:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/screens/profile/profile_ready_screen.dart:10:9 • use_super_parameters
+   info • 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre • lib/screens/profile/profile_screen.dart:198:23 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/profile/security_screen.dart:9:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/profile/security_screen.dart:99:53 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/profile/terms_of_service_screen.dart:7:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/screens/splash/splash_screen.dart:12:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/splash/splash_screen.dart:37:59 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/screens/subscription/add_card_screen.dart:9:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/screens/subscription/payment_method_screen.dart:12:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/subscription/payment_method_screen.dart:117:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/subscription/payment_method_screen.dart:128:43 • deprecated_member_use
+warning • Unused import: '../home/home_screen.dart' • lib/screens/subscription/subscription_plan_screen.dart:8:8 • unused_import
+   info • Parameter 'key' could be a super parameter • lib/screens/subscription/subscription_plan_screen.dart:12:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/screens/subscription/subscription_plan_screen.dart:210:42 • deprecated_member_use
+   info • The prefix 'IO' isn't a lower_case_with_underscores identifier • lib/services/socket_service.dart:3:60 • library_prefixes
+   info • Parameter 'key' could be a super parameter • lib/widgets/app_button.dart:13:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/app_button.dart:70:48 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/auth/auth_text_field.dart:19:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/widgets/auth/signup_success_dialog.dart:10:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/widgets/auth/social_auth_button.dart:12:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/widgets/auth/social_icon_button.dart:9:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/widgets/bond/bond_user_card.dart:14:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/bond/bond_user_card.dart:32:35 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/circles/circle_card.dart:15:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/circles/circle_card.dart:29:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/circles/circle_card.dart:67:45 • deprecated_member_use
+   info • Unnecessary use of 'toList' in a spread • lib/widgets/circles/circle_card.dart:178:14 • unnecessary_to_list_in_spreads
+warning • Dead code • lib/widgets/circles/circle_card.dart:236:34 • dead_code
+warning • The left operand can't be null, so the right operand is never executed • lib/widgets/circles/circle_card.dart:236:37 • dead_null_aware_expression
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/circles/circle_card.dart:254:31 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/circles/circle_comment_item.dart:21:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/circles/circle_comment_item.dart:114:56 • deprecated_member_use
+   info • Unnecessary use of 'toList' in a spread • lib/widgets/circles/circle_comment_item.dart:178:28 • unnecessary_to_list_in_spreads
+  error • The method 'toggleLikeComment' isn't defined for the type 'CircleController' • lib/widgets/circles/circle_comment_item.dart:219:42 • undefined_method
+  error • The method 'updateCommentReaction' isn't defined for the type 'CircleController' • lib/widgets/circles/circle_comment_item.dart:442:28 • undefined_method
+   info • Parameter 'key' could be a super parameter • lib/widgets/circles/circle_header.dart:11:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/widgets/circles/circle_member_tile.dart:11:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/circles/circle_member_tile.dart:56:52 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/circles/circle_post_item.dart:18:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/circles/circle_post_item.dart:201:45 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/circles/circle_selection_dialog.dart:11:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/circles/circle_selection_dialog.dart:62:50 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/circles/circle_tab_bar.dart:11:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/widgets/circles/circle_tab_bar.dart:64:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/widgets/circles/create_post_sheet.dart:13:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/widgets/circles/interest_selection_sheet.dart:13:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/circles/interest_selection_sheet.dart:189:60 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/circles/interest_selection_sheet.dart:222:68 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/circles/interest_selection_sheet.dart:275:50 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/circles/reaction_selector.dart:7:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/circles/reaction_selector.dart:53:35 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/circles/reaction_selector.dart:99:9 • use_super_parameters
+   info • 'scaled' is deprecated and shouldn't be used. Use scaledByVector3, scaledByVector4, or scaledByDouble instead • lib/widgets/circles/reaction_selector.dart:119:52 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/custom_button.dart:8:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/widgets/custom_search_field.dart:16:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/widgets/events/category_filter.dart:11:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/widgets/events/e_ticket_card.dart:10:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/e_ticket_card.dart:22:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/e_ticket_card.dart:49:85 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/e_ticket_card.dart:63:89 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/e_ticket_card.dart:67:91 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/e_ticket_card.dart:98:50 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/events/event_card.dart:14:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/event_card.dart:42:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/event_card.dart:56:50 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/event_card.dart:64:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/event_card.dart:77:61 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/event_card.dart:98:51 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/event_card.dart:162:55 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/events/event_success_dialog.dart:9:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/event_success_dialog.dart:29:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/event_success_dialog.dart:89:52 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/events/media_viewers.dart:9:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/media_viewers.dart:47:39 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/events/media_viewers.dart:63:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/media_viewers.dart:131:39 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/events/my_events_sub_nav.dart:10:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/my_events_sub_nav.dart:41:79 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/events/wallet_widgets.dart:12:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/wallet_widgets.dart:40:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/wallet_widgets.dart:58:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/wallet_widgets.dart:98:48 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/events/wallet_widgets.dart:153:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/wallet_widgets.dart:166:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/wallet_widgets.dart:178:36 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/events/wallet_widgets.dart:179:34 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/home/circle_highlight_card.dart:14:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/home/circle_highlight_card.dart:29:33 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/home/home_app_bar.dart:11:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/widgets/home/people_recommendation_card.dart:9:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/home/people_recommendation_card.dart:22:33 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/home/section_header.dart:10:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/widgets/home/upcoming_event_card.dart:12:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/home/upcoming_event_card.dart:26:35 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/messages/conversation_tile.dart:13:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/widgets/messages/full_screen_image_viewer.dart:7:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/widgets/notification/notification_tile.dart:11:9 • use_super_parameters
+   info • Parameter 'key' could be a super parameter • lib/widgets/onboarding/onboarding_widgets.dart:35:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/onboarding/onboarding_widgets.dart:55:48 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/onboarding/onboarding_widgets.dart:81:9 • use_super_parameters
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/widgets/onboarding/onboarding_widgets.dart:101:37 • deprecated_member_use
+   info • Parameter 'key' could be a super parameter • lib/widgets/profile/verification_success_dialog.dart:13:9 • use_super_parameters
+
+308 issues found. (ran in 2.3s)

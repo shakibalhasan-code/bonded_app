@@ -42,6 +42,9 @@ class BondController extends GetxController {
   void onInit() {
     super.onInit();
     searchController = TextEditingController();
+    searchController.addListener(() {
+      searchQuery.value = searchController.text;
+    });
     fetchAllData();
   }
 
@@ -143,7 +146,7 @@ class BondController extends GetxController {
 
   Future<void> sendBondRequest(String userId) async {
     try {
-      final response = await _apiService.post('${AppUrls.bondRequests}/$userId');
+      final response = await _apiService.post('${AppUrls.bondRequests}/$userId', {});
       final data = jsonDecode(response.body);
       if (data['success']) {
         Get.snackbar('Success', 'Bond request sent');

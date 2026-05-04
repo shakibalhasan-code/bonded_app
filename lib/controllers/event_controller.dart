@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/event_model.dart';
 import '../services/api_service.dart';
 import '../core/constants/app_endpoints.dart';
@@ -18,6 +19,8 @@ class EventController extends GetxController {
   final RxList<EventModel> events = <EventModel>[].obs;
   final RxList<TicketModel> tickets = <TicketModel>[].obs;
   final RxList<TransactionModel> transactions = <TransactionModel>[].obs;
+  final RxBool isStripeConnected = false.obs;
+  final RxBool isCheckingStripe = false.obs;
 
   // Filter States
   final Rx<RangeValues> priceRange = const RangeValues(0, 100).obs;
@@ -42,6 +45,46 @@ class EventController extends GetxController {
     fetchEvents();
     _loadMockTickets();
     _loadMockTransactions();
+    checkStripeStatus();
+  }
+
+  Future<void> checkStripeStatus() async {
+    try {
+      isCheckingStripe.value = true;
+      final response = await _apiService.get(AppUrls.stripeStatus);
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        isStripeConnected.value = data['data']['connected'] ?? false;
+      }
+    } catch (e) {
+      debugPrint("Error checking stripe status: $e");
+    } finally {
+      isCheckingStripe.value = false;
+    }
+  }
+
+  Future<void> connectStripe() async {
+    try {
+      isLoading.value = true;
+      final response = await _apiService.post(AppUrls.stripeOnboard, {});
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final onboardingUrl = data['data']['onboardingUrl'];
+        if (onboardingUrl != null) {
+          final uri = Uri.parse(onboardingUrl);
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          } else {
+            Get.snackbar('Error', 'Could not launch onboarding URL');
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Error connecting stripe: $e");
+      Get.snackbar('Error', 'Failed to generate onboarding link');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> fetchEvents() async {
@@ -52,8 +95,9 @@ class EventController extends GetxController {
       if (selectedCategory.value == 2) {
         // Load highlights from mock
         _loadMockEvents();
-        events.value =
-            events.where((e) => e.category == EventCategory.highlights).toList();
+        events.value = events
+            .where((e) => e.category == EventCategory.highlights)
+            .toList();
         return;
       }
 

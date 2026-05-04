@@ -16,7 +16,7 @@ class CirclesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(CircleController());
+    final controller = Get.find<CircleController>();
 
     return Scaffold(
       backgroundColor: Colors.white,

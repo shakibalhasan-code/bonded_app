@@ -273,32 +273,38 @@ class _CirclePostItemState extends State<CirclePostItem> {
               switch (reaction) {
                 case "like":
                   icon = Icons.thumb_up;
-                  color = AppColors.primary;
-                  label = "React";
+                  color = Colors.blue;
+                  label = "Liked";
                   break;
                 case "love":
                   emoji = "❤️";
-                  label = "React";
+                  color = Colors.red;
+                  label = "Loved";
                   break;
                 case "care":
                   emoji = "🤗";
-                  label = "React";
+                  color = Colors.orange;
+                  label = "Cared";
                   break;
                 case "haha":
                   emoji = "😆";
-                  label = "React";
+                  color = Colors.orange;
+                  label = "Haha";
                   break;
                 case "wow":
                   emoji = "😮";
-                  label = "React";
+                  color = Colors.orange;
+                  label = "Wow";
                   break;
                 case "sad":
                   emoji = "😢";
-                  label = "React";
+                  color = Colors.orange;
+                  label = "Sad";
                   break;
                 case "angry":
                   emoji = "😡";
-                  label = "React";
+                  color = Colors.redAccent;
+                  label = "Angry";
                   break;
               }
             }
@@ -317,7 +323,7 @@ class _CirclePostItemState extends State<CirclePostItem> {
                     style: GoogleFonts.inter(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
-                      color: reaction != "none" ? AppColors.primary : color,
+                      color: color,
                     ),
                   ),
                 ],

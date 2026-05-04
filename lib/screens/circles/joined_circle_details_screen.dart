@@ -353,7 +353,7 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
               ElevatedButton(
                 onPressed: () {
                   Get.back();
-                  _showCreateEventDialog(context);
+                  _showCreateEventDialog(context, circle);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary.withOpacity(0.1),
@@ -390,7 +390,7 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
     );
   }
 
-  void _showCreateEventDialog(BuildContext context) {
+  void _showCreateEventDialog(BuildContext context, CircleModel circle) {
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(
@@ -443,6 +443,7 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                     arguments: {
                       'isVirtual': false,
                       'category': 'Birthday Celebration',
+                      'circleId': circle.id,
                     },
                   );
                 },
@@ -475,6 +476,7 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                     arguments: {
                       'isVirtual': true,
                       'category': 'Birthday Celebration',
+                      'circleId': circle.id,
                     },
                   );
                 },

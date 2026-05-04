@@ -46,7 +46,7 @@ class AuthController extends BaseController {
       setLoading(true);
       final response = await _apiService.post(
         AppUrls.register,
-        body: {
+        {
           "email": email,
           "password": password,
         },
@@ -72,7 +72,7 @@ class AuthController extends BaseController {
       setLoading(true);
       final response = await _apiService.post(
         AppUrls.login,
-        body: {
+        {
           "email": email,
           "password": password,
         },
@@ -107,7 +107,6 @@ class AuthController extends BaseController {
     } finally {
       setLoading(false);
     }
-
   }
 
   // Resend OTP
@@ -116,7 +115,7 @@ class AuthController extends BaseController {
       setLoading(true);
       final response = await _apiService.post(
         AppUrls.resendOtp,
-        body: {
+        {
           "email": email,
           "type": type,
         },
@@ -141,7 +140,7 @@ class AuthController extends BaseController {
       setLoading(true);
       final response = await _apiService.post(
         AppUrls.verifyAccount,
-        body: {
+        {
           "email": email,
           "otp": otp,
         },
@@ -192,7 +191,7 @@ class AuthController extends BaseController {
       setLoading(true);
       final response = await _apiService.post(
         AppUrls.forgotPassword,
-        body: {
+        {
           "email": email,
         },
       );
@@ -217,7 +216,7 @@ class AuthController extends BaseController {
       setLoading(true);
       final response = await _apiService.post(
         AppUrls.verifyResetOtp,
-        body: {
+        {
           "email": email,
           "otp": otp,
         },
@@ -244,12 +243,12 @@ class AuthController extends BaseController {
       setLoading(true);
       final response = await _apiService.post(
         AppUrls.resetPassword,
+        {
+          "password": newPassword,
+        },
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $resetToken',
-        },
-        body: {
-          "password": newPassword,
         },
       );
 
@@ -274,13 +273,13 @@ class AuthController extends BaseController {
       final token = SharedPrefsService.getString('accessToken');
       final response = await _apiService.post(
         AppUrls.changePassword,
+        {
+          "oldPassword": oldPassword,
+          "newPassword": newPassword,
+        },
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
-        },
-        body: {
-          "oldPassword": oldPassword,
-          "newPassword": newPassword,
         },
       );
 
@@ -305,7 +304,7 @@ class AuthController extends BaseController {
 
       final response = await _apiService.post(
         AppUrls.refreshAccessToken,
-        body: {
+        {
           "refreshToken": refreshToken,
         },
       );
@@ -332,7 +331,7 @@ class AuthController extends BaseController {
       );
 
       final data = jsonDecode(response.body);
-      if (data['success'] == true) {
+      if (data['success'] == true && data['data'] != null) {
         currentUser.value = UserModel.fromJson(data['data']);
         userData.value = data['data'];
       }

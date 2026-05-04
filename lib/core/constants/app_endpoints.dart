@@ -23,6 +23,8 @@ class AppUrls {
   static const String circles = '/circles';
   static const String events = '/events';
   static const String myEvents = '/events/my-events';
+  static const String stripeStatus = '/stripe-connect/me/status';
+  static const String stripeOnboard = '/stripe-connect/me';
 
   // Bond Endpoints
   static const String nearbyBonds = '/bonds/nearby';
@@ -45,6 +47,7 @@ class AppUrls {
   static String sharePost(String postId) => '/circles/posts/$postId/share';
   static String circleMembers(String circleId) => '/circles/$circleId/members';
   static String circleEvents(String circleId) => '/circles/$circleId/events';
+  static String joinCircle(String circleId) => '/circles/$circleId/join';
 
   static String imageUrl(String? path) {
     if (path == null || path.isEmpty) return 'https://i.pravatar.cc/150';
