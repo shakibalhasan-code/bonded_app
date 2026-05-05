@@ -117,6 +117,13 @@ class ChatController extends GetxController {
   }
 
   Future<void> initChat(UserModel user) async {
+    // If we're already initialized for this user, don't clear and reload
+    // unless we really need to.
+    if (conversationId != null && messages.isNotEmpty) {
+      log('ChatController: Already initialized for conversation: $conversationId');
+      return;
+    }
+
     isLoading.value = true;
     messages.clear(); // Clear old messages
     
@@ -169,9 +176,15 @@ class ChatController extends GetxController {
       final currentUserId = _getCurrentUserId();
       final newMessage = ChatMessage.fromJson(data['message'], currentUserId);
       
-      if (!messages.any((m) => m.id == newMessage.id)) {
+      // Check if message already exists (either from optimistic update or previous fetch)
+      final index = messages.indexWhere((m) => m.id == newMessage.id || (m.id.startsWith('temp_') && m.text == newMessage.text && m.isMe));
+      
+      if (index == -1) {
         messages.add(newMessage);
         _scrollToBottom();
+      } else if (messages[index].id.startsWith('temp_')) {
+        // Replace temporary message with actual message from server
+        messages[index] = newMessage;
       }
     });
 
@@ -216,9 +229,29 @@ class ChatController extends GetxController {
   void sendMessage(String text, UserModel user) {
     if (text.trim().isEmpty || conversationId == null) return;
 
+    final String messageText = text.trim();
+    final currentUserId = _getCurrentUserId();
+    
+    // Optimistic Update: Add message to list immediately
+    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    final optimisticMessage = ChatMessage(
+      id: tempId,
+      text: messageText,
+      senderName: 'You',
+      senderImage: '', // Will be handled by ChatMessage logic or ignored for Me
+      timestamp: DateTime.now(),
+      isMe: true,
+      type: 'text',
+    );
+    
+    messages.add(optimisticMessage);
+    _scrollToBottom();
+    messageController.clear();
+    sendTypingStatus(false);
+
     final payload = {
       'conversationId': conversationId,
-      'content': text.trim(),
+      'content': messageText,
       'type': 'text'
     };
 
@@ -227,19 +260,22 @@ class ChatController extends GetxController {
       debugPrint(const JsonEncoder.withIndent('  ').convert(response));
       
       if (response['success'] == true) {
-        final currentUserId = _getCurrentUserId();
         final sentMessage = ChatMessage.fromJson(response['data']['message'], currentUserId);
         
-        if (!messages.any((m) => m.id == sentMessage.id)) {
+        // Find the temporary message and replace it
+        final index = messages.indexWhere((m) => m.id == tempId);
+        if (index != -1) {
+          messages[index] = sentMessage;
+        } else if (!messages.any((m) => m.id == sentMessage.id)) {
           messages.add(sentMessage);
           _scrollToBottom();
         }
+      } else {
+        // Handle failure: remove optimistic message and show error
+        messages.removeWhere((m) => m.id == tempId);
+        Get.snackbar('Error', response['message'] ?? 'Failed to send message');
       }
     });
-
-    messageController.clear();
-    _scrollToBottom();
-    sendTypingStatus(false);
   }
 
   void sendTypingStatus(bool isTyping) {

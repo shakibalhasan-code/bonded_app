@@ -21,6 +21,9 @@ class EventController extends GetxController {
   final RxList<TransactionModel> transactions = <TransactionModel>[].obs;
   final RxBool isStripeConnected = false.obs;
   final RxBool isCheckingStripe = false.obs;
+  final RxBool isOnboardingStripe = false.obs;
+  final Rxn<WalletModel> wallet = Rxn<WalletModel>();
+  final RxBool isLoadingWallet = false.obs;
 
   // Filter States
   final Rx<RangeValues> priceRange = const RangeValues(0, 100).obs;
@@ -44,7 +47,7 @@ class EventController extends GetxController {
     super.onInit();
     fetchEvents();
     _loadMockTickets();
-    _loadMockTransactions();
+    fetchWallet();
     checkStripeStatus();
   }
 
@@ -54,12 +57,45 @@ class EventController extends GetxController {
       final response = await _apiService.get(AppUrls.stripeStatus);
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
-        isStripeConnected.value = data['data']['connected'] ?? false;
+        bool connected = data['data']['connected'] ?? false;
+        
+        if (connected) {
+          if (!isStripeConnected.value) {
+            Get.snackbar(
+              'Success',
+              'Stripe account connected successfully!',
+              backgroundColor: Colors.green,
+              colorText: Colors.white,
+            );
+            fetchWallet();
+          }
+          isStripeConnected.value = true;
+          isOnboardingStripe.value = false;
+        } else {
+          isStripeConnected.value = false;
+          isOnboardingStripe.value = false;
+        }
       }
     } catch (e) {
       debugPrint("Error checking stripe status: $e");
     } finally {
       isCheckingStripe.value = false;
+    }
+  }
+
+  Future<void> fetchWallet() async {
+    try {
+      isLoadingWallet.value = true;
+      final response = await _apiService.get(AppUrls.myWallet);
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        wallet.value = WalletModel.fromJson(data['data']);
+        _loadMockTransactions();
+      }
+    } catch (e) {
+      debugPrint("Error fetching wallet: $e");
+    } finally {
+      isLoadingWallet.value = false;
     }
   }
 
@@ -72,10 +108,19 @@ class EventController extends GetxController {
         final onboardingUrl = data['data']['onboardingUrl'];
         if (onboardingUrl != null) {
           final uri = Uri.parse(onboardingUrl);
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-          } else {
-            Get.snackbar('Error', 'Could not launch onboarding URL');
+          try {
+            bool launched = await launchUrl(
+              uri,
+              mode: LaunchMode.externalApplication,
+            );
+            if (launched) {
+              isOnboardingStripe.value = true;
+            } else {
+              Get.snackbar('Error', 'Could not launch onboarding URL');
+            }
+          } catch (e) {
+            debugPrint("Error launching URL: $e");
+            Get.snackbar('Error', 'Could not launch onboarding URL: $e');
           }
         }
       }
@@ -87,118 +132,53 @@ class EventController extends GetxController {
     }
   }
 
-  Future<void> fetchEvents() async {
+  Future<void> fetchEvents({bool showLoader = true}) async {
     try {
-      isLoading.value = true;
-      events.clear();
-
-      if (selectedCategory.value == 2) {
-        // Load highlights from mock
-        _loadMockEvents();
-        events.value = events
-            .where((e) => e.category == EventCategory.highlights)
-            .toList();
-        return;
-      }
-
-      String type = 'in-person';
-      if (selectedCategory.value == 1) {
-        type = 'virtual';
-      }
-
-      final response = await _apiService.get("${AppUrls.events}?type=$type");
+      if (showLoader) isLoading.value = true;
+      final response = await _apiService.get(AppUrls.events);
       final data = jsonDecode(response.body);
 
       if (data['success'] == true) {
         final List<dynamic> eventList = data['data'];
-        events.value = eventList.map((e) => EventModel.fromJson(e)).toList();
+        final List<EventModel> fetchedEvents =
+            eventList.map((e) => EventModel.fromJson(e)).toList();
+
+        if (fetchedEvents.every((e) => e.category != EventCategory.highlights)) {
+          _addMockHighlights(fetchedEvents);
+        }
+
+        events.value = fetchedEvents;
       }
     } catch (e) {
       debugPrint("Error fetching events: $e");
     } finally {
-      isLoading.value = false;
+      if (showLoader) isLoading.value = false;
     }
   }
 
-  Future<void> fetchMyEvents() async {
+  Future<void> fetchMyEvents({bool showLoader = true}) async {
     try {
-      isLoading.value = true;
+      if (showLoader) isLoading.value = true;
       final response = await _apiService.get(AppUrls.myEvents);
       final data = jsonDecode(response.body);
 
       if (data['success'] == true) {
         final List<dynamic> eventList = data['data'];
         events.value = eventList.map((e) {
-          final event = EventModel.fromJson(e);
-          // Mark as my event if needed, though myEvents endpoint usually implies it
-          return event;
+          return EventModel.fromJson(e);
         }).toList();
       }
     } catch (e) {
       debugPrint("Error fetching my events: $e");
     } finally {
-      isLoading.value = false;
+      if (showLoader) isLoading.value = false;
     }
   }
 
-  void _loadMockEvents() {
-    events.addAll([
-      // ... same as before but adding isMyEvent for some
+  void _addMockHighlights(List<EventModel> list) {
+    list.addAll([
       EventModel(
-        id: '1',
-        title: 'National Music Festival',
-        imageUrl:
-            'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3',
-        address: '2464 Royal Ln. Mesa, New Jersey 45463',
-        date: 'Dec 12',
-        time: '12:00 - 13:00PM',
-        category: EventCategory.inPerson,
-        isMyEvent: true, // Created by me
-      ),
-      EventModel(
-        id: '9',
-        title: 'Jazz Music Fest',
-        imageUrl:
-            'https://images.unsplash.com/photo-1514525253361-9f93ee74a89a',
-        address: '2464 Royal Ln. Mesa, New Jersey 45463',
-        date: 'Dec 12',
-        time: '12:00 - 13:00PM',
-        category: EventCategory.inPerson,
-        isMyEvent: false, // Booked by me (I'll handle this in logic)
-      ),
-      // ... keep other mock events
-      EventModel(
-        id: '2',
-        title: 'Jazz Music Fest',
-        imageUrl:
-            'https://images.unsplash.com/photo-1514525253361-9f93ee74a89a',
-        address: '2464 Royal Ln. Mesa, New Jersey 45463',
-        date: 'Dec 12',
-        time: '12:00 - 13:00PM',
-        category: EventCategory.inPerson,
-      ),
-      EventModel(
-        id: '3',
-        title: 'DJ Music Competition',
-        imageUrl:
-            'https://images.unsplash.com/photo-1470225620780-dba8ba36b745',
-        address: '2464 Royal Ln. Mesa, New Jersey 45463',
-        date: 'Dec 12',
-        time: '12:00 - 13:00PM',
-        category: EventCategory.inPerson,
-      ),
-      EventModel(
-        id: '4',
-        title: 'International Music...',
-        imageUrl:
-            'https://images.unsplash.com/photo-1459749411177-042180ce673c',
-        address: '2464 Royal Ln. Mesa, New Jersey 45463',
-        date: 'Dec 12',
-        time: '12:00 - 13:00PM',
-        category: EventCategory.inPerson,
-      ),
-      EventModel(
-        id: '5',
+        id: 'h1',
         title: 'Brunch Vibes',
         imageUrl:
             'https://images.unsplash.com/photo-1517457373958-b7bdd4587205',
@@ -206,7 +186,7 @@ class EventController extends GetxController {
         category: EventCategory.highlights,
       ),
       EventModel(
-        id: '6',
+        id: 'h2',
         title: 'NYC Introverts Meetup',
         imageUrl:
             'https://images.unsplash.com/photo-1492684223066-81342ee5ff30',
@@ -214,6 +194,67 @@ class EventController extends GetxController {
         category: EventCategory.highlights,
       ),
     ]);
+  }
+
+  List<EventModel> get filteredEvents {
+    if (selectedTab.value == 0) {
+      if (selectedCategory.value == 0) {
+        return events
+            .where((e) => e.category == EventCategory.inPerson)
+            .toList();
+      } else if (selectedCategory.value == 1) {
+        return events
+            .where((e) => e.category == EventCategory.virtual)
+            .toList();
+      } else if (selectedCategory.value == 2) {
+        return events
+            .where((e) => e.category == EventCategory.highlights)
+            .toList();
+      }
+    }
+    return events;
+  }
+
+  void changeTab(int tabIndex) {
+    selectedTab.value = tabIndex;
+    isOnboardingStripe.value = false;
+    if (tabIndex == 0) {
+      fetchEvents();
+    } else {
+      fetchMyEvents();
+    }
+  }
+
+  void changeCategory(int categoryIndex) {
+    selectedCategory.value = categoryIndex;
+    // No need to fetch, filteredEvents will update reactively
+  }
+
+  void changeMyEventTab(int tabIndex) {
+    selectedMyEventTab.value = tabIndex;
+    isOnboardingStripe.value = false;
+    if (tabIndex < 2) {
+      fetchMyEvents();
+    } else if (tabIndex == 3) {
+      fetchWallet();
+      checkStripeStatus();
+    }
+  }
+
+  void resetFilters() {
+    priceRange.value = const RangeValues(0, 100);
+    distanceRange.value = const RangeValues(0, 50);
+    selectedDate.value = null;
+    selectedTime.value = null;
+    activeFilterCategories.clear();
+  }
+
+  void toggleFilterCategory(String category) {
+    if (activeFilterCategories.contains(category)) {
+      activeFilterCategories.remove(category);
+    } else {
+      activeFilterCategories.add(category);
+    }
   }
 
   void _loadMockTickets() {
@@ -246,74 +287,19 @@ class EventController extends GetxController {
   }
 
   void _loadMockTransactions() {
-    transactions.addAll([
-      TransactionModel(
-        id: 'tr1',
-        title: 'Prosperity Pioneers',
-        transactionId: '0817239419528913',
-        date: 'Dec 12, 2023',
-        amount: -500,
-        isCredit: false,
-      ),
-      TransactionModel(
-        id: 'tr2',
-        title: 'Prosperity Pioneers',
-        transactionId: '0817239419528913',
-        date: 'Jan 01, 2024',
-        amount: 500,
-        isCredit: true,
-      ),
-      TransactionModel(
-        id: 'tr3',
-        title: 'Prosperity Pioneers',
-        transactionId: '0817239419528913',
-        date: 'Dec 12, 2023',
-        amount: -500,
-        isCredit: false,
-      ),
-    ]);
+    transactions.clear();
   }
 
-  List<EventModel> get filteredEvents {
-    return events;
-  }
-
-  void changeTab(int tabIndex) {
-    selectedTab.value = tabIndex;
-    if (tabIndex == 0) {
-      fetchEvents();
+  Future<void> refreshData() async {
+    if (selectedTab.value == 0) {
+      await fetchEvents(showLoader: false);
     } else {
-      fetchMyEvents();
-    }
-  }
-
-  void changeCategory(int categoryIndex) {
-    selectedCategory.value = categoryIndex;
-    if (categoryIndex < 3) {
-      fetchEvents();
-    }
-  }
-
-  void changeMyEventTab(int tabIndex) {
-    selectedMyEventTab.value = tabIndex;
-    if (tabIndex < 2) {
-      fetchMyEvents();
-    }
-  }
-
-  void resetFilters() {
-    priceRange.value = const RangeValues(0, 100);
-    distanceRange.value = const RangeValues(0, 50);
-    selectedDate.value = null;
-    selectedTime.value = null;
-    activeFilterCategories.clear();
-  }
-
-  void toggleFilterCategory(String category) {
-    if (activeFilterCategories.contains(category)) {
-      activeFilterCategories.remove(category);
-    } else {
-      activeFilterCategories.add(category);
+      if (selectedMyEventTab.value < 2) {
+        await fetchMyEvents(showLoader: false);
+      } else if (selectedMyEventTab.value == 3) {
+        await fetchWallet();
+        await checkStripeStatus();
+      }
     }
   }
 }

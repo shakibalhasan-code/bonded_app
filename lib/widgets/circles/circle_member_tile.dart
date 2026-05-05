@@ -4,6 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/circle_model.dart';
 import '../../services/shared_prefs_service.dart';
+import 'package:get/get.dart';
+import '../../controllers/bond_controller.dart';
+import '../../controllers/auth_controller.dart';
 
 class CircleMemberTile extends StatelessWidget {
   final MemberModel member;
@@ -15,6 +18,11 @@ class CircleMemberTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authController = Get.find<AuthController>();
+    final currentUserId = authController.currentUser.value?.id ?? SharedPrefsService.getString('userId');
+    final bool isMe = member.userId == currentUserId;
+    final bool isOwner = member.isOwner;
+
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
       child: Row(
@@ -48,7 +56,7 @@ class CircleMemberTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (member.isOwner) ...[
+                    if (isMe) ...[
                       SizedBox(width: 8.w),
                       Container(
                         padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
@@ -57,11 +65,28 @@ class CircleMemberTile extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4.r),
                         ),
                         child: Text(
-                          "Creator",
+                          "Me",
                           style: GoogleFonts.inter(
                             fontSize: 10.sp,
                             fontWeight: FontWeight.w700,
                             color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ] else if (isOwner) ...[
+                      SizedBox(width: 8.w),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFEFEF),
+                          borderRadius: BorderRadius.circular(4.r),
+                        ),
+                        child: Text(
+                          "Creator",
+                          style: GoogleFonts.inter(
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.red[400],
                           ),
                         ),
                       ),
@@ -80,11 +105,15 @@ class CircleMemberTile extends StatelessWidget {
               ],
             ),
           ),
-          if (!member.isOwner && member.id != SharedPrefsService.getString('userId'))
+          if (!isOwner && !isMe)
             SizedBox(
               height: 32.h,
               child: OutlinedButton(
-                onPressed: () {},
+                onPressed: () {
+                  if (!member.isBonded) {
+                    Get.find<BondController>().sendBondRequest(member.userId);
+                  }
+                },
                 style: OutlinedButton.styleFrom(
                   backgroundColor: member.isBonded ? AppColors.primary : Colors.white,
                   side: const BorderSide(color: AppColors.primary),

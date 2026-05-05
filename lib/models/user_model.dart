@@ -164,7 +164,16 @@ class Interest {
     required this.isActive,
   });
 
-  factory Interest.fromJson(Map<String, dynamic> json) {
+  factory Interest.fromJson(dynamic json) {
+    if (json is String) {
+      return Interest(
+        id: json,
+        name: '',
+        slug: '',
+        category: '',
+        isActive: true,
+      );
+    }
     return Interest(
       id: json['_id'] ?? '',
       name: json['name'] ?? '',

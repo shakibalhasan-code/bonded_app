@@ -7,6 +7,7 @@ import '../core/constants/app_endpoints.dart';
 
 class MemberModel {
   final String id;
+  final String userId;
   final String name;
   final String image;
   final String role;
@@ -15,6 +16,7 @@ class MemberModel {
 
   MemberModel({
     required this.id,
+    required this.userId,
     required this.name,
     required this.image,
     this.role = 'Member',
@@ -27,14 +29,19 @@ class MemberModel {
     String name = "Unknown";
     String image = "https://i.pravatar.cc/150";
     String id = json['_id'] ?? '';
+    String userId = "";
 
     if (user is Map) {
       name = user['fullName'] ?? "Unknown";
       image = AppUrls.imageUrl(user['avatar']);
+      userId = user['_id'] ?? "";
+    } else if (user is String) {
+      userId = user;
     }
 
     return MemberModel(
       id: id,
+      userId: userId,
       name: name,
       image: image,
       role: json['role'] ?? 'Member',

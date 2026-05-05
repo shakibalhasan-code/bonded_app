@@ -6,26 +6,27 @@ import '../../core/theme/app_colors.dart';
 import '../../models/event_model.dart';
 import '../../core/constants/app_endpoints.dart';
 import '../../core/routes/app_routes.dart';
+import '../../controllers/event_details_controller.dart';
+import '../../controllers/auth_controller.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import '../../widgets/events/media_viewers.dart';
 
 class EventDetailsScreen extends StatelessWidget {
   final EventModel? event;
-  const EventDetailsScreen({Key? key, this.event}) : super(key: key);
+  EventDetailsScreen({Key? key, this.event}) : super(key: key);
+
+  final controller = Get.put(EventDetailsController());
+  final authController = Get.find<AuthController>();
 
   @override
   Widget build(BuildContext context) {
-    final EventModel event = this.event ?? Get.arguments;
+    final EventModel initialEvent = event ?? Get.arguments;
 
-    // Mock data for the flow
-    final mockDescription =
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
-
-    final List<VenueModel> venues = [
-      VenueModel(name: "Grand Place Hotel", location: "New York"),
-      VenueModel(name: "Sonny Restaurant", location: "New York"),
-      VenueModel(name: "Redfin Hotel", location: "New York"),
-      VenueModel(name: "Dreams Restaurant", location: "New York"),
-      VenueModel(name: "Five Star Hotel", location: "New York"),
-    ];
+    // Initialize controller with current event and fetch full details
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.setEvent(initialEvent);
+    });
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -46,337 +47,441 @@ class EventDetailsScreen extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 30.h),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: ElevatedButton(
-          onPressed: () => Get.toNamed(AppRoutes.BOOK_EVENT, arguments: event),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            minimumSize: Size(double.infinity, 56.h),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30.r),
-            ),
+      bottomNavigationBar: Obx(() {
+        final currentEvent = controller.event.value ?? initialEvent;
+        final currentUserId = authController.currentUser.value?.id ?? '';
+        final isOwner = currentEvent.hostId == currentUserId;
+
+        return Container(
+          padding: EdgeInsets.fromLTRB(20.w, 10.h, 20.w, 30.h),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -5),
+              ),
+            ],
           ),
-          child: Text(
-            "Book Event",
-            style: GoogleFonts.inter(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
+          child: ElevatedButton(
+            onPressed: isOwner || controller.isBooking.value
+                ? null
+                : () => Get.toNamed(AppRoutes.BOOK_EVENT, arguments: currentEvent),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isOwner ? Colors.grey[400] : AppColors.primary,
+              minimumSize: Size(double.infinity, 56.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30.r),
+              ),
             ),
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20.r),
-              child: Image.network(
-                AppUrls.imageUrl(event.imageUrl),
-                width: double.infinity,
-                height: 200.h,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    height: 200.h,
-                    color: Colors.grey[100],
-                    child: const Center(child: CircularProgressIndicator()),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 200.h,
-                    width: double.infinity,
-                    color: const Color(0xFFFAF7FF),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.image_not_supported_outlined,
-                          color: AppColors.primary.withOpacity(0.5),
-                          size: 40.sp,
-                        ),
-                        SizedBox(height: 8.h),
-                        Text(
-                          "No Preview Available",
-                          style: GoogleFonts.inter(
-                            fontSize: 12.sp,
-                            color: AppColors.primary.withOpacity(0.5),
-                          ),
-                        ),
-                      ],
+            child: controller.isBooking.value
+                ? SizedBox(
+                    width: 24.w,
+                    height: 24.w,
+                    child: const CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 3,
                     ),
-                  );
-                },
-              ),
-            ),
-            SizedBox(height: 16.h),
-
-            // Title & Price
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    event.title,
-                    style: GoogleFonts.inter(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF1B0B3B),
-                    ),
-                  ),
-                ),
-                Text(
-                  "\$${event.price?.toStringAsFixed(2) ?? "\$5.00"}",
-                  style: GoogleFonts.inter(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 8.h),
-
-            // Date & Time
-            Text(
-              "Mon, Dec 24 . 18:00 - 23:00 PM",
-              style: GoogleFonts.inter(
-                fontSize: 14.sp,
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            SizedBox(height: 20.h),
-
-            // Description
-            _buildSectionTitle("Description:"),
-            SizedBox(height: 10.h),
-            Text(
-              mockDescription,
-              style: GoogleFonts.inter(
-                fontSize: 14.sp,
-                color: Colors.grey[700],
-                height: 1.5,
-              ),
-            ),
-            SizedBox(height: 24.h),
-
-            // Reviews
-            _buildSectionTitle("Reviews:"),
-            SizedBox(height: 12.h),
-            InkWell(
-              onTap: () => Get.toNamed(AppRoutes.REVIEWS),
-              child: Row(
-                children: [
-                  Icon(Icons.star, color: Colors.orange, size: 20.sp),
-                  SizedBox(width: 8.w),
-                  Text(
-                    "4.8",
+                  )
+                : Text(
+                    isOwner ? "own this event" : "Book Event",
                     style: GoogleFonts.inter(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1B0B3B),
+                      color: Colors.white,
                     ),
                   ),
-                  SizedBox(width: 8.w),
+          ),
+        );
+      }),
+      body: Obx(() {
+        if (controller.isLoading.value && controller.event.value == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final currentEvent = controller.event.value ?? initialEvent;
+
+        return SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Image
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20.r),
+                child: Image.network(
+                  AppUrls.imageUrl(currentEvent.imageUrl),
+                  width: double.infinity,
+                  height: 200.h,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      height: 200.h,
+                      color: Colors.grey[100],
+                      child: const Center(child: CircularProgressIndicator()),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: 200.h,
+                      width: double.infinity,
+                      color: const Color(0xFFFAF7FF),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.image_not_supported_outlined,
+                            color: AppColors.primary.withOpacity(0.5),
+                            size: 40.sp,
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            "No Preview Available",
+                            style: GoogleFonts.inter(
+                              fontSize: 12.sp,
+                              color: AppColors.primary.withOpacity(0.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              SizedBox(height: 16.h),
+
+              // Title & Price
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      currentEvent.title,
+                      style: GoogleFonts.inter(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF1B0B3B),
+                      ),
+                    ),
+                  ),
                   Text(
-                    "(4.8k reviews)",
+                    currentEvent.price != null && currentEvent.price! > 0
+                        ? "\$${currentEvent.price!.toStringAsFixed(2)}"
+                        : "FREE",
                     style: GoogleFonts.inter(
-                      fontSize: 14.sp,
-                      color: Colors.grey[600],
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.primary,
                     ),
-                  ),
-                  const Spacer(),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: 16.sp,
-                    color: Colors.grey[400],
                   ),
                 ],
               ),
-            ),
-            SizedBox(height: 24.h),
+              SizedBox(height: 8.h),
 
-            // Location
-            Row(
-              children: [
-                Icon(Icons.location_on, color: AppColors.primary, size: 20.sp),
-                SizedBox(width: 8.w),
-                Expanded(
+              // Date & Time
+              if (currentEvent.date != null || currentEvent.time != null)
+                Text(
+                  "${currentEvent.date ?? ''} . ${currentEvent.time ?? ''}",
+                  style: GoogleFonts.inter(
+                    fontSize: 14.sp,
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              if (currentEvent.date != null || currentEvent.time != null)
+                SizedBox(height: 20.h),
+
+              // Description
+              if (currentEvent.description != null &&
+                  currentEvent.description!.isNotEmpty) ...[
+                _buildSectionTitle("Description:"),
+                SizedBox(height: 10.h),
+                Text(
+                  currentEvent.description!,
+                  style: GoogleFonts.inter(
+                    fontSize: 14.sp,
+                    color: Colors.grey[700],
+                    height: 1.5,
+                  ),
+                ),
+                SizedBox(height: 24.h),
+              ],
+
+              // Hosted By
+              if (currentEvent.hostDetails != null) ...[
+                _buildSectionTitle("Hosted By"),
+                SizedBox(height: 12.h),
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 24.r,
+                      backgroundImage: NetworkImage(AppUrls.imageUrl(currentEvent.hostDetails!['avatar'])),
+                      onBackgroundImageError: (_, __) => const Icon(Icons.person),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            currentEvent.hostDetails!['fullName'] ?? "Host",
+                            style: GoogleFonts.inter(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF1B0B3B),
+                            ),
+                          ),
+                          SizedBox(height: 4.h),
+                          Text(
+                            "@${currentEvent.hostDetails!['username'] ?? "host"}",
+                            style: GoogleFonts.inter(
+                              fontSize: 14.sp,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    OutlinedButton(
+                      onPressed: () {
+                        if (currentEvent.hostId != null) {
+                           Get.toNamed(AppRoutes.HOST_DETAILS, arguments: currentEvent.hostId);
+                        }
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.primary),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20.r),
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                      ),
+                      child: Text(
+                        "View Profile",
+                        style: GoogleFonts.inter(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 24.h),
+              ],
+
+              // Reviews
+              if (currentEvent.rating != null) ...[
+                _buildSectionTitle("Reviews:"),
+                SizedBox(height: 12.h),
+                InkWell(
+                  onTap: () => Get.toNamed(AppRoutes.REVIEWS),
+                  child: Row(
+                    children: [
+                      Icon(Icons.star, color: Colors.orange, size: 20.sp),
+                      SizedBox(width: 8.w),
+                      Text(
+                        currentEvent.rating?.toString() ?? "0.0",
+                        style: GoogleFonts.inter(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1B0B3B),
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        "(${currentEvent.reviewsCount ?? 0} reviews)",
+                        style: GoogleFonts.inter(
+                          fontSize: 14.sp,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const Spacer(),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 16.sp,
+                        color: Colors.grey[400],
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 24.h),
+              ],
+
+              // Location
+              if (currentEvent.address != null || currentEvent.city != null) ...[
+                Row(
+                  children: [
+                    Icon(Icons.location_on,
+                        color: AppColors.primary, size: 20.sp),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Text(
+                        "${currentEvent.address ?? ''}, ${currentEvent.city ?? ''}, ${currentEvent.country ?? ''}",
+                        style: GoogleFonts.inter(
+                          fontSize: 14.sp,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12.h),
+                // Map placeholder or actual map could go here
+                SizedBox(height: 24.h),
+              ],
+
+              // Virtual Meeting Links
+              if (currentEvent.meetingLink != null ||
+                  currentEvent.virtualLink != null) ...[
+                _buildSectionTitle("Meeting Link"),
+                SizedBox(height: 8.h),
+                InkWell(
+                  onTap: () {}, // Handle URL launch
                   child: Text(
-                    "Grand city St. 100, New York, United States.",
+                    currentEvent.meetingLink ?? currentEvent.virtualLink ?? '',
                     style: GoogleFonts.inter(
                       fontSize: 14.sp,
-                      color: Colors.grey[700],
+                      color: Colors.blue,
+                      decoration: TextDecoration.underline,
                     ),
                   ),
                 ),
+                SizedBox(height: 24.h),
               ],
-            ),
-            SizedBox(height: 12.h),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12.r),
-              child: Image.network(
-                "https://images.unsplash.com/photo-1524661135-423995f22d0b", // Placeholder map image
-                width: double.infinity,
-                height: 150.h,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  color: const Color(0xFFFAF7FF),
-                  height: 150.h,
-                  child: Center(
-                    child: Icon(
-                      Icons.map_outlined,
-                      color: AppColors.primary.withOpacity(0.5),
-                      size: 40.sp,
-                    ),
-                  ),
+
+              // Suggested Venues
+              if (currentEvent.suggestedVenues != null &&
+                  currentEvent.suggestedVenues!.isNotEmpty) ...[
+                _buildSectionTitle("Suggested Venues"),
+                SizedBox(height: 12.h),
+                ...currentEvent.suggestedVenues!
+                    .map((v) => _buildVenueTile(v))
+                    .toList(),
+                SizedBox(height: 24.h),
+              ],
+
+              // Category
+              _buildSectionTitle("Event Category"),
+              SizedBox(height: 8.h),
+              Text(
+                currentEvent.category == EventCategory.virtual
+                    ? "Virtual Event"
+                    : currentEvent.category == EventCategory.highlights
+                        ? "Event Highlight"
+                        : "In-Person Event",
+                style: GoogleFonts.inter(
+                  fontSize: 14.sp,
+                  color: Colors.grey[700],
                 ),
               ),
-            ),
-            SizedBox(height: 8.h),
-            Center(
-              child: TextButton(
-                onPressed: () {},
-                child: Text(
-                  "See location on map",
+              SizedBox(height: 24.h),
+
+              // Seats
+              if (currentEvent.remainingSeats != null) ...[
+                _buildSectionTitle("Available Seats"),
+                SizedBox(height: 8.h),
+                Text(
+                  "${currentEvent.remainingSeats} / ${currentEvent.totalSeats ?? 'N/A'}",
                   style: GoogleFonts.inter(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 14.sp,
+                    color: Colors.grey[700],
                   ),
                 ),
-              ),
-            ),
-            SizedBox(height: 24.h),
+                SizedBox(height: 24.h),
+              ],
 
-            // Suggested Venues
-            _buildSectionTitle("Suggested Venues"),
-            SizedBox(height: 12.h),
-            ...venues.map((v) => _buildVenueTile(v)).toList(),
-            SizedBox(height: 24.h),
+              // Phone Number
+              if (currentEvent.phoneNumber != null &&
+                  currentEvent.phoneNumber!.isNotEmpty) ...[
+                _buildSectionTitle("Phone Number"),
+                SizedBox(height: 8.h),
+                Text(
+                  currentEvent.phoneNumber!,
+                  style: GoogleFonts.inter(
+                    fontSize: 14.sp,
+                    color: Colors.grey[700],
+                  ),
+                ),
+                SizedBox(height: 24.h),
+              ],
 
-            // Category
-            _buildSectionTitle("Event Category"),
-            SizedBox(height: 8.h),
-            Text(
-              "Birthday Celebration",
-              style: GoogleFonts.inter(
-                fontSize: 14.sp,
-                color: Colors.grey[700],
-              ),
-            ),
-            SizedBox(height: 24.h),
+              // Social Media
+              if (currentEvent.facebookLink != null ||
+                  currentEvent.twitterLink != null) ...[
+                _buildSectionTitle("Social Media"),
+                SizedBox(height: 12.h),
+                if (currentEvent.facebookLink != null)
+                  _buildSocialTile(
+                    Icons.facebook,
+                    currentEvent.facebookLink!,
+                    "Facebook",
+                  ),
+                if (currentEvent.twitterLink != null)
+                  _buildSocialTile(
+                    Icons.camera_alt, // Twitter/X logo
+                    currentEvent.twitterLink!,
+                    "Twitter",
+                  ),
+                SizedBox(height: 24.h),
+              ],
 
-            // Phone Number
-            _buildSectionTitle("Phone Number"),
-            SizedBox(height: 8.h),
-            Text(
-              "+49-5410-81030619",
-              style: GoogleFonts.inter(
-                fontSize: 14.sp,
-                color: Colors.grey[700],
-              ),
-            ),
-            SizedBox(height: 24.h),
+              // Highlights Section
+              Obx(() {
+                if (controller.highlights.isNotEmpty || (currentEvent.hostId == authController.currentUser.value?.id)) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildSectionTitle("Event Highlights"),
+                          if (currentEvent.hostId == authController.currentUser.value?.id)
+                            TextButton.icon(
+                              onPressed: () => _showCreateHighlightSheet(context, currentEvent.id),
+                              icon: Icon(Icons.add_a_photo, size: 16.sp, color: AppColors.primary),
+                              label: Text(
+                                "Add",
+                                style: GoogleFonts.inter(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      SizedBox(height: 12.h),
+                      if (controller.highlights.isEmpty)
+                        Text(
+                          "No highlights available yet.",
+                          style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[600]),
+                        )
+                      else
+                        SizedBox(
+                          height: 120.h,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: controller.highlights.length,
+                            itemBuilder: (context, index) {
+                              final highlight = controller.highlights[index];
+                              return _buildHighlightCard(highlight);
+                            },
+                          ),
+                        ),
+                      SizedBox(height: 24.h),
+                    ],
+                  );
+                }
+                return const SizedBox.shrink();
+              }),
 
-            // Social Media
-            _buildSectionTitle("Social Media"),
-            SizedBox(height: 12.h),
-            _buildSocialTile(
-              Icons.phone,
-              "https://www.whatsapp.com/bondedapp",
-              "WhatsApp",
-            ),
-            _buildSocialTile(
-              Icons.facebook,
-              "https://www.facebook.com/bondedapp",
-              "Facebook",
-            ),
-            _buildSocialTile(
-              Icons.camera_alt,
-              "https://www.twitter.com/bondedapp",
-              "Twitter",
-            ), // Twitter logo substitute
-            _buildSocialTile(
-              Icons.camera_alt,
-              "https://www.instagram.com/bondedapp",
-              "Instagram",
-            ),
-            SizedBox(height: 24.h),
-
-            // Event Highlights
-            _buildSectionTitle("Event Highlights"),
-            SizedBox(height: 12.h),
-            Text(
-              "Video Highlights",
-              style: GoogleFonts.inter(
-                fontWeight: FontWeight.bold,
-                fontSize: 13.sp,
-              ),
-            ),
-            SizedBox(height: 12.h),
-            SizedBox(
-              height: 140.h,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: 3,
-                itemBuilder: (context, index) => _buildHighlightThumbnail(true),
-              ),
-            ),
-            SizedBox(height: 24.h),
-            Text(
-              "Add Images",
-              style: GoogleFonts.inter(
-                fontWeight: FontWeight.bold,
-                fontSize: 13.sp,
-              ),
-            ),
-            SizedBox(height: 12.h),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 12.w,
-                mainAxisSpacing: 12.h,
-                childAspectRatio: 0.8,
-              ),
-              itemCount: 3,
-              itemBuilder: (context, index) => _buildHighlightThumbnail(false),
-            ),
-            SizedBox(height: 24.h),
-
-            // Caption
-            _buildSectionTitle("Caption"),
-            SizedBox(height: 12.h),
-            Text(
-              mockDescription,
-              style: GoogleFonts.inter(
-                fontSize: 14.sp,
-                color: Colors.grey[700],
-                height: 1.5,
-              ),
-            ),
-            SizedBox(height: 40.h),
-          ],
-        ),
-      ),
+              SizedBox(height: 40.h),
+            ],
+          ),
+        );
+      }),
     );
   }
 
@@ -454,43 +559,152 @@ class EventDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHighlightThumbnail(bool isVideo) {
-    return Container(
-      width: 120.w,
-      margin: EdgeInsets.only(right: 12.w),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16.r),
-        color: Colors.grey[100],
+  Widget _buildHighlightCard(HighlightModel highlight) {
+    String? displayImage = highlight.imageUrls.isNotEmpty ? highlight.imageUrls.first : null;
+    String? displayVideo = highlight.videoUrls.isNotEmpty ? highlight.videoUrls.first : null;
+
+    return GestureDetector(
+      onTap: () {
+        if (displayImage != null) {
+          Get.to(() => FullScreenImageViewer(imageUrl: displayImage));
+        } else if (displayVideo != null) {
+          Get.to(() => MockVideoPlayer(videoUrl: displayVideo));
+        }
+      },
+      child: Container(
+        width: 100.w,
+        margin: EdgeInsets.only(right: 12.w),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12.r),
+          color: Colors.grey[200],
+          image: displayImage != null
+              ? DecorationImage(
+                  image: NetworkImage(displayImage),
+                  fit: BoxFit.cover,
+                )
+              : null,
+        ),
+        child: displayImage == null
+            ? Center(child: Icon(Icons.video_library, color: Colors.grey[400]))
+            : null,
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.network(
-            "https://images.unsplash.com/photo-1492684223066-81342ee5ff30",
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Container(
-              color: const Color(0xFFFAF7FF),
-              child: Icon(
-                Icons.image_not_supported_outlined,
-                color: AppColors.primary.withOpacity(0.5),
-                size: 24.sp,
-              ),
-            ),
-          ),
-          if (isVideo)
-            Center(
-              child: Container(
-                padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.8),
-                  shape: BoxShape.circle,
+    );
+  }
+
+  void _showCreateHighlightSheet(BuildContext context, String eventId) {
+    final captionController = TextEditingController();
+    final RxList<String> imagePaths = <String>[].obs;
+    final RxList<String> videoPaths = <String>[].obs;
+    final ImagePicker picker = ImagePicker();
+
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.all(24.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Create Highlight",
+                style: GoogleFonts.inter(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textHeading,
                 ),
-                child: Icon(Icons.play_arrow, color: Colors.white, size: 18.sp),
               ),
-            ),
-        ],
+              SizedBox(height: 16.h),
+              TextField(
+                controller: captionController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: "Write a caption...",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+                        if (image != null) imagePaths.add(image.path);
+                      },
+                      icon: const Icon(Icons.image),
+                      label: const Text("Image"),
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        final XFile? video = await picker.pickVideo(source: ImageSource.gallery);
+                        if (video != null) videoPaths.add(video.path);
+                      },
+                      icon: const Icon(Icons.videocam),
+                      label: const Text("Video"),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16.h),
+              Obx(() => Text(
+                "${imagePaths.length} Image(s), ${videoPaths.length} Video(s) selected",
+                style: GoogleFonts.inter(fontSize: 12.sp, color: Colors.grey[600]),
+              )),
+              SizedBox(height: 24.h),
+              Obx(() => ElevatedButton(
+                onPressed: controller.isCreatingHighlight.value
+                    ? null
+                    : () async {
+                        if (captionController.text.trim().isEmpty) {
+                          Get.snackbar("Error", "Caption cannot be empty");
+                          return;
+                        }
+                        if (imagePaths.isEmpty && videoPaths.isEmpty) {
+                          Get.snackbar("Error", "Please select at least one image or video");
+                          return;
+                        }
+                        await controller.createHighlight(
+                          eventId: eventId,
+                          caption: captionController.text.trim(),
+                          imagePaths: imagePaths.toList(),
+                          videoPaths: videoPaths.toList(),
+                        );
+                        if (!controller.isCreatingHighlight.value) {
+                          Get.back();
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  minimumSize: Size(double.infinity, 50.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25.r),
+                  ),
+                ),
+                child: controller.isCreatingHighlight.value
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : Text(
+                        "Post Highlight",
+                        style: GoogleFonts.inter(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+              )),
+            ],
+          ),
+        ),
       ),
+      isScrollControlled: true,
     );
   }
 }

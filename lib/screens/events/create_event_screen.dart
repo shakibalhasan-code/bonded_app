@@ -12,10 +12,22 @@ class CreateEventScreen extends GetView<CreateEventController> {
   const CreateEventScreen({Key? key}) : super(key: key);
 
   final List<String> _categories = const [
-    "Birthday Celebration",
-    "Graduation",
-    "Anniversary",
     "Celebrations",
+    "Social",
+    "Food & Drinks",
+    "Nightlife",
+    "Networking & Professional",
+    "Fitness & Wellness",
+    "Arts & Culture",
+    "Music & Entertainment",
+    "Travel & Adventure",
+    "Education & Workshops",
+    "Dating & Singles",
+    "Community & Causes",
+    "Virtual Events",
+    "Graduation",
+    "Religious/Faith-based",
+    "Other",
   ];
 
   final List<String> _suggestedVenues = const [
@@ -100,25 +112,6 @@ class CreateEventScreen extends GetView<CreateEventController> {
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
-        }
-        if (controller.isLocating.value) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const CircularProgressIndicator(),
-                SizedBox(height: 16.h),
-                Text(
-                  "Locating your location...",
-                  style: GoogleFonts.inter(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ],
-            ),
-          );
         }
         return SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -512,7 +505,9 @@ class CreateEventScreen extends GetView<CreateEventController> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           isExpanded: true,
-          value: controller.selectedCategory.value,
+          value: _categories.contains(controller.selectedCategory.value)
+              ? controller.selectedCategory.value
+              : null,
           hint: Text(
             "Dropdown to select",
             style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[400]),
@@ -558,7 +553,7 @@ class CreateEventScreen extends GetView<CreateEventController> {
         color: const Color(0xFFFAF7FF),
         borderRadius: BorderRadius.circular(12.r),
       ),
-      child: TextField(
+      child: Obx(() => TextField(
         controller: controller.locationController,
         decoration: InputDecoration(
           hintText: "Location",
@@ -566,21 +561,30 @@ class CreateEventScreen extends GetView<CreateEventController> {
             fontSize: 14.sp,
             color: Colors.grey[400],
           ),
-          suffixIcon: IconButton(
-            icon: Icon(
-              Icons.my_location,
-              color: AppColors.primary,
-              size: 20.sp,
-            ),
-            onPressed: () => controller.getCurrentLocation(),
-          ),
+          suffixIcon: controller.isLocating.value
+              ? Padding(
+                  padding: EdgeInsets.all(12.w),
+                  child: SizedBox(
+                    width: 16.w,
+                    height: 16.w,
+                    child: const CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : IconButton(
+                  icon: Icon(
+                    Icons.my_location,
+                    color: AppColors.primary,
+                    size: 20.sp,
+                  ),
+                  onPressed: () => controller.getCurrentLocation(),
+                ),
           contentPadding: EdgeInsets.symmetric(
             horizontal: 16.w,
             vertical: 14.h,
           ),
           border: InputBorder.none,
         ),
-      ),
+      )),
     );
   }
 

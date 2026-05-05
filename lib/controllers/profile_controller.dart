@@ -43,22 +43,19 @@ class ProfileController extends BaseController {
     
     final authController = Get.find<AuthController>();
     
-    // 1. Listen for user changes and update controllers automatically
-    // This ensures that whenever the profile is fetched or updated, 
-    // the edit fields reflect the latest data.
-    ever(authController.currentUser, (UserModel? user) {
+    // Listen to current user changes
+    ever(authController.currentUser, (user) {
       if (user != null) {
         initializeControllers(user);
       }
     });
 
-    // 2. Immediate initialization if data already exists
+    // Immediate initialization if data already exists, else fetch it
     if (authController.currentUser.value != null) {
       initializeControllers(authController.currentUser.value!);
+    } else {
+      authController.fetchUserProfile();
     }
-    
-    // 3. Background refresh to ensure we have the absolute latest data
-    authController.fetchUserProfile();
   }
 
   void initializeControllers(UserModel user) {
@@ -133,11 +130,6 @@ class ProfileController extends BaseController {
 
   @override
   void onClose() {
-    fullNameController.dispose();
-    usernameController.dispose();
-    bioController.dispose();
-    phoneController.dispose();
-    cityController.dispose();
     super.onClose();
   }
 
@@ -309,45 +301,68 @@ class ProfileController extends BaseController {
     }
   }
 
-  bool validateProfileFields() {
+  bool validateBasicInfo() {
     bool isValid = true;
-    if (fullNameController.text.isEmpty) {
+    
+    // Full Name
+    if (fullNameController.text.trim().isEmpty) {
       fullNameError.value = "Full name is required";
       isValid = false;
     } else {
       fullNameError.value = "";
     }
 
-    if (usernameController.text.isEmpty) {
-      usernameError.value = "Username is required";
+    // Username
+    if (usernameController.text.trim().length < 3) {
+      usernameError.value = "Username must be at least 3 characters";
       isValid = false;
     } else {
       usernameError.value = "";
     }
 
-    if (phoneController.text.isEmpty) {
+    // Phone
+    final phoneText = phoneController.text.trim();
+    if (phoneText.isEmpty) {
       phoneError.value = "Phone number is required";
+      isValid = false;
+    } else if (!RegExp(r'^\d{4,15}$').hasMatch(phoneText)) {
+      phoneError.value = "Phone number must be 4–15 digits";
       isValid = false;
     } else {
       phoneError.value = "";
     }
 
-    if (selectedInterests.length < 5) {
-      Get.snackbar('Interests Required', 'Please select at least 5 interests', backgroundColor: Colors.orange, colorText: Colors.white);
-      isValid = false;
-    }
-
-    if (selectedInterests.length > 10) {
-      Get.snackbar('Too Many Interests', 'You can select up to 10 interests', backgroundColor: Colors.orange, colorText: Colors.white);
-      isValid = false;
-    }
-
-    if (selectedConnectionTypes.isEmpty) {
-      Get.snackbar('Connection Type Required', 'Please select at least one connection type', backgroundColor: Colors.orange, colorText: Colors.white);
+    // Date of Birth
+    if (dateOfBirth.value.isEmpty) {
+      Get.snackbar('Required', 'Please select your date of birth', backgroundColor: Colors.orange, colorText: Colors.white);
       isValid = false;
     }
 
     return isValid;
+  }
+
+  bool validateInterests() {
+    if (selectedInterests.length < 5) {
+      Get.snackbar('Interests Required', 'Please select at least 5 interests', backgroundColor: Colors.orange, colorText: Colors.white);
+      return false;
+    }
+    if (selectedInterests.length > 10) {
+      Get.snackbar('Too Many Interests', 'You can select up to 10 interests', backgroundColor: Colors.orange, colorText: Colors.white);
+      return false;
+    }
+    return true;
+  }
+
+  bool validateConnectionTypes() {
+    if (selectedConnectionTypes.isEmpty) {
+      Get.snackbar('Connection Type Required', 'Please select at least one connection type', backgroundColor: Colors.orange, colorText: Colors.white);
+      return false;
+    }
+    return true;
+  }
+
+  bool validateProfileFields() {
+    return validateBasicInfo() && validateInterests() && validateConnectionTypes();
   }
 
   void toggleInterest(String slug) {
@@ -368,6 +383,7 @@ class ProfileController extends BaseController {
 
   // Update Profile API Call
   Future<void> updateProfile({bool isInitialFlow = true}) async {
+    // Validate everything before submission
     if (!validateProfileFields()) return;
     
     try {
@@ -392,7 +408,7 @@ class ProfileController extends BaseController {
       if (fullNameController.text != user?.fullName) body["fullName"] = fullNameController.text;
       if (usernameController.text != user?.username) body["username"] = usernameController.text;
       if (bioController.text != user?.bio) body["bio"] = bioController.text;
-      // Handle Phone & Country Code (Must be provided together per backend schema)
+      
       bool phoneChanged = phoneController.text != user?.phone;
       bool countryCodeChanged = selectedCountryCode.value != user?.phoneCountryCode;
 
@@ -401,7 +417,6 @@ class ProfileController extends BaseController {
         body["phoneCountryCode"] = selectedCountryCode.value;
       }
       
-      // Compare Date of Birth
       String? userDOB;
       if (user?.dateOfBirth != null && user!.dateOfBirth!.contains('T')) {
         try {
@@ -424,10 +439,8 @@ class ProfileController extends BaseController {
       
       if (selectedCountry.value != user?.country) body["country"] = selectedCountry.value;
       if (cityController.text != user?.city) body["city"] = cityController.text;
-      
       if (currentAddress.value != user?.address) body["address"] = currentAddress.value;
 
-      // Location Comparison (New Backend Format: {longitude, latitude})
       final currentLat = user?.location?.coordinates[1];
       final currentLng = user?.location?.coordinates[0];
       if (latitude.value != currentLat || longitude.value != currentLng) {
@@ -437,10 +450,9 @@ class ProfileController extends BaseController {
         };
       }
 
-      // Connection Types
       final connectionTypeSlugs = selectedConnectionTypes
           .map((e) => e.toLowerCase().replaceAll(' ', '_').replaceAll('-', '_'))
-          .map((e) => e == 'event_based_meetup' ? 'event_based_meetups' : e) // Align with plural in backend
+          .map((e) => e == 'event_based_meetup' ? 'event_based_meetups' : e)
           .toList()..sort();
       final userConnectionTypes = (user?.connectionType ?? <String>[]).toList()..sort();
       
@@ -448,7 +460,6 @@ class ProfileController extends BaseController {
         body["connectionType"] = connectionTypeSlugs;
       }
 
-      // Interests
       final interestsSlugs = selectedInterests.toList()..sort();
       final userInterestsSlugs = (user?.interests?.map((e) => e.slug).toList() ?? <String>[])..sort();
       
@@ -459,6 +470,7 @@ class ProfileController extends BaseController {
       if (body.isEmpty && profileImagePath.value.isEmpty) {
         setLoading(false);
         if (!isInitialFlow) Get.back();
+        else Get.offAllNamed(AppRoutes.KYC_DOCUMENT);
         return;
       }
 
@@ -470,8 +482,6 @@ class ProfileController extends BaseController {
 
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
-        // Update global user state
-        final authController = Get.find<AuthController>();
         authController.currentUser.value = UserModel.fromJson(data['data']['user']);
 
         Get.snackbar(

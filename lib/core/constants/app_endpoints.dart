@@ -22,9 +22,13 @@ class AppUrls {
   static const String getInterests = '/interests';
   static const String circles = '/circles';
   static const String events = '/events';
-  static const String myEvents = '/events/my-events';
+  static const String myEvents = '/events/me';
   static const String stripeStatus = '/stripe-connect/me/status';
   static const String stripeOnboard = '/stripe-connect/me';
+  static const String myWallet = '/wallet/me';
+  static String bookEvent(String id) => '/bookings/events/$id';
+  static String eventHighlights(String eventId) => '/events/$eventId/highlights';
+
 
   // Bond Endpoints
   static const String nearbyBonds = '/bonds/nearby';

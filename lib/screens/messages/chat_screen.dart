@@ -10,15 +10,31 @@ import '../../controllers/chat_controller.dart';
 import '../../core/theme/app_colors.dart';
 import '../../widgets/messages/full_screen_image_viewer.dart';
 
-class ChatScreen extends StatelessWidget {
+class ChatScreen extends StatefulWidget {
   const ChatScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final UserModel user = Get.arguments;
-    final controller = Get.put(ChatController());
-    controller.initChat(user);
+  State<ChatScreen> createState() => _ChatScreenState();
+}
 
+class _ChatScreenState extends State<ChatScreen> {
+  late final ChatController controller;
+  late final UserModel user;
+
+  @override
+  void initState() {
+    super.initState();
+    user = Get.arguments;
+    controller = Get.put(ChatController());
+    // Use addPostFrameCallback to ensure the controller is initialized 
+    // and we can call initChat safely
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.initChat(user);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(

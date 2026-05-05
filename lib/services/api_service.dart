@@ -41,7 +41,8 @@ class ApiService {
     dynamic body,
     Map<String, String>? headers,
   }) async {
-    final encodedBody = body != null ? jsonEncode(body) : null;
+    final payload = body ?? map;
+    final encodedBody = payload != null ? jsonEncode(payload) : null;
     return _performRequest(
       () => http.post(
         Uri.parse('$baseUrl$endpoint'),

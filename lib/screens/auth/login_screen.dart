@@ -100,7 +100,10 @@ class LoginScreen extends GetView<AuthController> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => Get.offNamed(AppRoutes.SIGNUP),
+                    onTap: () {
+                      controller.clearControllers();
+                      Get.offNamed(AppRoutes.SIGNUP);
+                    },
                     child: Text(
                       "Sign Up",
                       style: GoogleFonts.inter(

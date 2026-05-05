@@ -5,15 +5,21 @@ import '../../models/event_model.dart';
 import '../../core/theme/app_colors.dart';
 
 class WalletDashboardCard extends StatefulWidget {
-  final double balance;
+  final WalletModel? wallet;
   final bool isConnected;
+  final bool isOnboarding;
+  final bool isChecking;
   final VoidCallback onConnect;
+  final VoidCallback onCheckStatus;
 
   const WalletDashboardCard({
     Key? key,
-    required this.balance,
+    this.wallet,
     this.isConnected = false,
+    this.isOnboarding = false,
+    this.isChecking = false,
     required this.onConnect,
+    required this.onCheckStatus,
   }) : super(key: key);
 
   @override
@@ -52,9 +58,9 @@ class _WalletDashboardCardState extends State<WalletDashboardCard> {
               Row(
                 children: [
                   Text(
-                    "Your balance",
+                    "Total Available",
                     style: GoogleFonts.inter(
-                      fontSize: 15.sp,
+                      fontSize: 14.sp,
                       color: Colors.white.withOpacity(0.9),
                       fontWeight: FontWeight.w500,
                     ),
@@ -67,82 +73,183 @@ class _WalletDashboardCardState extends State<WalletDashboardCard> {
                           ? Icons.visibility_off_outlined
                           : Icons.visibility_outlined,
                       color: Colors.white,
-                      size: 20.sp,
+                      size: 18.sp,
                     ),
                   ),
                 ],
               ),
-              Row(
-                children: [
-                  Icon(Icons.credit_card, color: Colors.white70, size: 20.sp),
-                  SizedBox(width: 8.w),
-                  Text("VISA",
-                      style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12.sp)),
-                  SizedBox(width: 8.w),
-                  // Mastercard logo simulation
-                  Container(
-                    width: 16.w,
-                    height: 16.w,
-                    decoration: const BoxDecoration(
-                        color: Colors.red, shape: BoxShape.circle),
-                  ),
-                  Transform.translate(
-                    offset: Offset(-8.w, 0),
-                    child: Container(
-                      width: 16.w,
-                      height: 16.w,
-                      decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.8),
-                          shape: BoxShape.circle),
-                    ),
-                  ),
-                ],
-              ),
+              Icon(Icons.account_balance_wallet_outlined,
+                  color: Colors.white.withOpacity(0.5), size: 24.sp),
             ],
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 8.h),
           Text(
             _isMasked
                 ? "\$ ••••••••"
-                : "\$${widget.balance.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}",
+                : "\$${(widget.wallet?.availableBalance ?? 0.00).toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}",
             style: GoogleFonts.inter(
               fontSize: 32.sp,
               fontWeight: FontWeight.w800,
               color: Colors.white,
             ),
           ),
-          SizedBox(height: 24.h),
-          ElevatedButton(
-            onPressed: widget.isConnected ? () {} : widget.onConnect,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: AppColors.primary,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.r),
+          SizedBox(height: 20.h),
+          Row(
+            children: [
+              _buildMiniBalance(
+                "Pending",
+                widget.wallet?.pendingBalance ?? 0.00,
+                Icons.schedule_outlined,
               ),
-              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(widget.isConnected ? Icons.logout : Icons.link, size: 18),
-                SizedBox(width: 8.w),
-                Text(
-                  widget.isConnected ? "Withdraw" : "Connect Stripe",
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14.sp,
+              SizedBox(width: 24.w),
+              _buildMiniBalance(
+                "On-Hold",
+                widget.wallet?.onHoldBalance ?? 0.00,
+                Icons.lock_clock_outlined,
+              ),
+            ],
+          ),
+          SizedBox(height: 24.h),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: widget.isOnboarding && !widget.isConnected
+                ? Column(
+                    key: const ValueKey('onboarding'),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          if (widget.isChecking)
+                            SizedBox(
+                              width: 14.w,
+                              height: 14.w,
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          else
+                            Icon(Icons.info_outline,
+                                color: Colors.white.withOpacity(0.8),
+                                size: 16.sp),
+                          SizedBox(width: 8.w),
+                          Text(
+                            widget.isChecking
+                                ? "Verifying connection..."
+                                : "Awaiting Stripe setup completion",
+                            style: GoogleFonts.inter(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16.h),
+                      ElevatedButton(
+                        onPressed:
+                            widget.isChecking ? null : widget.onCheckStatus,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: AppColors.primary,
+                          elevation: 0,
+                          disabledBackgroundColor:
+                              Colors.white.withOpacity(0.8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 20.w, vertical: 10.h),
+                        ),
+                        child: widget.isChecking
+                            ? SizedBox(
+                                width: 18.w,
+                                height: 18.w,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.primary,
+                                ),
+                              )
+                            : Text(
+                                "Check Status",
+                                style: GoogleFonts.inter(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13.sp,
+                                ),
+                              ),
+                      ),
+                    ],
+                  )
+                : ElevatedButton(
+                    key: const ValueKey('connected_action'),
+                    onPressed: widget.isConnected ? () {} : widget.onConnect,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppColors.primary,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 24.w, vertical: 12.h),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                            widget.isConnected
+                                ? Icons.check_circle
+                                : Icons.link,
+                            size: 18),
+                        SizedBox(width: 8.w),
+                        Text(
+                          widget.isConnected
+                              ? "Stripe Connected"
+                              : "Connect Stripe",
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14.sp,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMiniBalance(String label, double amount, IconData icon) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: Colors.white.withOpacity(0.7), size: 14.sp),
+            SizedBox(width: 6.w),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 12.sp,
+                color: Colors.white.withOpacity(0.7),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 4.h),
+        Text(
+          _isMasked
+              ? "\$ •••"
+              : "\$${amount.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}",
+          style: GoogleFonts.inter(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/event_model.dart';
+import '../../controllers/event_details_controller.dart';
 
 class BookEventScreen extends StatefulWidget {
   const BookEventScreen({Key? key}) : super(key: key);
@@ -14,14 +15,15 @@ class BookEventScreen extends StatefulWidget {
 
 class _BookEventScreenState extends State<BookEventScreen> {
   int _seats = 1;
-  final double _pricePerSeat = 50.00;
-  final double _taxPerSeat = 5.00;
+  final double _pricePerSeat = 0.00;
+  final double _taxPerSeat = 0.00;
 
   @override
   Widget build(BuildContext context) {
-    // final EventModel event = Get.arguments; // Can be used for dynamic pricing
+    final EventModel? event = Get.arguments;
+    final double currentPrice = event?.price ?? _pricePerSeat;
 
-    double subtotal = _seats * _pricePerSeat;
+    double subtotal = _seats * currentPrice;
     double tax = _seats * _taxPerSeat;
     double total = subtotal + tax;
 
@@ -56,24 +58,40 @@ class _BookEventScreenState extends State<BookEventScreen> {
             ),
           ],
         ),
-        child: ElevatedButton(
-          onPressed: () => Get.back(), // Placeholder action: Go back or proceed to payment
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            minimumSize: Size(double.infinity, 56.h),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30.r),
+        child: Obx(() {
+          final controller = Get.find<EventDetailsController>();
+          return ElevatedButton(
+            onPressed: controller.isBooking.value
+                ? null
+                : () {
+                    if (event != null) {
+                      controller.bookEvent(
+                        event.id,
+                        data: {"quantity": _seats},
+                      );
+                    } else {
+                      Get.snackbar("Error", "Event details not found");
+                    }
+                  },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              minimumSize: Size(double.infinity, 56.h),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30.r),
+              ),
             ),
-          ),
-          child: Text(
-            "Continue",
-            style: GoogleFonts.inter(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
-        ),
+            child: controller.isBooking.value
+                ? const CircularProgressIndicator(color: Colors.white)
+                : Text(
+                    "Book Now",
+                    style: GoogleFonts.inter(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+          );
+        }),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -81,7 +99,7 @@ class _BookEventScreenState extends State<BookEventScreen> {
           children: [
             SizedBox(height: 20.h),
             Text(
-              "Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed qu",
+              "Secure your spot at this event! Choose the number of seats you need and proceed to confirm your booking.",
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 14.sp,
@@ -143,13 +161,20 @@ class _BookEventScreenState extends State<BookEventScreen> {
               ),
               child: Column(
                 children: [
-                  _buildPriceRow("$_seats Seats", "\$${subtotal.toStringAsFixed(2)}"),
+                  _buildPriceRow(
+                    "$_seats Seats",
+                    "\$${subtotal.toStringAsFixed(2)}",
+                  ),
                   SizedBox(height: 16.h),
                   _buildPriceRow("Tax", "\$${tax.toStringAsFixed(2)}"),
                   SizedBox(height: 16.h),
                   const Divider(),
                   SizedBox(height: 16.h),
-                  _buildPriceRow("Total", "\$${total.toStringAsFixed(2)}", isTotal: true),
+                  _buildPriceRow(
+                    "Total",
+                    "\$${total.toStringAsFixed(2)}",
+                    isTotal: true,
+                  ),
                 ],
               ),
             ),

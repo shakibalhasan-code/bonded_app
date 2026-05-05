@@ -162,7 +162,7 @@ class ProfileBuildingScreen extends StatelessWidget {
             // Date of Birth - Unified Style
             Obx(() => AuthTextField(
               label: "Date of Birth",
-              hintText: controller.dateOfBirth.value.isEmpty ? "DD/MM/YYYY" : controller.dateOfBirth.value,
+              hintText: controller.dateOfBirth.value.isEmpty ? "YYYY-MM-DD" : controller.dateOfBirth.value,
               prefixIcon: Icons.calendar_today_outlined,
               readOnly: true,
               onTap: () async {
@@ -185,7 +185,7 @@ class ProfileBuildingScreen extends StatelessWidget {
                   },
                 );
                 if (pickedDate != null) {
-                  controller.dateOfBirth.value = DateFormat('dd/MM/yyyy').format(pickedDate);
+                  controller.dateOfBirth.value = DateFormat('yyyy-MM-dd').format(pickedDate);
                 }
               },
             )),
@@ -245,7 +245,7 @@ class ProfileBuildingScreen extends StatelessWidget {
             // Continue Button
             GestureDetector(
               onTap: () {
-                if (controller.validateProfileFields()) {
+                if (controller.validateBasicInfo()) {
                   Get.toNamed(AppRoutes.ADD_LOCATION);
                 }
               },

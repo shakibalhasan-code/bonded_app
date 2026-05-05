@@ -6,6 +6,9 @@ import '../../core/theme/app_colors.dart';
 
 import '../../core/constants/app_endpoints.dart';
 
+import 'package:get/get.dart';
+import '../../controllers/auth_controller.dart';
+
 class EventCard extends StatelessWidget {
   final EventModel event;
   final VoidCallback onTap;
@@ -20,6 +23,10 @@ class EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authController = Get.find<AuthController>();
+    final currentUserId = authController.currentUser.value?.id ?? '';
+    final isOwner = event.hostId == currentUserId;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -83,6 +90,48 @@ class EventCard extends StatelessWidget {
               padding: EdgeInsets.all(12.w),
               child: Stack(
                 children: [
+                  if (event.isExternal)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 8.w, vertical: 4.h),
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          borderRadius: BorderRadius.circular(6.r),
+                        ),
+                        child: Text(
+                          "External",
+                          style: GoogleFonts.inter(
+                            fontSize: 8.sp,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    )
+                  else if (isOwner)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 8.w, vertical: 4.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(6.r),
+                        ),
+                        child: Text(
+                          "Hosted by You",
+                          style: GoogleFonts.inter(
+                            fontSize: 8.sp,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
                   if (showOptions)
                     Positioned(
                       top: 0,
@@ -115,12 +164,6 @@ class EventCard extends StatelessWidget {
                               "Edit Event",
                             ),
                             const PopupMenuDivider(),
-                            // _buildPopupItem(
-                            //   "cancel",
-                            //   Icons.delete_outline,
-                            //   "Cancel Event",
-                            // ),
-                            // const PopupMenuDivider(),
                             _buildPopupItem(
                               "highlights",
                               Icons.auto_awesome_outlined,

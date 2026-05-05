@@ -13,6 +13,8 @@ import '../../core/routes/app_routes.dart';
 import '../../widgets/events/my_events_sub_nav.dart';
 import '../../widgets/events/e_ticket_card.dart';
 import '../../widgets/events/wallet_widgets.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 
 class EventScreen extends StatelessWidget {
   const EventScreen({Key? key}) : super(key: key);
@@ -144,27 +146,38 @@ class EventScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 20.h),
                     Expanded(
-                      child: GridView.builder(
-                        padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 0.8,
-                          crossAxisSpacing: 16.w,
-                          mainAxisSpacing: 16.h,
+                      child: RefreshIndicator(
+                        onRefresh: controller.refreshData,
+                        color: AppColors.primary,
+                        child: GridView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.8,
+                            crossAxisSpacing: 16.w,
+                            mainAxisSpacing: 16.h,
+                          ),
+                          itemCount: controller.filteredEvents.length,
+                          itemBuilder: (context, index) {
+                            final event = controller.filteredEvents[index];
+                            return EventCard(
+                              event: event,
+                              onTap: () {
+                                if (event.isExternal) {
+                                  _showExternalEventDialog(context, event);
+                                } else {
+                                  Get.toNamed(
+                                    event.category == EventCategory.highlights
+                                        ? AppRoutes.EVENT_HIGHLIGHT_DETAILS
+                                        : AppRoutes.EVENT_DETAILS,
+                                    arguments: event,
+                                  );
+                                }
+                              },
+                            );
+                          },
                         ),
-                        itemCount: controller.filteredEvents.length,
-                        itemBuilder: (context, index) {
-                          final event = controller.filteredEvents[index];
-                          return EventCard(
-                            event: event,
-                            onTap: () => Get.toNamed(
-                              event.category == EventCategory.highlights
-                                  ? AppRoutes.EVENT_HIGHLIGHT_DETAILS
-                                  : AppRoutes.EVENT_DETAILS,
-                              arguments: event,
-                            ),
-                          );
-                        },
                       ),
                     ),
                   ],
@@ -195,43 +208,62 @@ class EventScreen extends StatelessWidget {
 
     if (subTab == 0 || subTab == 1) {
       final list = controller.filteredEvents;
-      return GridView.builder(
-        padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 0.8,
-          crossAxisSpacing: 16.w,
-          mainAxisSpacing: 16.h,
-        ),
-        itemCount: list.length,
-        itemBuilder: (context, index) => EventCard(
-          event: list[index],
-          showOptions: subTab == 0,
-          onTap: () =>
-              Get.toNamed(AppRoutes.EVENT_DETAILS, arguments: list[index]),
+      return RefreshIndicator(
+        onRefresh: controller.refreshData,
+        color: AppColors.primary,
+        child: GridView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 0.8,
+            crossAxisSpacing: 16.w,
+            mainAxisSpacing: 16.h,
+          ),
+          itemCount: list.length,
+          itemBuilder: (context, index) => EventCard(
+            event: list[index],
+            showOptions: subTab == 0,
+            onTap: () {
+              if (list[index].isExternal) {
+                _showExternalEventDialog(context, list[index]);
+              } else {
+                Get.toNamed(AppRoutes.EVENT_DETAILS, arguments: list[index]);
+              }
+            },
+          ),
         ),
       );
     } else if (subTab == 2) {
-      return ListView.builder(
-        padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
-        itemCount: controller.tickets.length,
-        itemBuilder: (context, index) =>
-            ETicketCard(ticket: controller.tickets[index]),
+      return RefreshIndicator(
+        onRefresh: controller.refreshData,
+        color: AppColors.primary,
+        child: ListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
+          itemCount: controller.tickets.length,
+          itemBuilder: (context, index) =>
+              ETicketCard(ticket: controller.tickets[index]),
+        ),
       );
     } else {
       return Obx(() {
-        if (controller.isCheckingStripe.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        return SingleChildScrollView(
+      return RefreshIndicator(
+        onRefresh: controller.refreshData,
+        color: AppColors.primary,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               WalletDashboardCard(
-                balance: 958476.50,
+                wallet: controller.wallet.value,
                 isConnected: controller.isStripeConnected.value,
+                isOnboarding: controller.isOnboardingStripe.value,
+                isChecking: controller.isCheckingStripe.value,
                 onConnect: () => controller.connectStripe(),
+                onCheckStatus: () => controller.checkStripeStatus(),
               ),
               SizedBox(height: 32.h),
               Row(
@@ -258,9 +290,103 @@ class EventScreen extends StatelessWidget {
                   .toList(),
             ],
           ),
-        );
+        ),
+      );
       });
     }
+  }
+
+  void _showExternalEventDialog(BuildContext context, EventModel event) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(28.r),
+        ),
+        child: Container(
+          padding: EdgeInsets.all(24.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28.r),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 80.h,
+                height: 80.h,
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.open_in_new, color: Colors.orange, size: 40.sp),
+              ),
+              SizedBox(height: 24.h),
+              Text(
+                "External Event",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textHeading,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                "This event is hosted on an external platform. You will be redirected to the event page to complete your booking.",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 14.sp,
+                  color: Colors.grey[600],
+                  height: 1.5,
+                ),
+              ),
+              SizedBox(height: 32.h),
+              ElevatedButton(
+                onPressed: () async {
+                  Get.back();
+                  if (event.externalLink != null) {
+                    final uri = Uri.parse(event.externalLink!);
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    } else {
+                      Get.snackbar("Error", "Could not launch external link");
+                    }
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: Size(double.infinity, 56.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.r),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  "Visit Event",
+                  style: GoogleFonts.inter(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              SizedBox(height: 12.h),
+              TextButton(
+                onPressed: () => Get.back(),
+                child: Text(
+                  "Cancel",
+                  style: GoogleFonts.inter(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _showCreateEventDialog(
@@ -319,7 +445,7 @@ class EventScreen extends StatelessWidget {
                     AppRoutes.CREATE_EVENT,
                     arguments: {
                       'isVirtual': false,
-                      'category': 'Birthday Celebration',
+                      'category': 'Celebrations',
                     },
                   );
                 },
@@ -348,7 +474,7 @@ class EventScreen extends StatelessWidget {
                     AppRoutes.CREATE_EVENT,
                     arguments: {
                       'isVirtual': true,
-                      'category': 'Birthday Celebration',
+                      'category': 'Celebrations',
                     },
                   );
                 },

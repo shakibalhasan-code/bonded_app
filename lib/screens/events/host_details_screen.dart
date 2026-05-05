@@ -3,9 +3,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
+import '../../controllers/host_details_controller.dart';
+import '../../core/constants/app_endpoints.dart';
 
 class HostDetailsScreen extends StatelessWidget {
-  const HostDetailsScreen({Key? key}) : super(key: key);
+  HostDetailsScreen({Key? key}) : super(key: key);
+
+  final HostDetailsController controller = Get.put(HostDetailsController());
 
   @override
   Widget build(BuildContext context) {
@@ -28,121 +32,140 @@ class HostDetailsScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: 24.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 20.h),
-            // Profile Header
-            Center(
-              child: Column(
-                children: [
-                  Stack(
-                    children: [
-                      CircleAvatar(
-                        radius: 50.r,
-                        backgroundImage: const NetworkImage("https://images.unsplash.com/photo-1535713875002-d1d0cf377fde"),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final profile = controller.hostProfile;
+        if (profile.isEmpty) {
+          return Center(
+            child: Text(
+              "Host profile not found.",
+              style: GoogleFonts.inter(fontSize: 16.sp, color: Colors.grey),
+            ),
+          );
+        }
+
+        final bool locationSharing = profile['preferences']?['locationSharing'] ?? false;
+        final String? city = profile['city'];
+        final String? country = profile['country'];
+        final String locationText = (city != null && country != null)
+            ? "$city, $country"
+            : (city ?? country ?? "");
+
+        return SingleChildScrollView(
+          padding: EdgeInsets.symmetric(horizontal: 24.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 20.h),
+              // Profile Header
+              Center(
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 50.r,
+                      backgroundImage: NetworkImage(AppUrls.imageUrl(profile['avatar'])),
+                      onBackgroundImageError: (_, __) => const Icon(Icons.person, size: 50),
+                    ),
+                    SizedBox(height: 16.h),
+                    Text(
+                      profile['fullName'] ?? "Host User",
+                      style: GoogleFonts.inter(
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF1B0B3B),
                       ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        left: 0,
-                        child: Center(
-                          child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 2.h),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(10.r),
-                            ),
-                            child: Text(
-                              "Pro",
-                              style: GoogleFonts.inter(
-                                color: Colors.white,
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
+                    ),
+                    SizedBox(height: 4.h),
+                    Text(
+                      "@${profile['username'] ?? 'username'}",
+                      style: GoogleFonts.inter(
+                        fontSize: 14.sp,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    if (locationSharing && locationText.isNotEmpty) ...[
+                      SizedBox(height: 4.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.location_on, size: 14.sp, color: Colors.grey[600]),
+                          SizedBox(width: 4.w),
+                          Text(
+                            locationText,
+                            style: GoogleFonts.inter(
+                              fontSize: 14.sp,
+                              color: Colors.grey[600],
                             ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
-                  ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    "Andrew Ainsley",
-                    style: GoogleFonts.inter(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF1B0B3B),
-                    ),
-                  ),
-                  SizedBox(height: 4.h),
-                  Text(
-                    "andrew_ainsley@gmail.com",
-                    style: GoogleFonts.inter(
-                      fontSize: 14.sp,
-                      color: Colors.grey[600],
-                    ),
-                  ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 32.h),
+              const Divider(),
+              SizedBox(height: 24.h),
+
+              // More About Section
+              _buildSectionTitle("More About ${profile['fullName']?.split(' ').first ?? 'Host'}"),
+              SizedBox(height: 16.h),
+              Row(
+                children: [
+                  _buildInfoColumn("Rating", "${profile['averageRating'] ?? 0} (${profile['reviewCount'] ?? 0} reviews)"),
+                  SizedBox(width: 40.w),
+                  _buildInfoColumn("Subscription", profile['subscriptionTier']?.toString().capitalizeFirst ?? 'Free'),
                 ],
               ),
-            ),
-            SizedBox(height: 32.h),
-            const Divider(),
-            SizedBox(height: 24.h),
+              SizedBox(height: 24.h),
 
-            // More About Section
-            _buildSectionTitle("More About Andrew:"),
-            SizedBox(height: 16.h),
-            Row(
-              children: [
-                _buildInfoColumn("First Name", "Maria T."),
-                SizedBox(width: 40.w),
-                _buildInfoColumn("No. Of Hosted Events", "12 events hosted"),
+              if (profile['bio'] != null && profile['bio'].toString().isNotEmpty) ...[
+                // Bio
+                _buildSectionTitle("Bio"),
+                SizedBox(height: 12.h),
+                Text(
+                  profile['bio'],
+                  style: GoogleFonts.inter(
+                    fontSize: 14.sp,
+                    color: Colors.grey[700],
+                    height: 1.5,
+                  ),
+                ),
+                SizedBox(height: 32.h),
               ],
-            ),
-            SizedBox(height: 24.h),
 
-            // Bio
-            _buildSectionTitle("Bio"),
-            SizedBox(height: 12.h),
-            Text(
-              "Lorem Ipsum Dolor Sit Amet, Consectetur Adipiscing Elit, Sed Do Eiusmod Tempor Incididunt Ut Labore Et Dolore Magna Aliqua. Ut Enim Ad Minim Veniam, Quis Nostrud Exercitation Ullamco Laboris Nisi Ut Aliquip Ex Ea Commodo Consequat.",
-              style: GoogleFonts.inter(
-                fontSize: 14.sp,
-                color: Colors.grey[700],
-                height: 1.5,
+              // Social Media (If available)
+              if (profile['phone'] != null || profile['facebook'] != null) ...[
+                _buildSectionTitle("Social Media Details"),
+                SizedBox(height: 16.h),
+                if (profile['phone'] != null)
+                  _buildSocialItem(Icons.phone_outlined, "Phone Number", "${profile['phoneCountryCode'] ?? ''} ${profile['phone']}", showLabel: true),
+                SizedBox(height: 16.h),
+                if (profile['facebook'] != null)
+                  _buildSocialItem(Icons.facebook, "Social Media", profile['facebook']),
+                SizedBox(height: 32.h),
+              ],
+
+              // Verification
+              _buildSectionTitle("Verification Badge"),
+              SizedBox(height: 16.h),
+              Row(
+                children: [
+                  _buildInfoColumn("Profile Completed", (profile['profileCompleted'] == true) ? "Verified" : "Pending"),
+                  SizedBox(width: 40.w),
+                  _buildInfoColumn("ID Verification", (profile['documentVerification'] == 'verified') ? "Verified" : "Pending"),
+                ],
               ),
-            ),
-            SizedBox(height: 32.h),
-
-            // Social Media
-            _buildSectionTitle("Social Media Details"),
-            SizedBox(height: 16.h),
-            _buildSocialItem(Icons.phone_outlined, "Phone Number", "+49-5410-81030619", showLabel: true),
-            SizedBox(height: 16.h),
-            _buildSocialItem(Icons.facebook, "Social Media", "https://www.facebook.com/bondedapp"),
-            SizedBox(height: 16.h),
-            _buildSocialItem(Icons.camera_alt, "", "https://www.twitter.com/bondedapp"),
-            SizedBox(height: 32.h),
-
-            // Verification
-            _buildSectionTitle("Verification Badge"),
-            SizedBox(height: 16.h),
-            Row(
-              children: [
-                _buildInfoColumn("Phone Number", "Verified"),
-                SizedBox(width: 40.w),
-                _buildInfoColumn("ID Verification", "Verified"),
-              ],
-            ),
-            SizedBox(height: 24.h),
-            _buildInfoColumn("Social Verification", "Verified"),
-            SizedBox(height: 60.h),
-          ],
-        ),
-      ),
+              SizedBox(height: 24.h),
+              _buildInfoColumn("Selfie Verification", (profile['selfieVerification'] == 'verified') ? "Verified" : "Pending"),
+              SizedBox(height: 60.h),
+            ],
+          ),
+        );
+      }),
     );
   }
 

@@ -213,44 +213,59 @@ class _CirclePostItemState extends State<CirclePostItem> {
       padding: EdgeInsets.symmetric(horizontal: 20.w),
       child: Row(
         children: [
-          Container(
-            padding: EdgeInsets.all(4.w),
-            decoration: const BoxDecoration(
-              color: Color(0xFF6C38FF),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.thumb_up, size: 10.sp, color: Colors.white),
-          ),
-          SizedBox(width: 4.w),
-          Container(
-            padding: EdgeInsets.all(4.w),
-            decoration: const BoxDecoration(
-              color: Color(0xFFFF3B3B),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.favorite, size: 10.sp, color: Colors.white),
-          ),
-          SizedBox(width: 8.w),
-          Obx(() => Text(
-                widget.post.isCountPrivate.value
-                    ? "Liked by others"
-                    : widget.post.likesCount.value.toString(),
-                style: GoogleFonts.inter(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textHeading,
-                ),
-              )),
+          Obx(() {
+            final reaction = widget.post.reactionType.value;
+            if (reaction == "none") return const SizedBox.shrink();
+
+            String emoji = "";
+            IconData? icon;
+            Color color = Colors.white;
+            Color bgColor = AppColors.primary;
+
+            switch (reaction) {
+              case "like":
+                icon = Icons.thumb_up;
+                bgColor = Colors.blue;
+                break;
+              case "love":
+                emoji = "❤️";
+                bgColor = Colors.red;
+                break;
+              case "care":
+                emoji = "🤗";
+                bgColor = Colors.orange;
+                break;
+              case "haha":
+                emoji = "😆";
+                bgColor = Colors.orange;
+                break;
+              case "wow":
+                emoji = "😮";
+                bgColor = Colors.orange;
+                break;
+              case "sad":
+                emoji = "😢";
+                bgColor = Colors.orange;
+                break;
+              case "angry":
+                emoji = "😡";
+                bgColor = Colors.redAccent;
+                break;
+            }
+
+            return Container(
+              padding: EdgeInsets.all(4.w),
+              decoration: BoxDecoration(
+                color: bgColor,
+                shape: BoxShape.circle,
+              ),
+              child: emoji.isNotEmpty
+                  ? Text(emoji, style: TextStyle(fontSize: 10.sp))
+                  : Icon(icon, size: 10.sp, color: color),
+            );
+          }),
           const Spacer(),
-          Obx(() => Text(
-                "${widget.post.commentsCount.value} comments",
-                style: GoogleFonts.inter(fontSize: 12.sp, color: Colors.grey[600]),
-              )),
-          SizedBox(width: 12.w),
-          Obx(() => Text(
-                "${widget.post.sharesCount.value} shares",
-                style: GoogleFonts.inter(fontSize: 12.sp, color: Colors.grey[600]),
-              )),
+          // All counts (likes, comments, shares) have been removed per user request
         ],
       ),
     );

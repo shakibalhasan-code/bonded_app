@@ -91,6 +91,7 @@ class SignupScreen extends GetView<AuthController> {
                   ),
                   GestureDetector(
                     onTap: () {
+                      controller.clearControllers();
                       Get.offNamed(AppRoutes.LOGIN);
                     },
                     child: Text(

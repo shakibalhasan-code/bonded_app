@@ -1,3 +1,4 @@
+import 'package:bonded_app/controllers/auth_controller.dart';
 import 'package:bonded_app/widgets/auth/social_auth_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -85,7 +86,10 @@ class WelcomeScreen extends StatelessWidget {
               AppButton(
                 text: "Login with Email",
                 isPrimary: true,
-                onPressed: () => Get.toNamed(AppRoutes.LOGIN),
+                onPressed: () {
+                  Get.find<AuthController>().clearControllers();
+                  Get.toNamed(AppRoutes.LOGIN);
+                },
               ),
               SizedBox(height: 16.h),
 
@@ -93,7 +97,10 @@ class WelcomeScreen extends StatelessWidget {
               AppButton(
                 text: "Sign Up",
                 isPrimary: false,
-                onPressed: () => Get.toNamed(AppRoutes.SIGNUP),
+                onPressed: () {
+                  Get.find<AuthController>().clearControllers();
+                  Get.toNamed(AppRoutes.SIGNUP);
+                },
               ),
 
               const Spacer(flex: 2),

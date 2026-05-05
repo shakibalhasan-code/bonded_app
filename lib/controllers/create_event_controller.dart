@@ -68,15 +68,6 @@ class CreateEventController extends BaseController {
 
   @override
   void onClose() {
-    nameController.dispose();
-    descriptionController.dispose();
-    phoneController.dispose();
-    fbController.dispose();
-    twitterController.dispose();
-    locationController.dispose();
-    seatsController.dispose();
-    virtualLinkController.dispose();
-    priceController.dispose();
     super.onClose();
   }
 
@@ -106,7 +97,18 @@ class CreateEventController extends BaseController {
       }
 
       isLocating.value = true;
-      Position position = await Geolocator.getCurrentPosition();
+      
+      // Try to get last known position first for speed
+      Position? position = await Geolocator.getLastKnownPosition();
+      
+      // If no last known position or it's old, get current position with a timeout
+      if (position == null) {
+        position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.medium,
+          timeLimit: const Duration(seconds: 5),
+        );
+      }
+      
       latitude.value = position.latitude;
       longitude.value = position.longitude;
 
@@ -129,9 +131,20 @@ class CreateEventController extends BaseController {
       }
     } catch (e) {
       debugPrint("Error getting location: $e");
-      Get.snackbar('Error', 'Failed to get current location');
+      // If high accuracy fails/times out, try once more with low accuracy
+      try {
+        Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.low,
+          timeLimit: const Duration(seconds: 5),
+        );
+        latitude.value = position.latitude;
+        longitude.value = position.longitude;
+        // ... (can repeat reverse geocoding if needed, but let's keep it simple for now)
+      } catch (_) {
+        Get.snackbar('Error', 'Failed to get current location');
+      }
     } finally {
-      setLoading(false);
+      isLocating.value = false;
     }
   }
 

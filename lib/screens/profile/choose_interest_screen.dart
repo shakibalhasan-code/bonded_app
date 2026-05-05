@@ -133,17 +133,9 @@ class _ChooseInterestScreenState extends State<ChooseInterestScreen> {
             padding: EdgeInsets.fromLTRB(24.w, 0, 24.w, 40.h),
             child: GestureDetector(
               onTap: () {
-                if (controller.selectedInterests.length < 5) {
-                  Get.snackbar(
-                    'Selection Required',
-                    'Please select at least 5 interests to continue.',
-                    snackPosition: SnackPosition.BOTTOM,
-                    backgroundColor: Colors.redAccent,
-                    colorText: Colors.white,
-                  );
-                  return;
+                if (controller.validateInterests()) {
+                  Get.toNamed(AppRoutes.CONNECTION_TYPE);
                 }
-                Get.toNamed(AppRoutes.CONNECTION_TYPE);
               },
               child: Container(
                 height: 56.h,

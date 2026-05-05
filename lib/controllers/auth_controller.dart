@@ -21,12 +21,16 @@ class AuthController extends BaseController {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  
+  @override
+  void onInit() {
+    super.onInit();
+    // Auto-fetch profile if token exists
+    fetchUserProfile();
+  }
 
   @override
   void onClose() {
-    emailController.dispose();
-    passwordController.dispose();
-    confirmPasswordController.dispose();
     super.onClose();
   }
 
@@ -323,8 +327,12 @@ class AuthController extends BaseController {
   Future<void> fetchUserProfile() async {
     try {
       final token = SharedPrefsService.getString('accessToken');
-      if (token == null) return;
-
+      if (token == null) {
+        debugPrint("No access token found, skipping profile fetch.");
+        return;
+      }
+      
+      setLoading(true);
       final response = await _apiService.get(
         AppUrls.getProfile,
         headers: {'Authorization': 'Bearer $token'},
@@ -334,9 +342,14 @@ class AuthController extends BaseController {
       if (data['success'] == true && data['data'] != null) {
         currentUser.value = UserModel.fromJson(data['data']);
         userData.value = data['data'];
+        debugPrint("User profile fetched successfully.");
+      } else {
+        debugPrint("Failed to fetch user profile: ${data['message']}");
       }
     } catch (e) {
       debugPrint("Error fetching user profile: $e");
+    } finally {
+      setLoading(false);
     }
   }
 

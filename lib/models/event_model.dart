@@ -86,6 +86,14 @@ class EventModel {
   final String? externalLink;
   final int? totalSeats;
   final int? remainingSeats;
+  final String? phoneNumber;
+  final String? facebookLink;
+  final String? twitterLink;
+  final String? venueName;
+  final String? virtualLink;
+  final String? meetingLink;
+  final String? hostId;
+  final Map<String, dynamic>? hostDetails;
 
   EventModel({
     required this.id,
@@ -111,52 +119,60 @@ class EventModel {
     this.externalLink,
     this.totalSeats,
     this.remainingSeats,
+    this.phoneNumber,
+    this.facebookLink,
+    this.twitterLink,
+    this.venueName,
+    this.virtualLink,
+    this.meetingLink,
+    this.hostId,
+    this.hostDetails,
   });
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
-    // Determine category from type
-    final eventData =
-        json['event'] ?? json; // Fallback to root for circle events
+    final eventData = json['event'] ?? json;
     final typeStr = eventData['type'] ?? 'in-person';
     EventCategory cat = EventCategory.inPerson;
     if (typeStr == 'virtual') cat = EventCategory.virtual;
 
-    // Parse startAt for date and time, or use eventDate/eventTime if available
     String? date = json['eventDate'] ?? eventData['eventDate'];
     String? time = json['eventTime'] ?? eventData['eventTime'];
 
-    if (date == null && json['startAt'] != null) {
-      final startAt = DateTime.parse(json['startAt']).toLocal();
-      date = "${startAt.day}/${startAt.month}/${startAt.year}";
-      time =
-          "${startAt.hour.toString().padLeft(2, '0')}:${startAt.minute.toString().padLeft(2, '0')}";
+    if (date == null && (json['startAt'] != null || json['startsAt'] != null || eventData['startsAt'] != null)) {
+      try {
+        final startAtStr = json['startAt'] ?? json['startsAt'] ?? eventData['startsAt'];
+        final startAt = DateTime.parse(startAtStr).toLocal();
+        date = "${startAt.day}/${startAt.month}/${startAt.year}";
+        time = "${startAt.hour.toString().padLeft(2, '0')}:${startAt.minute.toString().padLeft(2, '0')}";
+      } catch (_) {}
     }
 
+    final coverImg = json['image'] ?? json['coverImage'] ?? eventData['coverImage'] ?? eventData['image'];
+
     return EventModel(
-      id: json['id'] ?? json['_id'] ?? '',
+      id: json['id'] ?? json['_id'] ?? eventData['_id'] ?? eventData['id'] ?? '',
       title: json['title'] ?? eventData['title'] ?? '',
-      imageUrl: AppUrls.imageUrl(json['coverImage'] ?? eventData['coverImage']),
-      address:
-          json['location']?['address'] ??
-          eventData['location']?['address'] ??
-          eventData['address'],
-      city:
-          json['location']?['city'] ??
-          eventData['location']?['city'] ??
-          eventData['city'],
-      country:
-          json['location']?['country'] ??
-          eventData['location']?['country'] ??
-          eventData['country'],
+      imageUrl: AppUrls.imageUrl(coverImg),
+      address: json['location']?['address'] ?? eventData['location']?['address'] ?? eventData['address'],
+      city: json['location']?['city'] ?? eventData['location']?['city'] ?? eventData['city'],
+      country: json['location']?['country'] ?? eventData['location']?['country'] ?? eventData['country'],
       date: date,
       time: time,
       price: (eventData['ticketPrice'] ?? 0).toDouble(),
       category: cat,
       description: eventData['description'],
-      isExternal: json['isExternal'] ?? false,
-      externalLink: json['externalLink'],
+      isExternal: json['isExternal'] ?? eventData['isExternal'] ?? false,
+      externalLink: json['externalLink'] ?? eventData['externalLink'],
       totalSeats: eventData['totalSeats'],
       remainingSeats: eventData['remainingSeats'],
+      phoneNumber: eventData['phoneNumber'],
+      facebookLink: eventData['facebookLink'],
+      twitterLink: eventData['twitterLink'],
+      venueName: eventData['venueName'],
+      virtualLink: eventData['virtualLink'],
+      meetingLink: eventData['meetingLink'],
+      hostId: eventData['host'] is String ? eventData['host'] : (eventData['host']?['_id'] ?? eventData['host']?['id']),
+      hostDetails: eventData['hostDetails'] ?? json['hostDetails'],
     );
   }
 }
@@ -168,6 +184,8 @@ class HighlightModel {
   final List<String> videoUrls;
   final List<String> imageUrls;
   final String description;
+  final String? caption;
+  final Map<String, dynamic>? creator;
 
   HighlightModel({
     required this.id,
@@ -176,7 +194,28 @@ class HighlightModel {
     required this.videoUrls,
     required this.imageUrls,
     required this.description,
+    this.caption,
+    this.creator,
   });
+
+  factory HighlightModel.fromJson(Map<String, dynamic> json) {
+    return HighlightModel(
+      id: json['_id'] ?? json['id'] ?? '',
+      eventName: json['event']?['title'] ?? '',
+      circleName: json['taggedCircle']?['name'] ?? '',
+      description: json['caption'] ?? '', // Mapping caption to description for UI backward compatibility if needed
+      caption: json['caption'],
+      creator: json['creator'],
+      videoUrls: (json['videos'] as List?)
+              ?.map((v) => AppUrls.imageUrl(v['url']))
+              .toList() ??
+          [],
+      imageUrls: (json['images'] as List?)
+              ?.map((i) => AppUrls.imageUrl(i['url']))
+              .toList() ??
+          [],
+    );
+  }
 }
 
 class TicketModel {
@@ -214,3 +253,30 @@ class TransactionModel {
     required this.isCredit,
   });
 }
+
+class WalletModel {
+  final String userId;
+  final double availableBalance;
+  final double pendingBalance;
+  final double onHoldBalance;
+  final String currency;
+
+  WalletModel({
+    required this.userId,
+    required this.availableBalance,
+    required this.pendingBalance,
+    required this.onHoldBalance,
+    required this.currency,
+  });
+
+  factory WalletModel.fromJson(Map<String, dynamic> json) {
+    return WalletModel(
+      userId: json['userId'] ?? '',
+      availableBalance: (json['availableBalance'] ?? 0).toDouble(),
+      pendingBalance: (json['pendingBalance'] ?? 0).toDouble(),
+      onHoldBalance: (json['onHoldBalance'] ?? 0).toDouble(),
+      currency: json['currency'] ?? 'USD',
+    );
+  }
+}
+

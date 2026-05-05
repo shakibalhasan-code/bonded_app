@@ -525,7 +525,7 @@ class CircleController extends BaseController {
           final mimeParts = mimeType.split('/');
           files.add(
             await http.MultipartFile.fromPath(
-              'images',
+              'image',
               image.path,
               contentType: MediaType(mimeParts.first, mimeParts[1]),
             ),

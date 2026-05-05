@@ -52,10 +52,6 @@ import '../../core/bindings/circle_binding.dart';
 import '../../core/bindings/event_binding.dart';
 import 'app_routes.dart';
 
-
-
-
-
 class AppPages {
   static const INITIAL = AppRoutes.INITIAL;
 
@@ -93,7 +89,7 @@ class AppPages {
       page: () => const ProfileReadyScreen(),
     ),
     GetPage(
-      name: AppRoutes.MAIN, 
+      name: AppRoutes.MAIN,
       page: () => const MainWrapper(),
       binding: CircleBinding(),
     ),
@@ -158,10 +154,7 @@ class AppPages {
       name: AppRoutes.CIRCLE_MEMBERS,
       page: () => const CircleMembersScreen(),
     ),
-    GetPage(
-      name: AppRoutes.ADD_MEMBERS,
-      page: () => const AddMembersScreen(),
-    ),
+    GetPage(name: AppRoutes.ADD_MEMBERS, page: () => const AddMembersScreen()),
     GetPage(
       name: AppRoutes.CREATE_CIRCLE,
       page: () => const CreateCircleScreen(),
@@ -176,10 +169,7 @@ class AppPages {
       name: AppRoutes.BOND_PROFILE,
       page: () => const BondProfileScreen(),
     ),
-    GetPage(
-      name: AppRoutes.CHAT,
-      page: () => const ChatScreen(),
-    ),
+    GetPage(name: AppRoutes.CHAT, page: () => const ChatScreen()),
     GetPage(
       name: AppRoutes.NEARBY_PEOPLE,
       page: () => const NearbyPeopleScreen(),
@@ -188,35 +178,23 @@ class AppPages {
       name: AppRoutes.EVENT_HIGHLIGHT_DETAILS,
       page: () => const EventHighlightDetailsScreen(),
     ),
-    GetPage(
-      name: AppRoutes.EVENT_DETAILS,
-      page: () => const EventDetailsScreen(),
-    ),
-    GetPage(
-      name: AppRoutes.REVIEWS,
-      page: () => const ReviewsScreen(),
-    ),
+    GetPage(name: AppRoutes.EVENT_DETAILS, page: () => EventDetailsScreen()),
+    GetPage(name: AppRoutes.REVIEWS, page: () => const ReviewsScreen()),
     GetPage(
       name: AppRoutes.WRITE_REVIEW,
       page: () => const WriteReviewScreen(),
     ),
     GetPage(
       name: AppRoutes.HOST_DETAILS,
-      page: () => const HostDetailsScreen(),
+      page: () => HostDetailsScreen(),
     ),
-    GetPage(
-      name: AppRoutes.BOOK_EVENT,
-      page: () => const BookEventScreen(),
-    ),
+    GetPage(name: AppRoutes.BOOK_EVENT, page: () => const BookEventScreen()),
     GetPage(
       name: AppRoutes.CREATE_EVENT,
       page: () => const CreateEventScreen(),
       binding: EventBinding(),
     ),
-    GetPage(
-      name: AppRoutes.EVENT_KYC,
-      page: () => const EventKYCScreen(),
-    ),
+    GetPage(name: AppRoutes.EVENT_KYC, page: () => const EventKYCScreen()),
     GetPage(
       name: AppRoutes.EVENT_FILTER,
       page: () => const EventFilterScreen(),
@@ -252,6 +230,3 @@ class AppPages {
     ),
   ];
 }
-
-
-
