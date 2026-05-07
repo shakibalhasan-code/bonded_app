@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/event_model.dart';
+import '../../models/highlight_model.dart';
 import '../../core/constants/app_endpoints.dart';
 import '../../core/routes/app_routes.dart';
 import '../../controllers/event_details_controller.dart';
@@ -560,14 +561,18 @@ class EventDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildHighlightCard(HighlightModel highlight) {
-    String? displayImage = highlight.imageUrls.isNotEmpty ? highlight.imageUrls.first : null;
-    String? displayVideo = highlight.videoUrls.isNotEmpty ? highlight.videoUrls.first : null;
+    final images = highlight.images ?? [];
+    final videos = highlight.videos ?? [];
+    
+    String? displayImage = images.isNotEmpty ? AppUrls.imageUrl(images.first.url) : null;
+    String? displayVideo = videos.isNotEmpty ? AppUrls.imageUrl(videos.first.url) : null;
 
     return GestureDetector(
       onTap: () {
         if (displayImage != null) {
           Get.to(() => FullScreenImageViewer(imageUrl: displayImage));
         } else if (displayVideo != null) {
+          // You might need a real video player here, but for now using the mock one
           Get.to(() => MockVideoPlayer(videoUrl: displayVideo));
         }
       },
@@ -584,7 +589,7 @@ class EventDetailsScreen extends StatelessWidget {
                 )
               : null,
         ),
-        child: displayImage == null
+        child: displayImage == null && displayVideo != null
             ? Center(child: Icon(Icons.video_library, color: Colors.grey[400]))
             : null,
       ),

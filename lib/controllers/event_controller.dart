@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/event_model.dart';
+import '../models/highlight_model.dart';
 import '../services/api_service.dart';
 import '../core/constants/app_endpoints.dart';
 
@@ -17,6 +18,7 @@ class EventController extends GetxController {
       0.obs; // 0: Created, 1: Booked, 2: Tickets, 3: Wallet
 
   final RxList<EventModel> events = <EventModel>[].obs;
+  final RxList<HighlightModel> publicHighlights = <HighlightModel>[].obs;
   final RxList<TicketModel> tickets = <TicketModel>[].obs;
   final RxList<TransactionModel> transactions = <TransactionModel>[].obs;
   final RxBool isStripeConnected = false.obs;
@@ -227,7 +229,25 @@ class EventController extends GetxController {
 
   void changeCategory(int categoryIndex) {
     selectedCategory.value = categoryIndex;
-    // No need to fetch, filteredEvents will update reactively
+    if (categoryIndex == 2) {
+      fetchPublicHighlights();
+    }
+  }
+
+  Future<void> fetchPublicHighlights({bool showLoader = true}) async {
+    try {
+      if (showLoader) isLoading.value = true;
+      final response = await _apiService.get(AppUrls.publicHighlights);
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final List<dynamic> list = data['data'];
+        publicHighlights.value = list.map((e) => HighlightModel.fromJson(e)).toList();
+      }
+    } catch (e) {
+      debugPrint("Error fetching public highlights: $e");
+    } finally {
+      if (showLoader) isLoading.value = false;
+    }
   }
 
   void changeMyEventTab(int tabIndex) {

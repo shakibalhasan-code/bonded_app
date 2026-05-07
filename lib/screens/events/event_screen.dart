@@ -9,6 +9,8 @@ import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_assets.dart';
 import '../../controllers/event_controller.dart';
 import '../../widgets/events/event_card.dart';
+import '../../widgets/events/highlight_card.dart';
+import '../../models/highlight_model.dart';
 import '../../core/routes/app_routes.dart';
 import '../../widgets/events/my_events_sub_nav.dart';
 import '../../widgets/events/e_ticket_card.dart';
@@ -158,8 +160,20 @@ class EventScreen extends StatelessWidget {
                             crossAxisSpacing: 16.w,
                             mainAxisSpacing: 16.h,
                           ),
-                          itemCount: controller.filteredEvents.length,
+                          itemCount: controller.selectedCategory.value == 2 
+                              ? controller.publicHighlights.length 
+                              : controller.filteredEvents.length,
                           itemBuilder: (context, index) {
+                            if (controller.selectedCategory.value == 2) {
+                              final highlight = controller.publicHighlights[index];
+                              return HighlightCard(
+                                highlight: highlight,
+                                onTap: () => Get.toNamed(
+                                  AppRoutes.EVENT_HIGHLIGHT_DETAILS,
+                                  arguments: highlight,
+                                ),
+                              );
+                            }
                             final event = controller.filteredEvents[index];
                             return EventCard(
                               event: event,
@@ -168,9 +182,7 @@ class EventScreen extends StatelessWidget {
                                   _showExternalEventDialog(context, event);
                                 } else {
                                   Get.toNamed(
-                                    event.category == EventCategory.highlights
-                                        ? AppRoutes.EVENT_HIGHLIGHT_DETAILS
-                                        : AppRoutes.EVENT_DETAILS,
+                                    AppRoutes.EVENT_DETAILS,
                                     arguments: event,
                                   );
                                 }

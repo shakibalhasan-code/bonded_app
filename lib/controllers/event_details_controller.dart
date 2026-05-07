@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../models/event_model.dart';
+import '../models/highlight_model.dart';
 import '../services/api_service.dart';
 import '../core/constants/app_endpoints.dart';
 import '../core/theme/app_colors.dart';
@@ -59,18 +60,29 @@ class EventDetailsController extends GetxController {
     required String caption,
     required List<String> imagePaths,
     required List<String> videoPaths,
+    List<String>? taggedAttendees,
+    List<String>? taggedCircles,
+    List<int>? videoDurations,
   }) async {
     try {
       isCreatingHighlight.value = true;
       
       Map<String, String> fields = {
-        'data': jsonEncode({'caption': caption})
+        'caption': caption
       };
+
+      if (taggedAttendees != null && taggedAttendees.isNotEmpty) {
+        fields['taggedAttendees'] = jsonEncode(taggedAttendees);
+      }
+      if (taggedCircles != null && taggedCircles.isNotEmpty) {
+        fields['taggedCircles'] = jsonEncode(taggedCircles);
+      }
+      if (videoDurations != null && videoDurations.isNotEmpty) {
+        fields['videoDurationsSeconds'] = jsonEncode(videoDurations);
+      }
 
       List<http.MultipartFile> files = [];
 
-      // Import http is needed. Will add at the top of file if not present.
-      // But we can use http.MultipartFile.fromPath
       for (var path in imagePaths) {
         files.add(await http.MultipartFile.fromPath('image', path));
       }

@@ -177,46 +177,6 @@ class EventModel {
   }
 }
 
-class HighlightModel {
-  final String id;
-  final String eventName;
-  final String circleName;
-  final List<String> videoUrls;
-  final List<String> imageUrls;
-  final String description;
-  final String? caption;
-  final Map<String, dynamic>? creator;
-
-  HighlightModel({
-    required this.id,
-    required this.eventName,
-    required this.circleName,
-    required this.videoUrls,
-    required this.imageUrls,
-    required this.description,
-    this.caption,
-    this.creator,
-  });
-
-  factory HighlightModel.fromJson(Map<String, dynamic> json) {
-    return HighlightModel(
-      id: json['_id'] ?? json['id'] ?? '',
-      eventName: json['event']?['title'] ?? '',
-      circleName: json['taggedCircle']?['name'] ?? '',
-      description: json['caption'] ?? '', // Mapping caption to description for UI backward compatibility if needed
-      caption: json['caption'],
-      creator: json['creator'],
-      videoUrls: (json['videos'] as List?)
-              ?.map((v) => AppUrls.imageUrl(v['url']))
-              .toList() ??
-          [],
-      imageUrls: (json['images'] as List?)
-              ?.map((i) => AppUrls.imageUrl(i['url']))
-              .toList() ??
-          [],
-    );
-  }
-}
 
 class TicketModel {
   final String id;

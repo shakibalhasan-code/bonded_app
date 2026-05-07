@@ -4,7 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
-import '../../models/event_model.dart';
+import '../../models/highlight_model.dart';
+import '../../core/constants/app_endpoints.dart';
 import '../../widgets/events/media_viewers.dart';
 
 class EventHighlightDetailsScreen extends StatelessWidget {
@@ -12,19 +13,10 @@ class EventHighlightDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final EventModel event = Get.arguments;
+    final HighlightModel highlight = Get.arguments;
 
-    final List<String> videoThumbnails = [
-      'https://images.unsplash.com/photo-1492684223066-81342ee5ff30',
-      'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3',
-      'https://images.unsplash.com/photo-1514525253361-9f93ee74a89a',
-    ];
-
-    final List<String> images = [
-      'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14',
-      'https://images.unsplash.com/photo-1492684223066-81342ee5ff30',
-      'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4',
-    ];
+    final List<HighlightVideo> videos = highlight.videos ?? [];
+    final List<HighlightImage> images = highlight.images ?? [];
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -37,7 +29,7 @@ class EventHighlightDetailsScreen extends StatelessWidget {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          event.title,
+          highlight.event?.title ?? "Highlight Details",
           style: GoogleFonts.inter(
             fontSize: 18.sp,
             fontWeight: FontWeight.w700,
@@ -54,7 +46,7 @@ class EventHighlightDetailsScreen extends StatelessWidget {
             _buildSectionTitle("Event Name"),
             SizedBox(height: 8.h),
             Text(
-              "Weekend Hangouts Circle",
+              highlight.event?.title ?? "N/A",
               style: GoogleFonts.inter(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w500,
@@ -64,60 +56,99 @@ class EventHighlightDetailsScreen extends StatelessWidget {
             SizedBox(height: 24.h),
 
             // Video Highlights Section
-            _buildSectionTitle("Video Highlights"),
-            SizedBox(height: 12.h),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 12.w,
-                mainAxisSpacing: 12.h,
-                childAspectRatio: 0.8,
+            if (videos.isNotEmpty) ...[
+              _buildSectionTitle("Video Highlights"),
+              SizedBox(height: 12.h),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 12.w,
+                  mainAxisSpacing: 12.h,
+                  childAspectRatio: 0.8,
+                ),
+                itemCount: videos.length,
+                itemBuilder: (context, index) {
+                  final videoUrl = AppUrls.imageUrl(videos[index].url);
+                  return GestureDetector(
+                    onTap: () => Get.to(() => MockVideoPlayer(videoUrl: videoUrl)),
+                    child: _buildVideoThumbnail(videoUrl),
+                  );
+                },
               ),
-              itemCount: videoThumbnails.length,
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () => Get.to(() => MockVideoPlayer(videoUrl: videoThumbnails[index])),
-                  child: _buildVideoThumbnail(videoThumbnails[index]),
-                );
-              },
-            ),
-            SizedBox(height: 24.h),
+              SizedBox(height: 24.h),
+            ],
 
-            // Add Images Section
-            _buildSectionTitle("Add Images"),
-            SizedBox(height: 12.h),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 12.w,
-                mainAxisSpacing: 12.h,
-                childAspectRatio: 0.8,
+            // Images Section
+            if (images.isNotEmpty) ...[
+              _buildSectionTitle("Images"),
+              SizedBox(height: 12.h),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  crossAxisSpacing: 12.w,
+                  mainAxisSpacing: 12.h,
+                  childAspectRatio: 0.8,
+                ),
+                itemCount: images.length,
+                itemBuilder: (context, index) {
+                  final imageUrl = AppUrls.imageUrl(images[index].url);
+                  return GestureDetector(
+                    onTap: () => Get.to(() => FullScreenImageViewer(imageUrl: imageUrl)),
+                    child: _buildImageThumbnail(imageUrl),
+                  );
+                },
               ),
-              itemCount: images.length,
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () => Get.to(() => FullScreenImageViewer(imageUrl: images[index])),
-                  child: _buildImageThumbnail(images[index]),
-                );
-              },
-            ),
-            SizedBox(height: 24.h),
+              SizedBox(height: 24.h),
+            ],
 
             // Caption Section
-            _buildSectionTitle("Caption"),
-            SizedBox(height: 12.h),
-            Text(
-              "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-              style: GoogleFonts.inter(
-                fontSize: 14.sp,
-                color: const Color(0xFF1B0B3B),
-                height: 1.6,
+            if (highlight.caption != null && highlight.caption!.isNotEmpty) ...[
+              _buildSectionTitle("Caption"),
+              SizedBox(height: 12.h),
+              Text(
+                highlight.caption!,
+                style: GoogleFonts.inter(
+                  fontSize: 14.sp,
+                  color: const Color(0xFF1B0B3B),
+                  height: 1.6,
+                ),
               ),
-            ),
+              SizedBox(height: 24.h),
+            ],
+
+            // Tagged Attendees
+            if (highlight.taggedAttendees != null && highlight.taggedAttendees!.isNotEmpty) ...[
+              _buildSectionTitle("Tagged Attendees"),
+              SizedBox(height: 12.h),
+              Wrap(
+                spacing: 8.w,
+                children: highlight.taggedAttendees!.map((user) => Chip(
+                  avatar: CircleAvatar(
+                    backgroundImage: NetworkImage(AppUrls.imageUrl(user.avatar)),
+                  ),
+                  label: Text(user.fullName ?? "User"),
+                )).toList(),
+              ),
+              SizedBox(height: 24.h),
+            ],
+
+            // Tagged Circles
+            if (highlight.taggedCircles != null && highlight.taggedCircles!.isNotEmpty) ...[
+              _buildSectionTitle("Tagged Circles"),
+              SizedBox(height: 12.h),
+              Wrap(
+                spacing: 8.w,
+                children: highlight.taggedCircles!.map((circle) => Chip(
+                  backgroundColor: AppColors.primary.withOpacity(0.1),
+                  label: Text(circle.name ?? "Circle", style: TextStyle(color: AppColors.primary)),
+                )).toList(),
+              ),
+              SizedBox(height: 24.h),
+            ],
           ],
         ),
       ),

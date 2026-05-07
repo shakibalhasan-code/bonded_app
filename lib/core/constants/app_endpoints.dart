@@ -28,6 +28,9 @@ class AppUrls {
   static const String myWallet = '/wallet/me';
   static String bookEvent(String id) => '/bookings/events/$id';
   static String eventHighlights(String eventId) => '/events/$eventId/highlights';
+  static const String publicHighlights = '/events/public/highlights';
+  static String circleHighlights(String circleId) => '/circles/$circleId/highlights';
+  static String highlightDetails(String highlightId) => '/events/highlights/$highlightId';
 
 
   // Bond Endpoints
