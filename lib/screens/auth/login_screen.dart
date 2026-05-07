@@ -146,15 +146,15 @@ class LoginScreen extends GetView<AuthController> {
               children: [
                 SocialIconButton(
                   iconPath: AppAssets.googleIcon,
-                  onPressed: () {},
+                  onPressed: () => controller.loginWithGoogle(),
                 ),
                 SocialIconButton(
                   iconPath: AppAssets.facebookIcon,
-                  onPressed: () {},
+                  onPressed: () => controller.loginWithFacebook(),
                 ),
                 SocialIconButton(
                   iconPath: AppAssets.appleIcon,
-                  onPressed: () {},
+                  onPressed: () => controller.loginWithApple(),
                 ),
               ],
             ),

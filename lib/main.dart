@@ -4,12 +4,14 @@ import 'package:get/get.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_pages.dart';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'services/shared_prefs_service.dart';
 
 import 'core/bindings/initial_binding.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   await SharedPrefsService.init();
   runApp(const MyApp());
 }

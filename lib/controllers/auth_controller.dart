@@ -7,10 +7,13 @@ import '../core/constants/app_endpoints.dart';
 import '../core/routes/app_routes.dart';
 import '../models/user_model.dart';
 import '../services/socket_service.dart';
+import '../services/social_auth_service.dart';
 import 'base_controller.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthController extends BaseController {
   final ApiService _apiService = ApiService();
+  final SocialAuthService _socialAuthService = SocialAuthService();
 
   // Observable variables
   final RxBool isPasswordVisible = false.obs;
@@ -361,5 +364,71 @@ class AuthController extends BaseController {
     currentUser.value = null;
     userData.clear();
     Get.offAllNamed(AppRoutes.LOGIN);
+  }
+
+  // Social Login Methods
+  Future<void> loginWithGoogle() async {
+    try {
+      setLoading(true);
+      final credential = await _socialAuthService.signInWithGoogle();
+      if (credential != null) {
+        await _handleSocialLoginSuccess(credential, 'google');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Google Sign-In failed: ${e.toString()}');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  Future<void> loginWithFacebook() async {
+    try {
+      setLoading(true);
+      final credential = await _socialAuthService.signInWithFacebook();
+      if (credential != null) {
+        await _handleSocialLoginSuccess(credential, 'facebook');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Facebook Sign-In failed: ${e.toString()}');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  Future<void> loginWithApple() async {
+    try {
+      setLoading(true);
+      final credential = await _socialAuthService.signInWithApple();
+      if (credential != null) {
+        await _handleSocialLoginSuccess(credential, 'apple');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Apple Sign-In failed: ${e.toString()}');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  Future<void> _handleSocialLoginSuccess(UserCredential credential, String provider) async {
+    // Here you would typically send the token to your backend
+    // String? idToken = await credential.user?.getIdToken();
+    
+    // Placeholder for backend sync
+    // For now, let's just show a success message and go to main
+    // In a real app, you'd call an endpoint like AppUrls.socialLogin
+    
+    Get.snackbar('Success', 'Logged in with ${provider.capitalizeFirst}');
+    Get.offAllNamed(AppRoutes.MAIN);
+    
+    /* 
+    Example of backend sync:
+    final response = await _apiService.post(AppUrls.socialLogin, {
+      "idToken": idToken,
+      "provider": provider,
+      "email": credential.user?.email,
+      "name": credential.user?.displayName,
+    });
+    // Then handle the JWT from your backend as in standard login
+    */
   }
 }
