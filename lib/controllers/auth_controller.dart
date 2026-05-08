@@ -408,25 +408,62 @@ class AuthController extends BaseController {
   }
 
   Future<void> _handleSocialLoginSuccess(UserCredential credential, String provider) async {
-    // Here you would typically send the token to your backend
-    // String? idToken = await credential.user?.getIdToken();
-    
-    // Placeholder for backend sync
-    // For now, let's just show a success message and go to main
-    // In a real app, you'd call an endpoint like AppUrls.socialLogin
-    
-    Get.snackbar('Success', 'Logged in with ${provider.capitalizeFirst}');
-    Get.offAllNamed(AppRoutes.MAIN);
-    
-    /* 
-    Example of backend sync:
-    final response = await _apiService.post(AppUrls.socialLogin, {
-      "idToken": idToken,
-      "provider": provider,
-      "email": credential.user?.email,
-      "name": credential.user?.displayName,
-    });
-    // Then handle the JWT from your backend as in standard login
-    */
+    try {
+      // Get Firebase ID token to send to backend
+      final String? idToken = await credential.user?.getIdToken();
+      if (idToken == null) {
+        Get.snackbar('Error', 'Failed to get authentication token');
+        return;
+      }
+
+      // Send Firebase token to your backend for verification & JWT issuance
+      final response = await _apiService.post(
+        AppUrls.socialLogin,
+        {
+          "idToken": idToken,
+          "provider": provider,
+          "email": credential.user?.email,
+          "name": credential.user?.displayName,
+          "photoUrl": credential.user?.photoURL,
+        },
+      );
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final authData = data['data'];
+        final accessToken = authData['accessToken'];
+        final refreshToken = authData['refreshToken'];
+
+        // Save tokens and user ID
+        await SharedPrefsService.saveString('accessToken', accessToken);
+        if (refreshToken != null) {
+          await SharedPrefsService.saveString('refreshToken', refreshToken);
+        }
+        if (authData['user'] != null && authData['user']['_id'] != null) {
+          await SharedPrefsService.saveString('userId', authData['user']['_id']);
+        }
+
+        // Update user state
+        currentUser.value = UserModel.fromJson(authData['user']);
+        userData.value = authData['user'];
+
+        // Initialize Socket
+        Get.find<SocketService>().initSocket(token: accessToken);
+
+        Get.snackbar('Success', 'Logged in with ${provider.capitalizeFirst}');
+
+        // Navigate based on profile completion
+        if (authData['isCompleteProfile'] == true) {
+          Get.offAllNamed(AppRoutes.MAIN);
+        } else {
+          Get.offAllNamed(AppRoutes.PROFILE_BUILDING);
+        }
+      } else {
+        Get.snackbar('Error', data['message'] ?? '${provider.capitalizeFirst} Sign-In failed');
+      }
+    } catch (e) {
+      debugPrint('Social login backend error: $e');
+      Get.snackbar('Error', 'Failed to complete ${provider.capitalizeFirst} Sign-In');
+    }
   }
 }

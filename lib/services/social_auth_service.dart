@@ -3,6 +3,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:io';
 import '../core/constants/social_auth_config.dart';
 
 class SocialAuthService {
@@ -11,18 +12,31 @@ class SocialAuthService {
   // Google Sign In
   Future<UserCredential?> signInWithGoogle() async {
     try {
+      // Determine client ID based on platform
+      String? clientId;
+      if (!kIsWeb) {
+        if (Platform.isIOS) {
+          clientId = SocialAuthConfig.googleClientIdIos;
+        } else if (Platform.isAndroid) {
+          clientId = SocialAuthConfig.googleClientIdAndroid;
+        }
+      }
+
       // Initialize the singleton with your config before use
       await GoogleSignIn.instance.initialize(
-        clientId: kIsWeb ? SocialAuthConfig.googleClientId : null,
+        clientId: clientId,
       );
-      
-      final GoogleSignInAccount? googleUser = await GoogleSignIn.instance.authenticate();
+
+      final GoogleSignInAccount? googleUser = await GoogleSignIn.instance
+          .authenticate();
       if (googleUser == null) return null;
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
       // New for 7.0+: Retrieve accessToken via authorizationClient
-      final authorizedUser = await googleUser.authorizationClient.authorizeScopes(['email', 'profile']);
+      final authorizedUser = await googleUser.authorizationClient
+          .authorizeScopes(['email', 'profile']);
       final String? accessToken = authorizedUser.accessToken;
 
       final OAuthCredential credential = GoogleAuthProvider.credential(
@@ -41,9 +55,11 @@ class SocialAuthService {
   Future<UserCredential?> signInWithFacebook() async {
     try {
       final LoginResult result = await FacebookAuth.instance.login();
-      
+
       if (result.status == LoginStatus.success) {
-        final OAuthCredential credential = FacebookAuthProvider.credential(result.accessToken!.tokenString);
+        final OAuthCredential credential = FacebookAuthProvider.credential(
+          result.accessToken!.tokenString,
+        );
         return await _auth.signInWithCredential(credential);
       }
       return null;

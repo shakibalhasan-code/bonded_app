@@ -65,19 +65,19 @@ class WelcomeScreen extends StatelessWidget {
               SocialAuthButton(
                 iconPath: AppAssets.googleIcon,
                 label: "Continue with Google",
-                onPressed: () {},
+                onPressed: () => Get.find<AuthController>().loginWithGoogle(),
               ),
               SizedBox(height: 16.h),
               SocialAuthButton(
                 iconPath: AppAssets.appleIcon,
                 label: "Continue with Apple",
-                onPressed: () {},
+                onPressed: () => Get.find<AuthController>().loginWithApple(),
               ),
               SizedBox(height: 16.h),
               SocialAuthButton(
                 iconPath: AppAssets.facebookIcon,
                 label: "Continue with Facebook",
-                onPressed: () {},
+                onPressed: () => Get.find<AuthController>().loginWithFacebook(),
               ),
 
               const Spacer(flex: 2),

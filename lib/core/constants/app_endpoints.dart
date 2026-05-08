@@ -15,6 +15,7 @@ class AppUrls {
   static const String resetPassword = '/auth/reset-password';
   static const String changePassword = '/auth/change-password';
   static const String refreshAccessToken = '/auth/refresh-access-token';
+  static const String socialLogin = '/auth/social-login';
 
   // User Endpoints
   static const String userProfile = '/user/profile';
