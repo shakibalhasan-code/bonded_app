@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "507580696837",
+    "project_id": "test-project-2026-56d41",
+    "storage_bucket": "test-project-2026-56d41.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:507580696837:android:56440d731f8e6c8d14cf6c",
+        "android_client_info": {
+          "package_name": "com.bonded.android"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "507580696837-qi7qdh8o9vkqifjolelru679q8b4b98h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjKvxOHvjsEpXJdCTs5FuG8R_TvMjfbxg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "507580696837-qi7qdh8o9vkqifjolelru679q8b4b98h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "507580696837-dl810gsdcoqm6p6qq7j37d1rmdo0gbd4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sirikay.bonded"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:507580696837:android:8f095f173a2debf214cf6c",
+        "android_client_info": {
+          "package_name": "com.sirikay.bonded"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "507580696837-qi7qdh8o9vkqifjolelru679q8b4b98h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjKvxOHvjsEpXJdCTs5FuG8R_TvMjfbxg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "507580696837-qi7qdh8o9vkqifjolelru679q8b4b98h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "507580696837-dl810gsdcoqm6p6qq7j37d1rmdo0gbd4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sirikay.bonded"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

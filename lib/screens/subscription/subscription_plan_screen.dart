@@ -150,7 +150,7 @@ class SubscriptionPlanScreen extends StatelessWidget {
             padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 32.h),
             child: GestureDetector(
               onTap: () {
-                Get.to(() => const PaymentMethodScreen());
+                controller.completeSubscription(context);
               },
               child: Container(
                 height: 56.h,

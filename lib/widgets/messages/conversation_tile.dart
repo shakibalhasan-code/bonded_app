@@ -101,11 +101,14 @@ class ConversationTile extends StatelessWidget {
   }
 
   Widget _buildPlaceholder(String? name) {
-    return Image.network(
-      'https://ui-avatars.com/api/?name=${name ?? 'User'}&background=F0EDFF&color=6200EE&bold=true',
+    return Container(
       width: 60.w,
       height: 60.w,
-      fit: BoxFit.cover,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0EDFF),
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      child: Icon(Icons.person, color: AppColors.primary, size: 30.sp),
     );
   }
 }

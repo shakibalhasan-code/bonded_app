@@ -2,8 +2,10 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../widgets/profile/verification_success_dialog.dart';
 import '../core/routes/app_routes.dart';
+import 'billing_controller.dart';
 
 class SubscriptionController extends GetxController {
+  final billingController = Get.put(BillingController());
   final selectedPlan = 'Pro'.obs;
   final selectedPaymentMethod = 'Credit Card'.obs;
 
@@ -15,7 +17,17 @@ class SubscriptionController extends GetxController {
     selectedPaymentMethod.value = method;
   }
 
-  void completeSubscription(BuildContext context) {
+  Future<void> completeSubscription(BuildContext context) async {
+    if (selectedPlan.value == 'Free Tier') {
+      _showSuccessDialog();
+      return;
+    }
+
+    // Trigger native billing
+    await billingController.purchaseSubscription();
+  }
+
+  void _showSuccessDialog() {
     Get.dialog(
       VerificationSuccessDialog(
         title: "Subscription Purchased Successfully!",

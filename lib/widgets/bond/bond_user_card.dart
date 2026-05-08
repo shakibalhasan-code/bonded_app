@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../models/bond_user_model.dart';
 import '../../controllers/bond_controller.dart';
 import '../../core/routes/app_routes.dart';
+import '../../core/constants/app_endpoints.dart';
 
 class BondUserCard extends StatelessWidget {
   final BondConnectionModel connection;
@@ -43,9 +44,7 @@ class BondUserCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12.r),
                   child: user.avatar != null && user.avatar!.isNotEmpty
                       ? Image.network(
-                          user.avatar!.startsWith('http')
-                              ? user.avatar!
-                              : 'https://bonded-backend.onrender.com/${user.avatar}',
+                          AppUrls.imageUrl(user.avatar),
                           width: 60.w,
                           height: 60.w,
                           fit: BoxFit.cover,
@@ -95,11 +94,11 @@ class BondUserCard extends StatelessWidget {
   }
 
   Widget _buildPlaceholder(String? name) {
-    return Image.network(
-      'https://thumbs.dreamstime.com/b/portrait-black-woman-professional-smile-office-smart-casual-fashion-corporate-career-workplace-company-female-312731545.jpg',
+    return Container(
       width: 60.w,
       height: 60.w,
-      fit: BoxFit.cover,
+      color: AppColors.primary.withOpacity(0.1),
+      child: Icon(Icons.person, color: AppColors.primary, size: 30.sp),
     );
   }
 

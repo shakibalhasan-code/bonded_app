@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/routes/app_routes.dart';
 import '../../models/circle_model.dart';
 import '../app_button.dart';
+import '../../core/constants/app_endpoints.dart';
 
 class CircleCard extends StatelessWidget {
   final CircleModel circle;
@@ -43,16 +44,36 @@ class CircleCard extends StatelessWidget {
                     top: Radius.circular(20.r),
                   ),
                   child: Image.network(
-                    circle.image.isNotEmpty ? circle.image : _getPlaceholderImage(circle.id),
+                    AppUrls.imageUrl(circle.image),
                     height: 180.h,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Image.network(
-                        _getPlaceholderImage(circle.id),
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
                         height: 180.h,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
+                        color: Colors.grey[100],
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.primary.withOpacity(0.3),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 180.h,
+                        color: const Color(0xFFFAF7FF),
+                        child: Center(
+                          child: Icon(
+                            Icons.image_not_supported_outlined,
+                            color: AppColors.primary.withOpacity(0.5),
+                            size: 40.sp,
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -171,7 +192,9 @@ class CircleCard extends StatelessWidget {
                 ),
                 child: CircleAvatar(
                   radius: 12.r,
-                  backgroundImage: NetworkImage(entry.value),
+                  backgroundImage: NetworkImage(AppUrls.imageUrl(entry.value)),
+                  onBackgroundImageError: (_, __) {},
+                  child: Icon(Icons.person, size: 12.sp, color: Colors.white),
                 ),
               ),
             );

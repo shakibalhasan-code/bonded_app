@@ -357,10 +357,8 @@ class AuthController extends BaseController {
   }
 
   // Logout
-  void logout() {
-    SharedPrefsService.delete('accessToken');
-    SharedPrefsService.delete('refreshToken');
-    SharedPrefsService.delete('userId');
+  Future<void> logout() async {
+    await SharedPrefsService.clear();
     currentUser.value = null;
     userData.clear();
     Get.offAllNamed(AppRoutes.LOGIN);

@@ -56,14 +56,19 @@ class ChatMessage {
     // STRICT ID MATCHING:
     // We prioritize our local comparison for reliability across broadcast events.
     bool isOwn = false;
+    // Extraction for comparison
     if (senderId != null && currentUserId.isNotEmpty) {
-      isOwn = senderId.trim() == currentUserId.trim();
+      isOwn = senderId.trim().toLowerCase() == currentUserId.trim().toLowerCase();
     } else {
       // Fallback to backend flag if ID comparison isn't possible
       isOwn = json['isOwnMessage'] ?? false;
     }
     
-    debugPrint('SOCKET_DEBUG: PARSING MESSAGE -> Sender: $senderId, Me: $currentUserId, Result: ${isOwn ? "MINE" : "THEIRS"}');
+    if (isOwn == false && json['isOwnMessage'] == true) {
+      isOwn = true;
+    }
+    
+    debugPrint('CHAT_DEBUG: isMe=$isOwn | senderId=$senderId | myId=$currentUserId');
 
     String senderName = 'Unknown';
     String senderImage = 'https://i.pravatar.cc/150';
@@ -117,6 +122,9 @@ class ChatController extends GetxController {
   }
 
   Future<void> initChat(UserModel user) async {
+    // Ensure we have the most current user ID
+    currentUserId = _getCurrentUserId();
+
     // If we're already initialized for this user, don't clear and reload
     // unless we really need to.
     if (conversationId != null && messages.isNotEmpty) {
@@ -126,7 +134,7 @@ class ChatController extends GetxController {
 
     isLoading.value = true;
     messages.clear(); // Clear old messages
-    
+
     try {
       final response = await _apiService.post('${AppUrls.directChat}/${user.id}', {});
       final data = jsonDecode(response.body);
@@ -218,6 +226,7 @@ class ChatController extends GetxController {
 
     // 3. Try Persistent Storage
     final storedId = SharedPrefsService.getString('userId');
+    debugPrint('CHAT_DEBUG: Stored userId from Prefs: $storedId');
     if (storedId != null && storedId.isNotEmpty) {
       currentUserId = storedId;
       return storedId;

@@ -1,4 +1,4 @@
-package com.example.bonded_app
+package com.sirikay.bonded
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

@@ -7,11 +7,14 @@ import 'core/routes/app_pages.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'services/shared_prefs_service.dart';
 
+import 'firebase_options.dart';
 import 'core/bindings/initial_binding.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   await SharedPrefsService.init();
   runApp(const MyApp());
 }

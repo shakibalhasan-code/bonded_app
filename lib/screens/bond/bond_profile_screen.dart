@@ -35,11 +35,11 @@ class BondProfileScreen extends StatelessWidget {
           ),
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.chat_bubble_outline, color: AppColors.primary),
-            onPressed: () => Get.toNamed(AppRoutes.CHAT, arguments: user),
-          ),
-          SizedBox(width: 8.w),
+          // IconButton(
+          //   icon: Icon(Icons.chat_bubble_outline, color: AppColors.primary),
+          //   onPressed: () => Get.toNamed(AppRoutes.CHAT, arguments: user),
+          // ),
+          // SizedBox(width: 8.w),
         ],
       ),
       body: SingleChildScrollView(
@@ -229,7 +229,9 @@ class BondProfileScreen extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      final bond = controller.bondRequests.firstWhere((c) => c.user.id == user.id);
+                      final bond = controller.bondRequests.firstWhere(
+                        (c) => c.user.id == user.id,
+                      );
                       controller.rejectBondRequest(bond.bondId ?? "");
                     },
                     style: ElevatedButton.styleFrom(
@@ -254,7 +256,9 @@ class BondProfileScreen extends StatelessWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      final bond = controller.bondRequests.firstWhere((c) => c.user.id == user.id);
+                      final bond = controller.bondRequests.firstWhere(
+                        (c) => c.user.id == user.id,
+                      );
                       controller.acceptBondRequest(bond.bondId ?? "");
                     },
                     style: ElevatedButton.styleFrom(
@@ -312,7 +316,10 @@ class BondProfileScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _buildInfoItem("Date Of Birth", user.dateOfBirth ?? "N/A"),
-            _buildInfoItem("Connection Type", user.connectionType?.join(', ') ?? "N/A"),
+            _buildInfoItem(
+              "Connection Type",
+              user.connectionType?.join(', ') ?? "N/A",
+            ),
           ],
         ),
         SizedBox(height: 16.h),
@@ -353,7 +360,10 @@ class BondProfileScreen extends StatelessWidget {
 
   Widget _buildInterestsSection(UserModel user) {
     if (user.interests == null || user.interests!.isEmpty) {
-      return Text("No interests selected", style: GoogleFonts.inter(color: Colors.grey));
+      return Text(
+        "No interests selected",
+        style: GoogleFonts.inter(color: Colors.grey),
+      );
     }
 
     // Group interests by category

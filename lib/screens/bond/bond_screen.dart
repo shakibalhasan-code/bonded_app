@@ -168,6 +168,7 @@ class BondScreen extends StatelessWidget {
                         ),
                       )
                     : ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
                         itemCount: controller.filteredNearbyPeople.length,
                         itemBuilder: (context, index) {
                           return BondUserCard(
@@ -261,6 +262,7 @@ class BondScreen extends StatelessWidget {
                 }
 
                 return ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   itemCount: list.length,
                   itemBuilder: (context, index) {
                     return BondUserCard(
@@ -311,6 +313,7 @@ class BondScreen extends StatelessWidget {
                         ),
                       )
                     : ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
                         itemCount: controller.filteredMyBonds.length,
                         itemBuilder: (context, index) {
                           return BondUserCard(

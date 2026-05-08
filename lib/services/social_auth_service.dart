@@ -11,20 +11,20 @@ class SocialAuthService {
   // Google Sign In
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      // New: Initialize the singleton with your config
+      // Initialize the singleton with your config before use
       await GoogleSignIn.instance.initialize(
         clientId: kIsWeb ? SocialAuthConfig.googleClientId : null,
       );
       
-      // New: authenticate() replaces signIn()
       final GoogleSignInAccount? googleUser = await GoogleSignIn.instance.authenticate();
       if (googleUser == null) return null;
 
-      // New: You must explicitly authorize scopes to get an accessToken in v7.0+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      
+      // New for 7.0+: Retrieve accessToken via authorizationClient
       final authorizedUser = await googleUser.authorizationClient.authorizeScopes(['email', 'profile']);
       final String? accessToken = authorizedUser.accessToken;
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final OAuthCredential credential = GoogleAuthProvider.credential(
         accessToken: accessToken,
         idToken: googleAuth.idToken,

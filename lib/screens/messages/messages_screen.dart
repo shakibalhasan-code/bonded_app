@@ -69,6 +69,7 @@ class MessagesScreen extends StatelessWidget {
                       onRefresh: controller.fetchConversations,
                       child: controller.filteredConversations.isEmpty
                           ? ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
                               children: [
                                 SizedBox(height: 200.h),
                                 Center(
@@ -83,6 +84,7 @@ class MessagesScreen extends StatelessWidget {
                               ],
                             )
                           : ListView.separated(
+                              physics: const AlwaysScrollableScrollPhysics(),
                               padding: EdgeInsets.only(top: 8.h, bottom: 100.h),
                               itemCount: controller.filteredConversations.length,
                               separatorBuilder: (context, index) =>

@@ -1,12 +1,14 @@
+import 'package:bonded_app/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../services/shared_prefs_service.dart';
 import '../core/constants/app_endpoints.dart';
+import '../core/routes/app_routes.dart';
 
 class SocketService extends GetxService {
   static SocketService get to => Get.find();
-  
+
   IO.Socket? _socket;
   final RxBool isConnected = false.obs;
 
@@ -30,15 +32,18 @@ class SocketService extends GetxService {
     }
 
     final socketUrl = AppUrls.socket;
-    
+
     debugPrint('SOCKET_DEBUG: Connecting to $socketUrl');
     debugPrint('SOCKET_DEBUG: Token: ${authToken.substring(0, 10)}...');
 
-    _socket = IO.io(socketUrl, IO.OptionBuilder()
-      .setTransports(['websocket'])
-      .setAuth({'token': authToken})
-      .enableAutoConnect()
-      .build());
+    _socket = IO.io(
+      socketUrl,
+      IO.OptionBuilder()
+          .setTransports(['websocket'])
+          .setAuth({'token': authToken})
+          .enableAutoConnect()
+          .build(),
+    );
 
     _socket?.onConnect((_) {
       debugPrint('SOCKET_DEBUG: Connected successfully to server');
@@ -53,6 +58,21 @@ class SocketService extends GetxService {
     _socket?.onConnectError((err) {
       debugPrint('SOCKET_DEBUG: Connection Error: $err');
       isConnected.value = false;
+
+      // If unauthorized, redirect to login
+      if (err.toString().toLowerCase().contains('unauthorized')) {
+        if (!ApiService.isNavigatingToLogin &&
+            Get.currentRoute != AppRoutes.LOGIN) {
+          ApiService.isNavigatingToLogin = true;
+          SharedPrefsService.delete('accessToken');
+          SharedPrefsService.delete('refreshToken');
+          Get.offAllNamed(AppRoutes.LOGIN);
+
+          Future.delayed(const Duration(seconds: 2), () {
+            ApiService.isNavigatingToLogin = false;
+          });
+        }
+      }
     });
 
     _socket?.onError((err) {

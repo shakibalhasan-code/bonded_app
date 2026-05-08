@@ -3,6 +3,8 @@ class AppUrls {
       'https://nwqs97k3-5002.asse.devtunnels.ms/api/v1';
   static const String socket = 'https://nwqs97k3-5002.asse.devtunnels.ms';
 
+  static const String assetsBase = 'https://nwqs97k3-5002.asse.devtunnels.ms';
+
   // Auth Endpoints
   static const String login = '/auth/login';
   static const String register = '/auth/register';
@@ -27,11 +29,17 @@ class AppUrls {
   static const String stripeOnboard = '/stripe-connect/me';
   static const String myWallet = '/wallet/me';
   static String bookEvent(String id) => '/bookings/events/$id';
-  static String eventHighlights(String eventId) => '/events/$eventId/highlights';
+  static String eventHighlights(String eventId) =>
+      '/events/$eventId/highlights';
   static const String publicHighlights = '/events/public/highlights';
-  static String circleHighlights(String circleId) => '/circles/$circleId/highlights';
-  static String highlightDetails(String highlightId) => '/events/highlights/$highlightId';
+  static String circleHighlights(String circleId) =>
+      '/circles/$circleId/highlights';
+  static String highlightDetails(String highlightId) =>
+      '/events/highlights/$highlightId';
 
+  // Billing & Store Endpoints
+  static const String storeProducts = '/store-products';
+  static const String verifyPurchase = '/kyc/me/verification/verify-purchase';
 
   // Bond Endpoints
   static const String nearbyBonds = '/bonds/nearby';
@@ -59,7 +67,9 @@ class AppUrls {
   static String imageUrl(String? path) {
     if (path == null || path.isEmpty) return 'https://i.pravatar.cc/150';
     if (path.startsWith('http')) return path;
-    final serverUrl = baseUrl.split('/api/v1').first;
-    return '$serverUrl/$path';
+    
+    // Normalize path by removing leading slash if present
+    final normalizedPath = path.startsWith('/') ? path.substring(1) : path;
+    return '$assetsBase/$normalizedPath';
   }
 }

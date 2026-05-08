@@ -4,6 +4,9 @@ import 'package:bonded_app/core/constants/app_endpoints.dart';
 import 'package:bonded_app/services/shared_prefs_service.dart';
 import 'package:http/http.dart' as http;
 
+import 'package:get/get.dart';
+import 'package:bonded_app/core/routes/app_routes.dart';
+
 class ApiException implements Exception {
   final String message;
   final int? statusCode;
@@ -16,6 +19,8 @@ class ApiService {
   final String baseUrl;
 
   ApiService({this.baseUrl = AppUrls.baseUrl});
+  
+  static bool isNavigatingToLogin = false;
 
   // GET request
   Future<http.Response> get(
@@ -141,10 +146,34 @@ class ApiService {
         );
         response = await requestFn();
         _logResponse(response);
+        
+        // If still 401 after retry, something is wrong, force login
+        if (response.statusCode == 401) {
+          _navigateToLogin();
+        }
+      } else {
+        // Refresh failed, navigate to login
+        _navigateToLogin();
       }
     }
 
     return _handleResponse(response);
+  }
+
+  // Helper to clear tokens and navigate to login
+  void _navigateToLogin() {
+    if (isNavigatingToLogin || Get.currentRoute == AppRoutes.LOGIN) return;
+    
+    isNavigatingToLogin = true;
+    SharedPrefsService.delete('accessToken');
+    SharedPrefsService.delete('refreshToken');
+    
+    Get.offAllNamed(AppRoutes.LOGIN);
+    
+    // Reset flag after a delay to allow for fresh logins
+    Future.delayed(const Duration(seconds: 2), () {
+      isNavigatingToLogin = false;
+    });
   }
 
   // Refresh Access Token logic
@@ -267,6 +296,10 @@ class ApiService {
 
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 401 && endpoint != AppUrls.login) {
+      _navigateToLogin();
+    }
 
     return _handleResponse(response);
   }

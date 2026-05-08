@@ -110,6 +110,7 @@ class CirclesScreen extends StatelessWidget {
           child: circles.isEmpty
               ? _buildEmptyState()
               : ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   itemCount: circles.length,
                   padding: EdgeInsets.only(bottom: 100.h),
                   itemBuilder: (context, index) {
@@ -168,6 +169,7 @@ class CirclesScreen extends StatelessWidget {
             child: circles.isEmpty
                 ? _buildEmptyState()
                 : ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     itemCount: circles.length,
                     padding: EdgeInsets.only(bottom: 100.h),
                     itemBuilder: (context, index) {
@@ -277,21 +279,26 @@ class CirclesScreen extends StatelessWidget {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.search_off, size: 64.sp, color: Colors.grey[300]),
-          SizedBox(height: 16.h),
-          Text(
-            "No circles found",
-            style: GoogleFonts.inter(
-              fontSize: 16.sp,
-              color: Colors.grey,
-              fontWeight: FontWeight.w500,
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: Container(
+        height: 400.h,
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 64.sp, color: Colors.grey[300]),
+            SizedBox(height: 16.h),
+            Text(
+              "No circles found",
+              style: GoogleFonts.inter(
+                fontSize: 16.sp,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -151,45 +151,49 @@ class EventScreen extends StatelessWidget {
                       child: RefreshIndicator(
                         onRefresh: controller.refreshData,
                         color: AppColors.primary,
-                        child: GridView.builder(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.8,
-                            crossAxisSpacing: 16.w,
-                            mainAxisSpacing: 16.h,
-                          ),
-                          itemCount: controller.selectedCategory.value == 2 
-                              ? controller.publicHighlights.length 
-                              : controller.filteredEvents.length,
-                          itemBuilder: (context, index) {
-                            if (controller.selectedCategory.value == 2) {
-                              final highlight = controller.publicHighlights[index];
-                              return HighlightCard(
-                                highlight: highlight,
-                                onTap: () => Get.toNamed(
-                                  AppRoutes.EVENT_HIGHLIGHT_DETAILS,
-                                  arguments: highlight,
+                        child: (controller.selectedCategory.value == 2 
+                                ? controller.publicHighlights.isEmpty 
+                                : controller.filteredEvents.isEmpty)
+                            ? _buildEmptyEventsState()
+                            : GridView.builder(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
+                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  childAspectRatio: 0.8,
+                                  crossAxisSpacing: 16.w,
+                                  mainAxisSpacing: 16.h,
                                 ),
-                              );
-                            }
-                            final event = controller.filteredEvents[index];
-                            return EventCard(
-                              event: event,
-                              onTap: () {
-                                if (event.isExternal) {
-                                  _showExternalEventDialog(context, event);
-                                } else {
-                                  Get.toNamed(
-                                    AppRoutes.EVENT_DETAILS,
-                                    arguments: event,
+                                itemCount: controller.selectedCategory.value == 2 
+                                    ? controller.publicHighlights.length 
+                                    : controller.filteredEvents.length,
+                                itemBuilder: (context, index) {
+                                  if (controller.selectedCategory.value == 2) {
+                                    final highlight = controller.publicHighlights[index];
+                                    return HighlightCard(
+                                      highlight: highlight,
+                                      onTap: () => Get.toNamed(
+                                        AppRoutes.EVENT_HIGHLIGHT_DETAILS,
+                                        arguments: highlight,
+                                      ),
+                                    );
+                                  }
+                                  final event = controller.filteredEvents[index];
+                                  return EventCard(
+                                    event: event,
+                                    onTap: () {
+                                      if (event.isExternal) {
+                                        _showExternalEventDialog(context, event);
+                                      } else {
+                                        Get.toNamed(
+                                          AppRoutes.EVENT_DETAILS,
+                                          arguments: event,
+                                        );
+                                      }
+                                    },
                                   );
-                                }
-                              },
-                            );
-                          },
-                        ),
+                                },
+                              ),
                       ),
                     ),
                   ],
@@ -223,40 +227,44 @@ class EventScreen extends StatelessWidget {
       return RefreshIndicator(
         onRefresh: controller.refreshData,
         color: AppColors.primary,
-        child: GridView.builder(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 0.8,
-            crossAxisSpacing: 16.w,
-            mainAxisSpacing: 16.h,
-          ),
-          itemCount: list.length,
-          itemBuilder: (context, index) => EventCard(
-            event: list[index],
-            showOptions: subTab == 0,
-            onTap: () {
-              if (list[index].isExternal) {
-                _showExternalEventDialog(context, list[index]);
-              } else {
-                Get.toNamed(AppRoutes.EVENT_DETAILS, arguments: list[index]);
-              }
-            },
-          ),
-        ),
+        child: list.isEmpty
+            ? _buildEmptyEventsState()
+            : GridView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.8,
+                  crossAxisSpacing: 16.w,
+                  mainAxisSpacing: 16.h,
+                ),
+                itemCount: list.length,
+                itemBuilder: (context, index) => EventCard(
+                  event: list[index],
+                  showOptions: subTab == 0,
+                  onTap: () {
+                    if (list[index].isExternal) {
+                      _showExternalEventDialog(context, list[index]);
+                    } else {
+                      Get.toNamed(AppRoutes.EVENT_DETAILS, arguments: list[index]);
+                    }
+                  },
+                ),
+              ),
       );
     } else if (subTab == 2) {
       return RefreshIndicator(
         onRefresh: controller.refreshData,
         color: AppColors.primary,
-        child: ListView.builder(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
-          itemCount: controller.tickets.length,
-          itemBuilder: (context, index) =>
-              ETicketCard(ticket: controller.tickets[index]),
-        ),
+        child: controller.tickets.isEmpty
+            ? _buildEmptyEventsState(message: "No tickets found")
+            : ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
+                itemCount: controller.tickets.length,
+                itemBuilder: (context, index) =>
+                    ETicketCard(ticket: controller.tickets[index]),
+              ),
       );
     } else {
       return Obx(() {
@@ -579,6 +587,32 @@ class EventScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyEventsState({String message = "No events found"}) {
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: Container(
+        height: 400.h,
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.event_available_outlined,
+                size: 64.sp, color: Colors.grey[300]),
+            SizedBox(height: 16.h),
+            Text(
+              message,
+              style: GoogleFonts.inter(
+                fontSize: 16.sp,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

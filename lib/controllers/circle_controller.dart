@@ -447,26 +447,10 @@ class CircleController extends BaseController {
 
       final List<http.MultipartFile> files = [];
       if (imageFile != null) {
-        final mimeType = lookupMimeType(imageFile.path) ?? 'image/jpeg';
-        final mimeParts = mimeType.split('/');
-        files.add(
-          await http.MultipartFile.fromPath(
-            'image',
-            imageFile.path,
-            contentType: MediaType(mimeParts.first, mimeParts[1]),
-          ),
-        );
+        files.add(await http.MultipartFile.fromPath('image', imageFile.path));
       }
       if (videoFile != null) {
-        final mimeType = lookupMimeType(videoFile.path) ?? 'video/mp4';
-        final mimeParts = mimeType.split('/');
-        files.add(
-          await http.MultipartFile.fromPath(
-            'video',
-            videoFile.path,
-            contentType: MediaType(mimeParts.first, mimeParts[1]),
-          ),
-        );
+        files.add(await http.MultipartFile.fromPath('video', videoFile.path));
       }
 
       final Map<String, dynamic> bodyData = {'content': content};
@@ -474,7 +458,7 @@ class CircleController extends BaseController {
       final response = await _apiService.multipartRequest(
         'POST',
         url,
-        fields: {'data': jsonEncode(bodyData)},
+        fields: {'content': content},
         files: files,
       );
 
@@ -521,34 +505,18 @@ class CircleController extends BaseController {
       final List<http.MultipartFile> files = [];
       if (images != null) {
         for (var image in images) {
-          final mimeType = lookupMimeType(image.path) ?? 'image/jpeg';
-          final mimeParts = mimeType.split('/');
-          files.add(
-            await http.MultipartFile.fromPath(
-              'image',
-              image.path,
-              contentType: MediaType(mimeParts.first, mimeParts[1]),
-            ),
-          );
+          files.add(await http.MultipartFile.fromPath('image', image.path));
         }
       }
       if (video != null) {
-        final mimeType = lookupMimeType(video.path) ?? 'video/mp4';
-        final mimeParts = mimeType.split('/');
-        files.add(
-          await http.MultipartFile.fromPath(
-            'video',
-            video.path,
-            contentType: MediaType(mimeParts.first, mimeParts[1]),
-          ),
-        );
+        files.add(await http.MultipartFile.fromPath('video', video.path));
       }
 
       final response = await _apiService.multipartRequest(
         'POST',
         url,
         fields: {
-          'data': jsonEncode({'content': content}),
+          'content': content,
         },
         files: files,
       );
