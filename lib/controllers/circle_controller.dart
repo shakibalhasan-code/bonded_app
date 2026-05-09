@@ -413,17 +413,20 @@ class CircleController extends BaseController {
     }
   }
 
-  Future<void> sharePost(CircleModel circle, PostModel post) async {
+  Future<void> sharePost(CircleModel? circle, PostModel post) async {
     try {
-      setLoading(true);
-      final url = AppUrls.sharePost(post.id);
+      final targetCircleId = circle?.id ?? post.circleId;
+      if (targetCircleId == null) return;
 
+      final url = AppUrls.sharePost(targetCircleId, post.id);
       final response = await _apiService.post(url, {});
 
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
-        // Refresh feed auto
-        fetchCircleFeed(circle);
+        // Refresh feed auto if circle is provided
+        if (circle != null) {
+          fetchCircleFeed(circle);
+        }
         Get.snackbar("Success", "Post shared successfully");
       }
     } catch (e) {
@@ -435,7 +438,7 @@ class CircleController extends BaseController {
   }
 
   Future<void> addCommentToPost({
-    required CircleModel circle,
+    CircleModel? circle,
     required PostModel post,
     required String content,
     String? parentPostId,
@@ -443,6 +446,11 @@ class CircleController extends BaseController {
     File? videoFile,
     File? anyFile,
   }) async {
+    final String targetCircleId = circle?.id ?? post.circleId ?? "";
+    if (targetCircleId.isEmpty) {
+      Get.snackbar("Error", "Circle ID not found for this post");
+      return;
+    }
     final authController = Get.find<AuthController>();
     final user = authController.currentUser.value;
     
@@ -484,7 +492,7 @@ class CircleController extends BaseController {
     post.isCommenting.value = false;
 
     try {
-      final url = AppUrls.commentPost(circle.id, parentPostId ?? post.id);
+      final url = AppUrls.commentPost(targetCircleId, parentPostId ?? post.id);
 
       final List<http.MultipartFile> files = [];
       if (imageFile != null) {
@@ -524,7 +532,14 @@ class CircleController extends BaseController {
 
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
-        fetchCircleFeed(circle);
+        if (circle != null) {
+          fetchCircleFeed(circle);
+        } else {
+          // If no circle model provided (e.g. from Home), we might need to manually update 
+          // but usually the server response or a manual fetch is needed.
+          // For now, just show success.
+          Get.snackbar("Success", "Comment added successfully");
+        }
       } else {
         _removeTempComment(post, tempId);
         Get.snackbar("Error", data['message'] ?? "Failed to add comment");

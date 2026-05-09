@@ -56,11 +56,13 @@ class AppUrls {
   static String conversationMessages(String id) =>
       '/chat/conversations/$id/messages';
   // Circle Feed Endpoints
+  static const String home = '/home';
   static String circleFeed(String circleId) => '/circles/$circleId/feed';
   static String reactPost(String postId) => '/circles/posts/$postId/react';
   static String commentPost(String circleId, String postId) =>
       '/circles/$circleId/posts/$postId/comments';
-  static String sharePost(String postId) => '/circles/posts/$postId/share';
+  static String sharePost(String circleId, String postId) =>
+      '/circles/$circleId/posts/$postId/share';
   static String circleMembers(String circleId) => '/circles/$circleId/members';
   static String circleEvents(String circleId) => '/circles/$circleId/events';
   static String joinCircle(String circleId) => '/circles/$circleId/join';

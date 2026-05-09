@@ -1,166 +1,123 @@
+import 'dart:convert';
+import 'package:bonded_app/core/constants/app_endpoints.dart';
+import 'package:bonded_app/services/api_service.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/home_models.dart';
 import '../models/event_model.dart';
+import '../models/circle_model.dart';
 import '../services/socket_service.dart';
+import '../controllers/circle_controller.dart';
+import '../controllers/bond_controller.dart';
+import '../models/bond_user_model.dart';
 
 class HomeController extends GetxController {
-  // Mock data for Circle Highlights using models
+  final ApiService _apiService = ApiService();
+  final RxBool isLoading = false.obs;
+
+  // Real data using models
   final RxList<PostModel> circleHighlights = <PostModel>[].obs;
+  final RxList<EventModel> upcomingEvents = <EventModel>[].obs;
+  final RxList<CircleModel> discoveryCircles = <CircleModel>[].obs;
+  final RxList<BondConnectionModel> peopleRecommendations = <BondConnectionModel>[].obs;
 
   @override
   void onInit() {
     super.onInit();
-    _loadMockData();
+    Get.put(BondController()); // Ensure BondController is available
+    fetchHomeData();
     // Initialize Socket Connection
     Get.find<SocketService>().initSocket();
   }
 
-  void _loadMockData() {
-    circleHighlights.addAll([
-      PostModel(
-        id: '1',
-        userName: 'Weekend Hangouts Circle',
-        userImage: 'https://i.pravatar.cc/150?u=aniyw',
-        postText: 'Hey everyone, please give a warm welcome to our new members. Who will be working as office manager.',
-        likesCount: 15,
-        commentsCount: 3,
-        comments: [
-          CommentModel(
-            id: 'c1',
-            userName: 'Aniy Wilson',
-            userImage: 'https://i.pravatar.cc/150?u=aniyw',
-            text: 'Welcome! Really nice to meet you.',
-            timestamp: '3 d',
-            likesCount: 2,
-          ),
-        ],
-      ),
-      PostModel(
-        id: '2',
-        userName: 'Weekend Hangouts Circle',
-        userImage: 'https://i.pravatar.cc/150?u=aniyw',
-        postText: 'Another update from the weekend hangouts! Looking forward to seeing everyone there.',
-        likesCount: 10,
-        commentsCount: 1,
-        comments: [
-          CommentModel(
-            id: 'c2',
-            userName: 'John Doe',
-            userImage: 'https://i.pravatar.cc/150?u=john',
-            text: 'Can\'t wait!',
-            timestamp: '1 d',
-          ),
-        ],
-      ),
-    ]);
+  Future<void> fetchHomeData() async {
+    try {
+      isLoading.value = true;
+      
+      // Default coordinates for now or get from LocationController
+      final url = '${AppUrls.home}?lat=23.8103&lng=90.4125&maxDistance=15000';
+      debugPrint("Fetching home data from: $url");
+      
+      final response = await _apiService.get(url);
+      debugPrint("Home API Response Status: ${response.statusCode}");
+      debugPrint("Home API Response Body: ${response.body}");
+      
+      final data = jsonDecode(response.body);
+
+      if (data['success'] == true) {
+        final homeData = data['data'];
+        
+        try {
+          // 1. Posts (Circle Highlights)
+          if (homeData['circles'] != null && homeData['circles']['posts'] != null) {
+            final List postsJson = homeData['circles']['posts'];
+            circleHighlights.assignAll(postsJson.map((p) => PostModel.fromJson(p)).toList());
+          }
+
+          // 2. Events
+          if (homeData['events'] != null && homeData['events']['events'] != null) {
+            final List eventsJson = homeData['events']['events'];
+            upcomingEvents.assignAll(eventsJson.map((e) => EventModel.fromJson(e)).toList());
+          }
+
+          // 3. Discovery Circles
+          if (homeData['circles'] != null && homeData['circles']['circles'] != null) {
+            final List circlesJson = homeData['circles']['circles'];
+            discoveryCircles.assignAll(circlesJson.map((c) => CircleModel.fromJson(c)).toList());
+          }
+
+          // 4. Bond Suggestions (People You May Know)
+          if (homeData['bondSuggestions'] != null) {
+            final List suggestions = homeData['bondSuggestions'];
+            peopleRecommendations.assignAll(suggestions.map((s) => BondConnectionModel.fromJson(s)).toList());
+          }
+        } catch (e, stack) {
+          debugPrint("Error parsing home data models: $e");
+          debugPrint(stack.toString());
+        }
+      } else {
+        debugPrint("Home API Success: False, Message: ${data['message']}");
+      }
+    } catch (e) {
+      debugPrint("Error fetching home data: $e");
+    } finally {
+      isLoading.value = false;
+    }
   }
 
-  // Interactivity Methods
+  // Interactivity Methods (Delegated to CircleController or handled locally)
   void toggleLikePost(PostModel post) {
-    if (post.reactionType == null || post.reactionType.value != "none") {
-      updatePostReaction(post, "none");
-    } else {
-      updatePostReaction(post, "like");
-    }
+    Get.find<CircleController>().toggleLikePost(post);
   }
 
   void updatePostReaction(PostModel post, String type) {
-    // If transitioning from none to a reaction
-    if ((post.reactionType == null || post.reactionType.value == "none") && type != "none") {
-      post.likesCount.value++;
-      post.isLiked.value = true;
-    }
-    // If transitioning from a reaction to none
-    else if (post.reactionType != null && post.reactionType.value != "none" && type == "none") {
-      post.likesCount.value--;
-      post.isLiked.value = false;
-    }
-    
-    post.reactionType.value = type;
+    Get.find<CircleController>().updatePostReaction(post, type);
   }
 
   void toggleCommentInput(PostModel post) {
-    post.isCommenting.toggle();
+    Get.find<CircleController>().toggleCommentInput(post);
   }
 
   void addComment(PostModel post, String text) {
-    if (text.isEmpty) return;
-    
-    final newComment = CommentModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      userName: 'Me', // Placeholder for current user
-      userImage: 'https://i.pravatar.cc/150?u=me',
-      text: text,
-      timestamp: 'Just now',
+    Get.find<CircleController>().addCommentToPost(
+      post: post,
+      content: text,
     );
-    
-    post.comments.add(newComment);
-    post.commentsCount.value++;
-    post.isCommenting.value = false;
   }
 
   void toggleLikeComment(CommentModel comment) {
-    if (comment.isLiked.value) {
-      comment.isLiked.value = false;
-      comment.likesCount.value--;
-    } else {
-      comment.isLiked.value = true;
-      comment.likesCount.value++;
-    }
+    Get.find<CircleController>().toggleLikeComment(comment);
   }
 
   void toggleReplyInput(CommentModel comment) {
-    comment.showReplyInput.toggle();
+    Get.find<CircleController>().toggleReplyInput(comment);
   }
 
   void addReply(CommentModel comment, String text) {
-    if (text.isEmpty) return;
-    
-    final newReply = CommentModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      userName: 'Me',
-      userImage: 'https://i.pravatar.cc/150?u=me',
-      text: text,
-      timestamp: 'Just now',
-    );
-    
-    comment.replies.add(newReply);
-    comment.showReplyInput.value = false;
+    // Note: This assumes we have the parent post context. 
+    // In CircleHighlightCard, we don't easily have the PostModel here without passing it.
+    // However, since CircleHighlightCard is deprecated, we just want to avoid errors.
+    Get.snackbar("Notice", "Please use the updated post interaction features.");
   }
-
-  // Mock data for Upcoming Events
-  final RxList<EventModel> upcomingEvents = <EventModel>[
-    EventModel(
-      id: 'e1',
-      title: 'National Music Festival',
-      imageUrl: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=500&q=80',
-      date: 'Mon, Dec 25',
-      time: '18.00 - 23.00 PM',
-      address: '2464 Royal Ln. Mesa, New Jersey 45463',
-      category: EventCategory.inPerson,
-    ),
-    EventModel(
-      id: 'e2',
-      title: 'Jazz Music Fest',
-      imageUrl: 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=500&q=80',
-      date: 'Mon, Dec 26',
-      time: '18.00 - 23.00 PM',
-      address: '8502 Preston Rd. Inglewood, Maine 9809',
-      category: EventCategory.inPerson,
-    ),
-  ].obs;
-
-  // Mock data for People You May Know
-  final peopleRecommendations = [
-    {
-      'name': 'Matthias Huckestein',
-      'bio': 'Brunch lover, Wine Nights, Gama Nights',
-      'image': 'https://i.pravatar.cc/150?u=matthias',
-    },
-    {
-      'name': 'Maike Rother',
-      'bio': 'Brunch lover, Wine Nights, Gama Nights',
-      'image': 'https://i.pravatar.cc/150?u=maike',
-    },
-  ].obs;
 }
+

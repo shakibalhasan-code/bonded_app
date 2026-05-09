@@ -15,10 +15,15 @@ import 'reaction_selector.dart';
 
 class CirclePostItem extends StatefulWidget {
   final PostModel post;
-  final CircleModel circle;
+  final CircleModel? circle;
+  final bool showCircleName;
 
-  const CirclePostItem({Key? key, required this.post, required this.circle})
-    : super(key: key);
+  const CirclePostItem({
+    Key? key,
+    required this.post,
+    this.circle,
+    this.showCircleName = false,
+  }) : super(key: key);
 
   @override
   State<CirclePostItem> createState() => _CirclePostItemState();

@@ -16,14 +16,15 @@ import '../events/media_viewers.dart';
 
 class CircleCommentItem extends StatefulWidget {
   final CommentModel comment;
-  final CircleModel circle;
   final PostModel post;
   final bool isReply;
+
+  final CircleModel? circle;
 
   const CircleCommentItem({
     Key? key,
     required this.comment,
-    required this.circle,
+    this.circle,
     required this.post,
     this.isReply = false,
   }) : super(key: key);
