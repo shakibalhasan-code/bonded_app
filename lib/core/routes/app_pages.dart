@@ -36,6 +36,7 @@ import '../../screens/circles/add_members_screen.dart';
 import '../../screens/circles/create_circle_screen.dart';
 import '../../screens/circles/all_circles_screen.dart';
 import '../../screens/events/event_highlight_details_screen.dart';
+import '../../screens/events/add_event_highlight_screen.dart';
 import '../../screens/events/event_details_screen.dart';
 import '../../screens/events/reviews_screen.dart';
 import '../../screens/events/write_review_screen.dart';
@@ -177,6 +178,10 @@ class AppPages {
     GetPage(
       name: AppRoutes.EVENT_HIGHLIGHT_DETAILS,
       page: () => const EventHighlightDetailsScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.ADD_EVENT_HIGHLIGHT,
+      page: () => const AddEventHighlightScreen(),
     ),
     GetPage(name: AppRoutes.EVENT_DETAILS, page: () => EventDetailsScreen()),
     GetPage(name: AppRoutes.REVIEWS, page: () => const ReviewsScreen()),

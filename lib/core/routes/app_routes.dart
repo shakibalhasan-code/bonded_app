@@ -32,6 +32,7 @@ abstract class AppRoutes {
   static const CHAT = '/chat';
   static const NEARBY_PEOPLE = '/nearby_people';
   static const EVENT_HIGHLIGHT_DETAILS = '/event_highlight_details';
+  static const ADD_EVENT_HIGHLIGHT = '/add_event_highlight';
   static const EVENT_DETAILS = '/event_details';
   static const REVIEWS = '/reviews';
   static const WRITE_REVIEW = '/write_review';
