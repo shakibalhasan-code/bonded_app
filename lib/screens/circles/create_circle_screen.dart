@@ -22,7 +22,7 @@ class CreateCircleScreen extends StatefulWidget {
 class _CreateCircleScreenState extends State<CreateCircleScreen> {
   final ImagePicker _picker = ImagePicker();
   File? _selectedImage;
-  
+
   final TextEditingController nameController = TextEditingController();
   final TextEditingController descController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
@@ -111,7 +111,8 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
                               top: 8.h,
                               right: 8.w,
                               child: GestureDetector(
-                                onTap: () => setState(() => _selectedImage = null),
+                                onTap: () =>
+                                    setState(() => _selectedImage = null),
                                 child: Container(
                                   padding: EdgeInsets.all(6.w),
                                   decoration: const BoxDecoration(
@@ -181,19 +182,22 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
             // Location
             _buildSectionTitle("Location"),
             SizedBox(height: 8.h),
-            Obx(() => _buildTextField(
-              locationController,
-              profileController.isLoadingLocation.value 
-                  ? "Fetching location..." 
-                  : "Address (e.g., Dhaka, Bangladesh)",
-              suffixIcon: Icons.my_location,
-              onSuffixTap: () async {
-                await profileController.fetchCurrentLocation();
-                if (profileController.currentAddress.value.isNotEmpty) {
-                  locationController.text = profileController.currentAddress.value;
-                }
-              },
-            )),
+            Obx(
+              () => _buildTextField(
+                locationController,
+                profileController.isLoadingLocation.value
+                    ? "Fetching location..."
+                    : "Address (e.g., New York)",
+                suffixIcon: Icons.my_location,
+                onSuffixTap: () async {
+                  await profileController.fetchCurrentLocation();
+                  if (profileController.currentAddress.value.isNotEmpty) {
+                    locationController.text =
+                        profileController.currentAddress.value;
+                  }
+                },
+              ),
+            ),
             SizedBox(height: 20.h),
 
             // Add Circle Interest
@@ -214,12 +218,14 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        selectedInterestNames.isEmpty 
-                          ? "Select Interests" 
-                          : selectedInterestNames.join(", "),
+                        selectedInterestNames.isEmpty
+                            ? "Select Interests"
+                            : selectedInterestNames.join(", "),
                         style: GoogleFonts.inter(
                           fontSize: 14.sp,
-                          color: selectedInterestNames.isEmpty ? Colors.grey[400] : const Color(0xFF1B0B3B),
+                          color: selectedInterestNames.isEmpty
+                              ? Colors.grey[400]
+                              : const Color(0xFF1B0B3B),
                           fontWeight: FontWeight.w500,
                         ),
                         maxLines: 1,
@@ -244,11 +250,16 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
                   final index = entry.key;
                   final name = entry.value;
                   return Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 8.h,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primary.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(20.r),
-                      border: Border.all(color: AppColors.primary.withOpacity(0.12)),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.12),
+                      ),
                     ),
                     constraints: BoxConstraints(maxWidth: 0.7.sw),
                     child: Row(
@@ -331,32 +342,34 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
             SizedBox(height: 48.h),
 
             // Create Button
-            Obx(() => SizedBox(
-              width: double.infinity,
-              height: 56.h,
-              child: ElevatedButton(
-                onPressed: circleController.isLoading.value 
-                  ? null 
-                  : _handleCreateCircle,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  elevation: 0,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28.r),
-                  ),
-                ),
-                child: circleController.isLoading.value
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : Text(
-                      "Create Circle",
-                      style: GoogleFonts.inter(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.w700,
-                      ),
+            Obx(
+              () => SizedBox(
+                width: double.infinity,
+                height: 56.h,
+                child: ElevatedButton(
+                  onPressed: circleController.isLoading.value
+                      ? null
+                      : _handleCreateCircle,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    elevation: 0,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(28.r),
                     ),
+                  ),
+                  child: circleController.isLoading.value
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(
+                          "Create Circle",
+                          style: GoogleFonts.inter(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                ),
               ),
-            )),
+            ),
             SizedBox(height: 30.h),
           ],
         ),
@@ -378,11 +391,15 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
       "interestSlugs": selectedInterestSlugs,
       "isPaid": isPaid,
       "price": double.tryParse(priceController.text) ?? 0,
-      "address": locationController.text.isEmpty ? "Not Specified" : locationController.text,
+      "address": locationController.text.isEmpty
+          ? "Not Specified"
+          : locationController.text,
       "location": {
-        "longitude": profileController.longitude.value, // Using profile location as fallback or default
-        "latitude": profileController.latitude.value
-      }
+        "longitude": profileController
+            .longitude
+            .value, // Using profile location as fallback or default
+        "latitude": profileController.latitude.value,
+      },
     };
 
     circleController.createCircle(
@@ -390,7 +407,7 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
       imageFile: _selectedImage,
     );
   }
-  
+
   void _showInterestSelectionSheet() {
     Get.bottomSheet(
       InterestSelectionSheet(
@@ -399,7 +416,9 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
           // Find slugs for the selected names from profileController.allInterests
           final List<String> slugs = [];
           for (var name in selectedNames) {
-            final interest = profileController.allInterests.firstWhereOrNull((i) => i.name == name);
+            final interest = profileController.allInterests.firstWhereOrNull(
+              (i) => i.name == name,
+            );
             if (interest != null) {
               slugs.add(interest.slug);
             }

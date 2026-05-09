@@ -39,14 +39,29 @@ class AddMembersScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CustomSearchField(
-              controller: controller.searchController,
-              hintText: "Search members...",
-              onChanged: (value) => controller.searchQuery.value = value,
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8F7FF),
+                borderRadius: BorderRadius.circular(16.r),
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: TextField(
+                onChanged: (value) => controller.searchMembersToInvite(circle.id, value),
+                decoration: InputDecoration(
+                  hintText: "Search people...",
+                  hintStyle: GoogleFonts.inter(
+                    fontSize: 14.sp,
+                    color: Colors.grey[500],
+                  ),
+                  prefixIcon: Icon(Icons.search, color: AppColors.primary, size: 20.sp),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 12.h),
+                ),
+              ),
             ),
             SizedBox(height: 24.h),
             Text(
-              "Members",
+              "Search Results",
               style: GoogleFonts.inter(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.w700,
@@ -54,22 +69,46 @@ class AddMembersScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: 16.h),
-            Obx(() => ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: controller.filteredAvailableMembers.length,
-                  itemBuilder: (context, index) {
-                    final member = controller.filteredAvailableMembers[index];
-                    return _buildAddMemberTile(context, member, circle, controller);
-                  },
-                )),
+            Obx(() {
+              if (controller.isInviteLoading.value) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 40),
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+
+              if (controller.inviteSearchMembers.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 40),
+                    child: Text(
+                      "Search for users to invite",
+                      style: GoogleFonts.inter(color: Colors.grey),
+                    ),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: controller.inviteSearchMembers.length,
+                itemBuilder: (context, index) {
+                  final member = controller.inviteSearchMembers[index];
+                  return _buildAddMemberTile(context, member, circle, controller);
+                },
+              );
+            }),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildAddMemberTile(BuildContext context, MemberModel member, CircleModel circle, CircleController controller) {
+  Widget _buildAddMemberTile(BuildContext context, MemberModel member,
+      CircleModel circle, CircleController controller) {
     return Padding(
       padding: EdgeInsets.only(bottom: 16.h),
       child: Row(
@@ -98,23 +137,14 @@ class AddMembersScreen extends StatelessWidget {
                     color: AppColors.textHeading,
                   ),
                 ),
-                SizedBox(height: 4.h),
-                Text(
-                  member.role,
-                  style: GoogleFonts.inter(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.grey[600],
-                  ),
-                ),
               ],
             ),
           ),
           SizedBox(width: 8.w),
-          Container(
+          SizedBox(
             height: 32.h,
             child: OutlinedButton(
-              onPressed: () => controller.addMemberToCircle(circle, member),
+              onPressed: () => controller.addMemberDirectly(circle, member.userId),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppColors.primary),
                 shape: RoundedRectangleBorder(

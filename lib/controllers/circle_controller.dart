@@ -16,6 +16,7 @@ import '../models/circle_model.dart';
 import '../models/home_models.dart';
 import 'base_controller.dart';
 import 'auth_controller.dart';
+import 'billing_controller.dart';
 
 class CircleController extends BaseController {
   final ApiService _apiService = ApiService();
@@ -355,10 +356,7 @@ class CircleController extends BaseController {
       if (nextType == "none") {
         response = await _apiService.delete(url);
       } else {
-        response = await _apiService.post(
-          url,
-          {'reactionType': nextType},
-        );
+        response = await _apiService.post(url, {'reactionType': nextType});
       }
 
       final data = jsonDecode(response.body);
@@ -391,10 +389,7 @@ class CircleController extends BaseController {
       if (type == "none") {
         response = await _apiService.delete(url);
       } else {
-        response = await _apiService.post(
-          url,
-          {'reactionType': type},
-        );
+        response = await _apiService.post(url, {'reactionType': type});
       }
 
       final data = jsonDecode(response.body);
@@ -453,18 +448,45 @@ class CircleController extends BaseController {
     }
     final authController = Get.find<AuthController>();
     final user = authController.currentUser.value;
-    
+
     final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
-    
+
     final List<MediaModel> tempMedia = [];
     if (imageFile != null) {
-      tempMedia.add(MediaModel(url: imageFile.path, type: 'image', mimeType: 'image/jpeg', size: 0, localFilePath: imageFile.path, isUploading: true));
+      tempMedia.add(
+        MediaModel(
+          url: imageFile.path,
+          type: 'image',
+          mimeType: 'image/jpeg',
+          size: 0,
+          localFilePath: imageFile.path,
+          isUploading: true,
+        ),
+      );
     }
     if (videoFile != null) {
-      tempMedia.add(MediaModel(url: videoFile.path, type: 'video', mimeType: 'video/mp4', size: 0, localFilePath: videoFile.path, isUploading: true));
+      tempMedia.add(
+        MediaModel(
+          url: videoFile.path,
+          type: 'video',
+          mimeType: 'video/mp4',
+          size: 0,
+          localFilePath: videoFile.path,
+          isUploading: true,
+        ),
+      );
     }
     if (anyFile != null) {
-      tempMedia.add(MediaModel(url: anyFile.path, type: 'file', mimeType: 'application/octet-stream', size: 0, localFilePath: anyFile.path, isUploading: true));
+      tempMedia.add(
+        MediaModel(
+          url: anyFile.path,
+          type: 'file',
+          mimeType: 'application/octet-stream',
+          size: 0,
+          localFilePath: anyFile.path,
+          isUploading: true,
+        ),
+      );
     }
 
     final tempComment = CommentModel(
@@ -480,14 +502,16 @@ class CircleController extends BaseController {
     );
 
     if (parentPostId != null && parentPostId != post.id) {
-       final parentComment = post.comments.firstWhereOrNull((c) => c.id == parentPostId);
-       if (parentComment != null) {
-         parentComment.replies.insert(0, tempComment);
-         parentComment.replies.refresh();
-       }
+      final parentComment = post.comments.firstWhereOrNull(
+        (c) => c.id == parentPostId,
+      );
+      if (parentComment != null) {
+        parentComment.replies.insert(0, tempComment);
+        parentComment.replies.refresh();
+      }
     } else {
-       post.comments.insert(0, tempComment);
-       post.comments.refresh();
+      post.comments.insert(0, tempComment);
+      post.comments.refresh();
     }
     post.isCommenting.value = false;
 
@@ -498,29 +522,36 @@ class CircleController extends BaseController {
       if (imageFile != null) {
         final mimeType = lookupMimeType(imageFile.path) ?? 'image/jpeg';
         final mimeParts = mimeType.split('/');
-        files.add(await http.MultipartFile.fromPath(
-          'image',
-          imageFile.path,
-          contentType: MediaType(mimeParts.first, mimeParts[1]),
-        ));
+        files.add(
+          await http.MultipartFile.fromPath(
+            'image',
+            imageFile.path,
+            contentType: MediaType(mimeParts.first, mimeParts[1]),
+          ),
+        );
       }
       if (videoFile != null) {
         final mimeType = lookupMimeType(videoFile.path) ?? 'video/mp4';
         final mimeParts = mimeType.split('/');
-        files.add(await http.MultipartFile.fromPath(
-          'video',
-          videoFile.path,
-          contentType: MediaType(mimeParts.first, mimeParts[1]),
-        ));
+        files.add(
+          await http.MultipartFile.fromPath(
+            'video',
+            videoFile.path,
+            contentType: MediaType(mimeParts.first, mimeParts[1]),
+          ),
+        );
       }
       if (anyFile != null) {
-        final mimeType = lookupMimeType(anyFile.path) ?? 'application/octet-stream';
+        final mimeType =
+            lookupMimeType(anyFile.path) ?? 'application/octet-stream';
         final mimeParts = mimeType.split('/');
-        files.add(await http.MultipartFile.fromPath(
-          'file',
-          anyFile.path,
-          contentType: MediaType(mimeParts.first, mimeParts[1]),
-        ));
+        files.add(
+          await http.MultipartFile.fromPath(
+            'file',
+            anyFile.path,
+            contentType: MediaType(mimeParts.first, mimeParts[1]),
+          ),
+        );
       }
 
       final response = await _apiService.multipartRequest(
@@ -535,7 +566,7 @@ class CircleController extends BaseController {
         if (circle != null) {
           fetchCircleFeed(circle);
         } else {
-          // If no circle model provided (e.g. from Home), we might need to manually update 
+          // If no circle model provided (e.g. from Home), we might need to manually update
           // but usually the server response or a manual fetch is needed.
           // For now, just show success.
           Get.snackbar("Success", "Comment added successfully");
@@ -572,8 +603,122 @@ class CircleController extends BaseController {
   }
 
   void lockCircle(CircleModel circle) {
-    debugPrint("Lock circle: ${circle.name}");
-    // TODO: Implement lock logic
+    toggleLockCircle(circle);
+  }
+
+  Future<void> toggleLockCircle(CircleModel circle) async {
+    try {
+      setLoading(true);
+      final newStatus = circle.isLocked ? "unlock" : "lock";
+      final url = '${AppUrls.circles}/${circle.id}/join-status';
+      final response = await _apiService.patch(
+        url,
+        body: {'joinStatus': newStatus},
+      );
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        // Refresh to update UI state
+        fetchCircles(scope: 'created');
+        fetchCircles(visibility: 'public');
+        fetchCircles(visibility: 'private');
+        Get.snackbar("Success", "Circle status updated to $newStatus");
+      } else {
+        Get.snackbar(
+          "Error",
+          data['message'] ?? "Failed to update circle status",
+        );
+      }
+    } catch (e) {
+      debugPrint("Error updating circle status: $e");
+      Get.snackbar("Error", "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  Future<void> leaveCircle(CircleModel circle) async {
+    try {
+      setLoading(true);
+      final url = '${AppUrls.circles}/${circle.id}/leave';
+      final response = await _apiService.post(url, {});
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        circle.isJoined.value = false;
+        fetchCircles(scope: 'joined');
+        Get.back();
+        Get.snackbar("Success", data['message'] ?? "Left circle successfully");
+      } else {
+        Get.snackbar("Error", data['message'] ?? "Failed to leave circle");
+      }
+    } catch (e) {
+      debugPrint("Error leaving circle: $e");
+      Get.snackbar("Error", "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Member Invite Search
+  var inviteSearchMembers = <MemberModel>[].obs;
+  var isInviteLoading = false.obs;
+
+  Future<void> searchMembersToInvite(String circleId, String query) async {
+    if (query.isEmpty) {
+      inviteSearchMembers.clear();
+      return;
+    }
+    try {
+      isInviteLoading.value = true;
+      final url =
+          '${AppUrls.circles}/$circleId/members/search-invite?search=$query';
+      final response = await _apiService.get(url);
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final List<dynamic> usersJson = data['data'];
+        inviteSearchMembers.assignAll(
+          usersJson.map((u) {
+            return MemberModel(
+              id: u['_id'],
+              userId: u['_id'],
+              name: u['fullName'] ?? u['username'] ?? "Unknown",
+              image: AppUrls.imageUrl(u['avatar']),
+              isOwner: false,
+              role: 'User',
+              bondStatus: 'none',
+            );
+          }).toList(),
+        );
+      }
+    } catch (e) {
+      debugPrint("Error searching members to invite: $e");
+    } finally {
+      isInviteLoading.value = false;
+    }
+  }
+
+  Future<void> addMemberDirectly(CircleModel circle, String userId) async {
+    try {
+      setLoading(true);
+      final url = '${AppUrls.circles}/${circle.id}/members/add';
+      final response = await _apiService.post(url, {'userId': userId});
+
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        Get.snackbar("Success", "Member added successfully");
+        fetchCircleMembers(circle);
+        // Remove from invite list if present
+        inviteSearchMembers.removeWhere((m) => m.userId == userId);
+      } else {
+        Get.snackbar("Error", data['message'] ?? "Failed to add member");
+      }
+    } catch (e) {
+      debugPrint("Error adding member directly: $e");
+      Get.snackbar("Error", "An error occurred");
+    } finally {
+      setLoading(false);
+    }
   }
 
   Future<void> createCirclePost({
@@ -585,23 +730,50 @@ class CircleController extends BaseController {
   }) async {
     final authController = Get.find<AuthController>();
     final user = authController.currentUser.value;
-    
+
     final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
-    
+
     final List<MediaModel> tempMedia = [];
     final List<String> tempImages = [];
-    
+
     if (images != null) {
       for (var img in images) {
-        tempMedia.add(MediaModel(url: img.path, type: 'image', mimeType: 'image/jpeg', size: 0, localFilePath: img.path, isUploading: true));
+        tempMedia.add(
+          MediaModel(
+            url: img.path,
+            type: 'image',
+            mimeType: 'image/jpeg',
+            size: 0,
+            localFilePath: img.path,
+            isUploading: true,
+          ),
+        );
         tempImages.add(img.path);
       }
     }
     if (video != null) {
-      tempMedia.add(MediaModel(url: video.path, type: 'video', mimeType: 'video/mp4', size: 0, localFilePath: video.path, isUploading: true));
+      tempMedia.add(
+        MediaModel(
+          url: video.path,
+          type: 'video',
+          mimeType: 'video/mp4',
+          size: 0,
+          localFilePath: video.path,
+          isUploading: true,
+        ),
+      );
     }
     if (file != null) {
-      tempMedia.add(MediaModel(url: file.path, type: 'file', mimeType: 'application/octet-stream', size: 0, localFilePath: file.path, isUploading: true));
+      tempMedia.add(
+        MediaModel(
+          url: file.path,
+          type: 'file',
+          mimeType: 'application/octet-stream',
+          size: 0,
+          localFilePath: file.path,
+          isUploading: true,
+        ),
+      );
     }
 
     final tempPost = PostModel(
@@ -628,38 +800,43 @@ class CircleController extends BaseController {
         for (var image in images) {
           final mimeType = lookupMimeType(image.path) ?? 'image/jpeg';
           final mimeParts = mimeType.split('/');
-          files.add(await http.MultipartFile.fromPath(
-            'image',
-            image.path,
-            contentType: MediaType(mimeParts.first, mimeParts[1]),
-          ));
+          files.add(
+            await http.MultipartFile.fromPath(
+              'image',
+              image.path,
+              contentType: MediaType(mimeParts.first, mimeParts[1]),
+            ),
+          );
         }
       }
       if (video != null) {
         final mimeType = lookupMimeType(video.path) ?? 'video/mp4';
         final mimeParts = mimeType.split('/');
-        files.add(await http.MultipartFile.fromPath(
-          'video',
-          video.path,
-          contentType: MediaType(mimeParts.first, mimeParts[1]),
-        ));
+        files.add(
+          await http.MultipartFile.fromPath(
+            'video',
+            video.path,
+            contentType: MediaType(mimeParts.first, mimeParts[1]),
+          ),
+        );
       }
       if (file != null) {
-        final mimeType = lookupMimeType(file.path) ?? 'application/octet-stream';
+        final mimeType =
+            lookupMimeType(file.path) ?? 'application/octet-stream';
         final mimeParts = mimeType.split('/');
-        files.add(await http.MultipartFile.fromPath(
-          'file',
-          file.path,
-          contentType: MediaType(mimeParts.first, mimeParts[1]),
-        ));
+        files.add(
+          await http.MultipartFile.fromPath(
+            'file',
+            file.path,
+            contentType: MediaType(mimeParts.first, mimeParts[1]),
+          ),
+        );
       }
 
       final response = await _apiService.multipartRequest(
         'POST',
         url,
-        fields: {
-          'content': content,
-        },
+        fields: {'content': content},
         files: files,
       );
 
@@ -692,21 +869,25 @@ class CircleController extends BaseController {
   }
 
   void toggleLikeComment(CommentModel comment) {
-    _reactToId(comment.id, comment.reactionType, comment.isLiked, comment.likesCount);
+    _reactToId(
+      comment.id,
+      comment.reactionType,
+      comment.isLiked,
+      comment.likesCount,
+    );
   }
 
   Future<void> updateCommentReaction(CommentModel comment, String type) async {
     try {
-      final url = AppUrls.reactPost(comment.id); // Assuming backend uses the same endpoint logic for comment reactions
+      final url = AppUrls.reactPost(
+        comment.id,
+      ); // Assuming backend uses the same endpoint logic for comment reactions
 
       http.Response response;
       if (type == "none") {
         response = await _apiService.delete(url);
       } else {
-        response = await _apiService.post(
-          url,
-          {'reactionType': type},
-        );
+        response = await _apiService.post(url, {'reactionType': type});
       }
 
       final data = jsonDecode(response.body);
@@ -747,6 +928,13 @@ class CircleController extends BaseController {
   }
 
   Future<void> joinCircle(CircleModel circle) async {
+    if (circle.isPaid) {
+      // Import BillingController at the top or access it via Get
+      final billingController = Get.isRegistered<BillingController>() ? Get.find<BillingController>() : Get.put(BillingController());
+      await billingController.purchaseCircleJoin(circle.id);
+      return;
+    }
+
     try {
       setLoading(true);
       final url = AppUrls.joinCircle(circle.id);

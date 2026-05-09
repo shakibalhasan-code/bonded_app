@@ -572,7 +572,6 @@ class EventDetailsScreen extends StatelessWidget {
         if (displayImage != null) {
           Get.to(() => FullScreenImageViewer(imageUrl: displayImage));
         } else if (displayVideo != null) {
-          // You might need a real video player here, but for now using the mock one
           Get.to(() => MockVideoPlayer(videoUrl: displayVideo));
         }
       },
@@ -580,18 +579,46 @@ class EventDetailsScreen extends StatelessWidget {
         width: 100.w,
         margin: EdgeInsets.only(right: 12.w),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12.r),
-          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(16.r),
+          color: const Color(0xFFF0EDFF),
           image: displayImage != null
               ? DecorationImage(
                   image: NetworkImage(displayImage),
                   fit: BoxFit.cover,
                 )
               : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        child: displayImage == null && displayVideo != null
-            ? Center(child: Icon(Icons.video_library, color: Colors.grey[400]))
-            : null,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16.r),
+          child: Stack(
+            children: [
+              if (displayVideo != null && displayImage == null)
+                Center(
+                  child: Icon(Icons.play_circle_fill, color: AppColors.primary.withOpacity(0.7), size: 32.sp),
+                ),
+              if (displayVideo != null && displayImage != null)
+                Positioned(
+                  right: 8.w,
+                  top: 8.h,
+                  child: Container(
+                    padding: EdgeInsets.all(4.w),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.play_arrow, color: Colors.white, size: 12.sp),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -604,112 +631,286 @@ class EventDetailsScreen extends StatelessWidget {
 
     Get.bottomSheet(
       Container(
-        padding: EdgeInsets.all(24.w),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            ),
+          ],
         ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Create Highlight",
-                style: GoogleFonts.inter(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textHeading,
-                ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag Handle
+            SizedBox(height: 12.h),
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2.r),
               ),
-              SizedBox(height: 16.h),
-              TextField(
-                controller: captionController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: "Write a caption...",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                ),
-              ),
-              SizedBox(height: 16.h),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () async {
-                        final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-                        if (image != null) imagePaths.add(image.path);
-                      },
-                      icon: const Icon(Icons.image),
-                      label: const Text("Image"),
+            ),
+            
+            Flexible(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(24.w, 20.h, 24.w, 30.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Create Highlight",
+                          style: GoogleFonts.inter(
+                            fontSize: 20.sp,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF1B0B3B),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Get.back(),
+                          icon: Icon(Icons.close, color: Colors.grey[400]),
+                        ),
+                      ],
                     ),
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () async {
-                        final XFile? video = await picker.pickVideo(source: ImageSource.gallery);
-                        if (video != null) videoPaths.add(video.path);
-                      },
-                      icon: const Icon(Icons.videocam),
-                      label: const Text("Video"),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 16.h),
-              Obx(() => Text(
-                "${imagePaths.length} Image(s), ${videoPaths.length} Video(s) selected",
-                style: GoogleFonts.inter(fontSize: 12.sp, color: Colors.grey[600]),
-              )),
-              SizedBox(height: 24.h),
-              Obx(() => ElevatedButton(
-                onPressed: controller.isCreatingHighlight.value
-                    ? null
-                    : () async {
-                        if (captionController.text.trim().isEmpty) {
-                          Get.snackbar("Error", "Caption cannot be empty");
-                          return;
-                        }
-                        if (imagePaths.isEmpty && videoPaths.isEmpty) {
-                          Get.snackbar("Error", "Please select at least one image or video");
-                          return;
-                        }
-                        await controller.createHighlight(
-                          eventId: eventId,
-                          caption: captionController.text.trim(),
-                          imagePaths: imagePaths.toList(),
-                          videoPaths: videoPaths.toList(),
-                        );
-                        if (!controller.isCreatingHighlight.value) {
-                          Get.back();
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  minimumSize: Size(double.infinity, 50.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25.r),
-                  ),
-                ),
-                child: controller.isCreatingHighlight.value
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : Text(
-                        "Post Highlight",
-                        style: GoogleFonts.inter(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                    SizedBox(height: 20.h),
+                    
+                    // Caption Field
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8F7FF),
+                        borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(color: const Color(0xFFE5E0FF)),
+                      ),
+                      child: TextField(
+                        controller: captionController,
+                        maxLines: 4,
+                        style: GoogleFonts.inter(fontSize: 14.sp),
+                        decoration: InputDecoration(
+                          hintText: "What's happening at the event?",
+                          hintStyle: GoogleFonts.inter(color: Colors.grey[400]),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.all(16.w),
                         ),
                       ),
-              )),
+                    ),
+                    SizedBox(height: 24.h),
+                    
+                    // Media Section
+                    Text(
+                      "Add Photos & Videos",
+                      style: GoogleFonts.inter(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1B0B3B),
+                      ),
+                    ),
+                    SizedBox(height: 12.h),
+                    
+                    // Selected Media Previews
+                    Obx(() {
+                      if (imagePaths.isEmpty && videoPaths.isEmpty) {
+                        return Row(
+                          children: [
+                            _buildMediaAddButton(
+                              icon: Icons.add_a_photo_outlined,
+                              label: "Photo",
+                              onTap: () async {
+                                final List<XFile>? images = await picker.pickMultiImage();
+                                if (images != null) {
+                                  imagePaths.addAll(images.map((e) => e.path));
+                                }
+                              },
+                            ),
+                            SizedBox(width: 12.w),
+                            _buildMediaAddButton(
+                              icon: Icons.videocam_outlined,
+                              label: "Video",
+                              onTap: () async {
+                                final XFile? video = await picker.pickVideo(source: ImageSource.gallery);
+                                if (video != null) {
+                                  videoPaths.add(video.path);
+                                }
+                              },
+                            ),
+                          ],
+                        );
+                      }
+                      
+                      return SizedBox(
+                        height: 100.h,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            ...imagePaths.map((path) => _buildMediaPreview(path, true, () => imagePaths.remove(path))),
+                            ...videoPaths.map((path) => _buildMediaPreview(path, false, () => videoPaths.remove(path))),
+                            
+                            // Add more button
+                            GestureDetector(
+                              onTap: () async {
+                                final List<XFile>? images = await picker.pickMultiImage();
+                                if (images != null) {
+                                  imagePaths.addAll(images.map((e) => e.path));
+                                }
+                              },
+                              child: Container(
+                                width: 100.w,
+                                margin: EdgeInsets.only(right: 12.w),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8F7FF),
+                                  borderRadius: BorderRadius.circular(12.r),
+                                  border: Border.all(color: const Color(0xFFE5E0FF), style: BorderStyle.solid),
+                                ),
+                                child: Icon(Icons.add, color: AppColors.primary),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    
+                    SizedBox(height: 32.h),
+                    
+                    // Submit Button
+                    Obx(() => ElevatedButton(
+                      onPressed: controller.isCreatingHighlight.value
+                          ? null
+                          : () async {
+                              if (captionController.text.trim().isEmpty) {
+                                Get.snackbar("Error", "Please add a caption");
+                                return;
+                              }
+                              if (imagePaths.isEmpty && videoPaths.isEmpty) {
+                                Get.snackbar("Error", "Please add at least one photo or video");
+                                return;
+                              }
+                              
+                              final success = await controller.createHighlight(
+                                eventId: eventId,
+                                caption: captionController.text.trim(),
+                                imagePaths: imagePaths.toList(),
+                                videoPaths: videoPaths.toList(),
+                              );
+                              
+                              if (success) {
+                                if (Get.isBottomSheetOpen == true) {
+                                  Get.back();
+                                }
+                                Get.snackbar(
+                                  "Success", 
+                                  "Highlight created successfully",
+                                  backgroundColor: Colors.green,
+                                  colorText: Colors.white,
+                                  snackPosition: SnackPosition.BOTTOM,
+                                  margin: EdgeInsets.all(20.w),
+                                  duration: const Duration(seconds: 2),
+                                );
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        minimumSize: Size(double.infinity, 56.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28.r),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: controller.isCreatingHighlight.value
+                          ? SizedBox(
+                              width: 24.w,
+                              height: 24.w,
+                              child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
+                            )
+                          : Text(
+                              "Post Highlight",
+                              style: GoogleFonts.inter(
+                                fontSize: 16.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                    )),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  Widget _buildMediaAddButton({required IconData icon, required String label, required VoidCallback onTap}) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 20.h),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8F7FF),
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(color: const Color(0xFFE5E0FF)),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: AppColors.primary, size: 28.sp),
+              SizedBox(height: 8.h),
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
             ],
           ),
         ),
       ),
-      isScrollControlled: true,
+    );
+  }
+
+  Widget _buildMediaPreview(String path, bool isImage, VoidCallback onRemove) {
+    return Container(
+      width: 100.w,
+      margin: EdgeInsets.only(right: 12.w),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12.r),
+        color: Colors.black,
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12.r),
+            child: isImage 
+              ? Image.file(File(path), fit: BoxFit.cover)
+              : Center(child: Icon(Icons.play_circle_fill, color: Colors.white, size: 30.sp)),
+          ),
+          Positioned(
+            top: 4.h,
+            right: 4.w,
+            child: GestureDetector(
+              onTap: onRemove,
+              child: Container(
+                padding: EdgeInsets.all(4.w),
+                decoration: const BoxDecoration(
+                  color: Colors.black54,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.close, color: Colors.white, size: 14.sp),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

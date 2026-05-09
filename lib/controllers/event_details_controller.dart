@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'billing_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -57,7 +59,7 @@ class EventDetailsController extends GetxController {
     }
   }
 
-  Future<void> createHighlight({
+  Future<bool> createHighlight({
     required String eventId,
     required String caption,
     required List<String> imagePaths,
@@ -112,18 +114,20 @@ class EventDetailsController extends GetxController {
       );
 
       final data = jsonDecode(response.body);
+      debugPrint("Create highlight response: ${response.body}");
       if (data['success'] == true) {
-        Get.snackbar("Success", "Highlight created successfully",
-            backgroundColor: Colors.green, colorText: Colors.white);
         fetchHighlights(eventId);
+        return true;
       } else {
         Get.snackbar("Error", data['message'] ?? "Failed to create highlight",
             backgroundColor: Colors.red, colorText: Colors.white);
+        return false;
       }
     } catch (e) {
       debugPrint("Error creating highlight: $e");
-      Get.snackbar("Error", "Something went wrong",
+      Get.snackbar("Error", "Something went wrong: $e",
           backgroundColor: Colors.red, colorText: Colors.white);
+      return false;
     } finally {
       isCreatingHighlight.value = false;
     }
@@ -136,7 +140,27 @@ class EventDetailsController extends GetxController {
       final responseData = jsonDecode(response.body);
 
       if (responseData['success'] == true) {
-        _showSuccessDialog();
+        final data = responseData['data'];
+        
+        if (data['status'] == 'confirmed') {
+          _showSuccessDialog();
+        } else if (data['paymentFlow'] == 'store') {
+          // Store billing (Virtual Event)
+          final bookingId = data['bookingId'];
+          final platform = Platform.isAndroid ? 'google' : 'apple';
+          final productId = data['products'][platform]['productId'];
+          
+          final billingController = Get.isRegistered<BillingController>() 
+              ? Get.find<BillingController>() 
+              : Get.put(BillingController());
+              
+          await billingController.purchaseVirtualTicket(bookingId, productId);
+        } else if (data['clientSecret'] != null) {
+          // Stripe (In-Person Event)
+          Get.snackbar("Info", "Stripe payment required. Please use a card in the web checkout.");
+        } else {
+          _showSuccessDialog();
+        }
       } else {
         Get.snackbar(
           "Error",

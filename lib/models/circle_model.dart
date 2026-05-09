@@ -13,6 +13,7 @@ class MemberModel {
   final String role;
   final bool isOwner;
   final bool isBonded;
+  final String bondStatus; // none, accepted, pending_sent, pending_received
 
   MemberModel({
     required this.id,
@@ -22,6 +23,7 @@ class MemberModel {
     this.role = 'Member',
     required this.isOwner,
     this.isBonded = false,
+    this.bondStatus = 'none',
   });
 
   factory MemberModel.fromJson(Map<String, dynamic> json) {
@@ -47,6 +49,7 @@ class MemberModel {
       role: json['role'] ?? 'Member',
       isOwner: json['isCreator'] ?? false,
       isBonded: json['isBonded'] ?? false,
+      bondStatus: json['bondStatus'] ?? 'none',
     );
   }
 }
@@ -107,7 +110,7 @@ class CircleModel {
     required this.address,
     required this.createdAt,
     required this.updatedAt,
-    this.image = 'https://images.unsplash.com/photo-1529156069898-49953e39b30f?w=800&q=80',
+    this.image = 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&q=80',
     bool isJoinedValue = false,
     this.isLocked = false,
     this.memberAvatars = const [],
@@ -155,7 +158,7 @@ class CircleModel {
       address: json['address'] ?? 'Not Specified',
       createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
       updatedAt: DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
-      image: AppUrls.imageUrl(json['image'] ?? 'https://images.unsplash.com/photo-1529156069898-49953e39b30f?w=800&q=80'),
+      image: AppUrls.imageUrl(json['image'] ?? 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&q=80'),
       isJoinedValue: json['isJoined'] ?? false,
       isLocked: json['isLocked'] ?? false,
       memberAvatars: List<String>.from(json['memberAvatars'] ?? []),

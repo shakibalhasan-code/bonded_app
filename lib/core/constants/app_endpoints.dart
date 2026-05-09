@@ -40,7 +40,13 @@ class AppUrls {
 
   // Billing & Store Endpoints
   static const String storeProducts = '/store-products';
-  static const String verifyPurchase = '/kyc/me/verification/verify-purchase';
+  static const String kycVerifyPurchase = '/kyc/me/verification/verify-purchase';
+  static const String kycMe = '/kyc/me';
+  static const String iapVerify = '/iap/verify';
+  static String circleJoinPaymentIntent(String circleId) => '/circles/$circleId/join/payment-intent';
+  static String circleJoinConfirm(String circleId) => '/circles/$circleId/join/confirm';
+  static const String storeProductsTiers = '/store-products/tiers';
+  static const String storeProductsResolve = '/store-products/resolve';
 
   // Bond Endpoints
   static const String nearbyBonds = '/bonds/nearby';

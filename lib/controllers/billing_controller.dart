@@ -7,6 +7,7 @@ import 'package:bonded_app/services/billing_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import '../services/shared_prefs_service.dart';
 import 'base_controller.dart';
 
 class BillingController extends BaseController {
@@ -70,25 +71,116 @@ class BillingController extends BaseController {
     }
   }
 
+  Map<String, String>? _currentPurchaseContext;
+
   Future<void> purchaseKycVerification() async {
-    final product = products.firstWhereOrNull(
-      (p) => p.id == BillingConfig.kycVerificationId,
-    );
-    if (product != null) {
-      await _billingService.buyProduct(product);
-    } else {
-      Get.snackbar('Error', 'Verification product not found in store.');
+    try {
+      setLoading(true);
+      final platform = Platform.isAndroid ? 'google' : 'apple';
+      final response = await _apiService.get('${AppUrls.storeProducts}?purpose=creator-verification&platform=$platform');
+      final data = jsonDecode(response.body);
+      if (data['success'] == true && data['data'] != null && data['data'].isNotEmpty) {
+        final productId = data['data'][0]['productId'];
+        final fetchedProducts = await _billingService.getProducts({productId});
+        if (fetchedProducts.isNotEmpty) {
+          _currentPurchaseContext = {'type': 'kyc', 'productId': productId};
+          SharedPrefsService.saveString('pending_purchase_type', 'kyc');
+          SharedPrefsService.saveString('pending_purchase_product_id', productId);
+          await _billingService.buyProduct(fetchedProducts.first);
+        } else {
+          Get.snackbar('Error', 'Verification product not found in store.');
+        }
+      } else {
+        Get.snackbar('Error', 'Failed to fetch verification product.');
+      }
+    } catch (e) {
+      debugPrint('Error initiating kyc purchase: $e');
+      Get.snackbar('Error', 'An error occurred.');
+    } finally {
+      setLoading(false);
     }
   }
 
   Future<void> purchaseSubscription() async {
-    final product = products.firstWhereOrNull(
-      (p) => p.id == BillingConfig.subscriptionId,
-    );
-    if (product != null) {
-      await _billingService.buyProduct(product);
-    } else {
-      Get.snackbar('Error', 'Subscription product not found in store.');
+    try {
+      setLoading(true);
+      final platform = Platform.isAndroid ? 'google' : 'apple';
+      final response = await _apiService.get('${AppUrls.storeProducts}?purpose=host-pro-subscription&platform=$platform');
+      final data = jsonDecode(response.body);
+      if (data['success'] == true && data['data'] != null && data['data'].isNotEmpty) {
+        final productId = data['data'][0]['productId'];
+        final fetchedProducts = await _billingService.getProducts({productId});
+        if (fetchedProducts.isNotEmpty) {
+          _currentPurchaseContext = {'type': 'subscription', 'productId': productId};
+          SharedPrefsService.saveString('pending_purchase_type', 'subscription');
+          SharedPrefsService.saveString('pending_purchase_product_id', productId);
+          await _billingService.buyProduct(fetchedProducts.first);
+        } else {
+          Get.snackbar('Error', 'Subscription product not found in store.');
+        }
+      } else {
+        Get.snackbar('Error', 'Failed to fetch subscription product.');
+      }
+    } catch (e) {
+      debugPrint('Error initiating subscription purchase: $e');
+      Get.snackbar('Error', 'An error occurred.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  Future<void> purchaseCircleJoin(String circleId) async {
+    try {
+      setLoading(true);
+      final response = await _apiService.post(AppUrls.circleJoinPaymentIntent(circleId), {});
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final platform = Platform.isAndroid ? 'google' : 'apple';
+        final productId = data['data']['products'][platform]['productId'];
+        
+        final fetchedProducts = await _billingService.getProducts({productId});
+        if (fetchedProducts.isNotEmpty) {
+          _currentPurchaseContext = {'type': 'circle_join', 'circleId': circleId, 'productId': productId};
+          SharedPrefsService.saveString('pending_purchase_type', 'circle_join');
+          SharedPrefsService.saveString('pending_purchase_circle_id', circleId);
+          SharedPrefsService.saveString('pending_purchase_product_id', productId);
+          await _billingService.buyProduct(fetchedProducts.first);
+        } else {
+          Get.snackbar('Error', 'Product not found in store.');
+        }
+      } else {
+        Get.snackbar('Error', data['message'] ?? 'Failed to initiate purchase.');
+      }
+    } catch (e) {
+      debugPrint('Error purchasing circle join: $e');
+      Get.snackbar('Error', 'An unexpected error occurred.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  Future<void> purchaseVirtualTicket(String bookingId, String productId) async {
+    try {
+      setLoading(true);
+      final fetchedProducts = await _billingService.getProducts({productId});
+      if (fetchedProducts.isNotEmpty) {
+        _currentPurchaseContext = {
+          'type': 'virtual_event_ticket',
+          'bookingId': bookingId,
+          'productId': productId
+        };
+        SharedPrefsService.saveString('pending_purchase_type', 'virtual_event_ticket');
+        SharedPrefsService.saveString('pending_purchase_booking_id', bookingId);
+        SharedPrefsService.saveString('pending_purchase_product_id', productId);
+        await _billingService.buyProduct(fetchedProducts.first);
+      } else {
+        Get.snackbar('Error', 'Ticket product not found in store.');
+      }
+    } catch (e) {
+      debugPrint('Error purchasing virtual ticket: $e');
+      Get.snackbar('Error', 'An unexpected error occurred.');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -120,7 +212,6 @@ class BillingController extends BaseController {
       if (Platform.isAndroid) {
         body['googlePurchaseToken'] =
             purchaseDetails.verificationData.serverVerificationData;
-        body['productId'] = purchaseDetails.productID;
       } else {
         body['appleTransactionId'] = purchaseDetails.purchaseID;
         // In some cases for Apple, you might need the receipt data
@@ -128,10 +219,57 @@ class BillingController extends BaseController {
             purchaseDetails.verificationData.serverVerificationData;
       }
 
-      final response = await _apiService.post(AppUrls.verifyPurchase, body);
+      String url = AppUrls.kycVerifyPurchase; // Default
+
+      String? type = SharedPrefsService.getString('pending_purchase_type');
+      String? savedProductId = SharedPrefsService.getString('pending_purchase_product_id');
+      
+      if (type == null || savedProductId != purchaseDetails.productID) {
+         if (purchaseDetails.productID.contains('subscription') || purchaseDetails.productID == BillingConfig.subscriptionId) {
+            type = 'subscription';
+         } else if (purchaseDetails.productID.contains('circle.join')) {
+            type = 'circle_join';
+         } else {
+            type = 'kyc';
+         }
+      }
+
+      if (type == 'circle_join') {
+        String? circleId = SharedPrefsService.getString('pending_purchase_circle_id');
+        if (circleId != null && circleId.isNotEmpty) {
+           url = AppUrls.circleJoinConfirm(circleId);
+        } else {
+           Get.snackbar('Error', 'Circle ID missing for verification.');
+           return false;
+        }
+      } else if (type == 'virtual_event_ticket') {
+        String? bookingId = SharedPrefsService.getString('pending_purchase_booking_id');
+        if (bookingId != null && bookingId.isNotEmpty) {
+          url = AppUrls.iapVerify;
+          body['purpose'] = 'virtual-event-ticket';
+          body['referenceId'] = bookingId;
+        } else {
+          Get.snackbar('Error', 'Booking ID missing for verification.');
+          return false;
+        }
+      } else if (type == 'subscription') {
+        url = AppUrls.iapVerify;
+        body['purpose'] = 'host-pro-subscription';
+      } else {
+        url = AppUrls.kycVerifyPurchase;
+      }
+
+      final response = await _apiService.post(url, body);
       final data = jsonDecode(response.body);
 
-      return data['success'] == true;
+      if (data['success'] == true) {
+         SharedPrefsService.delete('pending_purchase_type');
+         SharedPrefsService.delete('pending_purchase_circle_id');
+         SharedPrefsService.delete('pending_purchase_booking_id');
+         SharedPrefsService.delete('pending_purchase_product_id');
+         return true;
+      }
+      return false;
     } catch (e) {
       debugPrint('Backend verification error: $e');
       return false;

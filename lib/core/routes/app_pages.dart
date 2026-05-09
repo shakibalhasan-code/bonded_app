@@ -1,5 +1,5 @@
 import 'package:bonded_app/screens/profile/connection_type_screen.dart';
-import 'package:bonded_app/screens/profile/picture_verification_screen.dart';
+import 'package:bonded_app/screens/profile/kyc_checklist_screen.dart';
 import 'package:bonded_app/screens/events/event_filter_screen.dart';
 import 'package:bonded_app/screens/profile/profile_screen.dart';
 import 'package:bonded_app/screens/profile/edit_profile_screen.dart';
@@ -130,12 +130,12 @@ class AppPages {
     ),
     GetPage(
       name: AppRoutes.PICTURE_VERIFICATION,
-      page: () => const PictureVerificationScreen(),
+      page: () => const KycChecklistScreen(),
       binding: ProfileBinding(),
     ),
     GetPage(
       name: AppRoutes.KYC_DOCUMENT,
-      page: () => const KYCDocumentScreen(),
+      page: () => const KycChecklistScreen(),
       binding: ProfileBinding(),
     ),
     GetPage(

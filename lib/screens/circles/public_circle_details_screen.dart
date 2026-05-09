@@ -550,110 +550,210 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
   void _showGroupInfoBottomSheet(BuildContext context, CircleModel circle) {
     Get.bottomSheet(
       Container(
-        padding: EdgeInsets.all(24.w),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            ),
+          ],
         ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40.w,
-                  height: 4.h,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2.r),
-                  ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(height: 12.h),
+            Container(
+              width: 40.w,
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2.r),
+              ),
+            ),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.fromLTRB(24.w, 20.h, 24.w, 30.h),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Group Info",
+                          style: GoogleFonts.inter(
+                            fontSize: 22.sp,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF1B0B3B),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Get.back(),
+                          icon: Icon(Icons.close, color: Colors.grey[400]),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20.h),
+                    
+                    // Circle Cover Image
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(20.r),
+                      child: Image.network(
+                        circle.image,
+                        width: double.infinity,
+                        height: 180.h,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            height: 180.h,
+                            color: const Color(0xFFF8F7FF),
+                            child: const Center(child: CircularProgressIndicator()),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 180.h,
+                            width: double.infinity,
+                            color: const Color(0xFFFAF7FF),
+                            child: Center(
+                              child: Icon(Icons.image_not_supported_outlined, color: AppColors.primary.withOpacity(0.3), size: 40.sp),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    SizedBox(height: 20.h),
+                    
+                    Text(
+                      circle.name,
+                      style: GoogleFonts.inter(
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF1B0B3B),
+                      ),
+                    ),
+                    SizedBox(height: 8.h),
+                    
+                    // Category Chip
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(20.r),
+                      ),
+                      child: Text(
+                        circle.category,
+                        style: GoogleFonts.inter(
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16.h),
+                    
+                    Text(
+                      circle.description,
+                      style: GoogleFonts.inter(
+                        fontSize: 14.sp,
+                        color: Colors.grey[700],
+                        height: 1.6,
+                      ),
+                    ),
+                    SizedBox(height: 24.h),
+                    
+                    // Stats Row
+                    Row(
+                      children: [
+                        _buildStatItem(Icons.people_outline, "${circle.memberCount.value} Members"),
+                        SizedBox(width: 24.w),
+                        _buildStatItem(Icons.article_outlined, "${circle.postCount.value} Posts"),
+                      ],
+                    ),
+                    SizedBox(height: 24.h),
+                    
+                    // Interests / Tags
+                    if (circle.hashtags.isNotEmpty) ...[
+                      Text(
+                        "Interests",
+                        style: GoogleFonts.inter(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1B0B3B),
+                        ),
+                      ),
+                      SizedBox(height: 12.h),
+                      Wrap(
+                        spacing: 8.w,
+                        runSpacing: 8.h,
+                        children: circle.hashtags.map((tag) => Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: const Color(0xFFE5E0FF)),
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Text(
+                            tag,
+                            style: GoogleFonts.inter(
+                              fontSize: 12.sp,
+                              color: const Color(0xFF6B4DFF),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        )).toList(),
+                      ),
+                      SizedBox(height: 32.h),
+                    ],
+                    
+                    // Close Button
+                    ElevatedButton(
+                      onPressed: () => Get.back(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        minimumSize: Size(double.infinity, 56.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28.r),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        "Close",
+                        style: GoogleFonts.inter(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              SizedBox(height: 24.h),
-              Text(
-                "Group Info",
-                style: GoogleFonts.inter(
-                  fontSize: 20.sp,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF1B0B3B),
-                ),
-              ),
-              SizedBox(height: 20.h),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16.r),
-                child: Image.network(
-                  circle.image,
-                  width: double.infinity,
-                  height: 150.h,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              SizedBox(height: 16.h),
-              Text(
-                circle.name,
-                style: GoogleFonts.inter(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1B0B3B),
-                ),
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                circle.description,
-                style: GoogleFonts.inter(
-                  fontSize: 14.sp,
-                  color: Colors.grey[600],
-                  height: 1.5,
-                ),
-              ),
-              SizedBox(height: 24.h),
-              Text(
-                "Members (${circle.detailedMembers.length})",
-                style: GoogleFonts.inter(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1B0B3B),
-                ),
-              ),
-              SizedBox(height: 12.h),
-              Obx(
-                () => ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: circle.detailedMembers.take(3).length,
-                  itemBuilder: (context, index) {
-                    return CircleMemberTile(
-                      member: circle.detailedMembers[index],
-                    );
-                  },
-                ),
-              ),
-              SizedBox(height: 24.h),
-              ElevatedButton(
-                onPressed: () => Get.back(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  minimumSize: Size(double.infinity, 50.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25.r),
-                  ),
-                ),
-                child: Text(
-                  "Close",
-                  style: GoogleFonts.inter(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              SizedBox(height: 10.h),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       isScrollControlled: true,
+    );
+  }
+
+  Widget _buildStatItem(IconData icon, String label) {
+    return Row(
+      children: [
+        Icon(icon, size: 20.sp, color: AppColors.primary),
+        SizedBox(width: 8.w),
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF1B0B3B),
+          ),
+        ),
+      ],
     );
   }
 
