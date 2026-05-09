@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'package:bonded_app/core/constants/app_endpoints.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/circle_model.dart';
 import '../../controllers/circle_controller.dart';
@@ -22,6 +24,7 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
   final TextEditingController _textController = TextEditingController();
   final List<File> _selectedImages = [];
   File? _selectedVideo;
+  File? _selectedFile;
   final ImagePicker _picker = ImagePicker();
 
   @override
@@ -50,6 +53,15 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
     }
   }
 
+  Future<void> _pickFile() async {
+    FilePickerResult? result = await FilePicker.pickFiles();
+    if (result != null && result.files.single.path != null) {
+      setState(() {
+        _selectedFile = File(result.files.single.path!);
+      });
+    }
+  }
+
   void _removeImage(int index) {
     setState(() {
       _selectedImages.removeAt(index);
@@ -59,6 +71,12 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
   void _removeVideo() {
     setState(() {
       _selectedVideo = null;
+    });
+  }
+
+  void _removeFile() {
+    setState(() {
+      _selectedFile = null;
     });
   }
 
@@ -75,7 +93,12 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
     final user = authController.currentUser.value;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, MediaQuery.of(context).viewInsets.bottom + 24.h),
+      padding: EdgeInsets.fromLTRB(
+        24.w,
+        12.h,
+        24.w,
+        MediaQuery.of(context).viewInsets.bottom + 24.h,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(32.r)),
@@ -117,39 +140,56 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                   ),
                 ),
                 const Spacer(),
-                Obx(() => controller.isLoading.value
-                    ? SizedBox(
-                        height: 20.w,
-                        width: 20.w,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                      )
-                    : TextButton(
-                        onPressed: () {
-                          if (_textController.text.trim().isEmpty && _selectedImages.isEmpty && _selectedVideo == null) {
-                            Get.snackbar("Empty Post", "Please add some content or media to your post.");
-                            return;
-                          }
-                          controller.createCirclePost(
-                            circle: widget.circle,
-                            content: _textController.text,
-                            images: _selectedImages,
-                            video: _selectedVideo,
-                          );
-                        },
-                        style: TextButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
-                        ),
-                        child: Text(
-                          "Post",
-                          style: GoogleFonts.inter(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                Obx(
+                  () => controller.isLoading.value
+                      ? SizedBox(
+                          height: 20.w,
+                          width: 20.w,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary,
+                          ),
+                        )
+                      : TextButton(
+                          onPressed: () {
+                            if (_textController.text.trim().isEmpty &&
+                                _selectedImages.isEmpty &&
+                                _selectedVideo == null &&
+                                _selectedFile == null) {
+                              Get.snackbar(
+                                "Empty Post",
+                                "Please add some content or media to your post.",
+                              );
+                              return;
+                            }
+                            controller.createCirclePost(
+                              circle: widget.circle,
+                              content: _textController.text,
+                              images: _selectedImages,
+                              video: _selectedVideo,
+                              file: _selectedFile,
+                            );
+                          },
+                          style: TextButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 20.w,
+                              vertical: 8.h,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20.r),
+                            ),
+                          ),
+                          child: Text(
+                            "Post",
+                            style: GoogleFonts.inter(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                      )),
+                ),
               ],
             ),
             SizedBox(height: 24.h),
@@ -161,7 +201,7 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                   CircleAvatar(
                     radius: 24.r,
                     backgroundImage: NetworkImage(
-                      user.avatar ?? 'https://i.pravatar.cc/150?u=${user.id}',
+                      AppUrls.imageUrl(user.avatar),
                     ),
                   ),
                   SizedBox(width: 12.w),
@@ -245,7 +285,11 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                                 color: Colors.white,
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(Icons.close, size: 14.sp, color: Colors.red),
+                              child: Icon(
+                                Icons.close,
+                                size: 14.sp,
+                                color: Colors.red,
+                              ),
                             ),
                           ),
                         ),
@@ -269,7 +313,11 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.videocam, size: 40.sp, color: AppColors.primary),
+                          Icon(
+                            Icons.videocam,
+                            size: 40.sp,
+                            color: AppColors.primary,
+                          ),
                           SizedBox(height: 8.h),
                           Text(
                             "Video Selected",
@@ -294,7 +342,67 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.close, size: 16.sp, color: Colors.red),
+                        child: Icon(
+                          Icons.close,
+                          size: 16.sp,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+            if (_selectedFile != null)
+              Stack(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: 100.h,
+                    margin: EdgeInsets.only(top: 8.h),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16.r),
+                      border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.insert_drive_file,
+                            size: 32.sp,
+                            color: Colors.blue,
+                          ),
+                          SizedBox(height: 8.h),
+                          Text(
+                            "File Selected",
+                            style: GoogleFonts.inter(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 16.h,
+                    right: 8.w,
+                    child: GestureDetector(
+                      onTap: _removeFile,
+                      child: Container(
+                        padding: EdgeInsets.all(4.w),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.close,
+                          size: 16.sp,
+                          color: Colors.red,
+                        ),
                       ),
                     ),
                   ),
@@ -308,20 +416,36 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
             // Actions
             Row(
               children: [
-                _buildActionButton(
-                  icon: Icons.image_outlined,
-                  label: "Photo",
-                  color: const Color(0xFF4CAF50),
-                  onTap: _pickImages,
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildActionButton(
+                          icon: Icons.image_outlined,
+                          label: "Photo",
+                          color: const Color(0xFF4CAF50),
+                          onTap: _pickImages,
+                        ),
+                        SizedBox(width: 8.w),
+                        _buildActionButton(
+                          icon: Icons.videocam_outlined,
+                          label: "Video",
+                          color: const Color(0xFFE91E63),
+                          onTap: _pickVideo,
+                        ),
+                        SizedBox(width: 8.w),
+                        _buildActionButton(
+                          icon: Icons.attach_file,
+                          label: "File",
+                          color: const Color(0xFF2196F3),
+                          onTap: _pickFile,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                SizedBox(width: 16.w),
-                _buildActionButton(
-                  icon: Icons.videocam_outlined,
-                  label: "Video",
-                  color: const Color(0xFFE91E63),
-                  onTap: _pickVideo,
-                ),
-                const Spacer(),
+                SizedBox(width: 12.w),
                 Text(
                   "${_textController.text.length}/1000",
                   style: GoogleFonts.inter(

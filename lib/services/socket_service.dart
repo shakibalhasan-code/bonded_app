@@ -115,7 +115,11 @@ class SocketService extends GetxService {
     _socket?.on(event, handler);
   }
 
-  void off(String event) {
-    _socket?.off(event);
+  void off(String event, [dynamic handler]) {
+    if (handler != null) {
+      _socket?.off(event, handler);
+    } else {
+      _socket?.off(event);
+    }
   }
 }

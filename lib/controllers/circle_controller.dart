@@ -15,6 +15,7 @@ import '../core/constants/app_endpoints.dart';
 import '../models/circle_model.dart';
 import '../models/home_models.dart';
 import 'base_controller.dart';
+import 'auth_controller.dart';
 
 class CircleController extends BaseController {
   final ApiService _apiService = ApiService();
@@ -440,20 +441,79 @@ class CircleController extends BaseController {
     String? parentPostId,
     File? imageFile,
     File? videoFile,
+    File? anyFile,
   }) async {
+    final authController = Get.find<AuthController>();
+    final user = authController.currentUser.value;
+    
+    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    
+    final List<MediaModel> tempMedia = [];
+    if (imageFile != null) {
+      tempMedia.add(MediaModel(url: imageFile.path, type: 'image', mimeType: 'image/jpeg', size: 0, localFilePath: imageFile.path, isUploading: true));
+    }
+    if (videoFile != null) {
+      tempMedia.add(MediaModel(url: videoFile.path, type: 'video', mimeType: 'video/mp4', size: 0, localFilePath: videoFile.path, isUploading: true));
+    }
+    if (anyFile != null) {
+      tempMedia.add(MediaModel(url: anyFile.path, type: 'file', mimeType: 'application/octet-stream', size: 0, localFilePath: anyFile.path, isUploading: true));
+    }
+
+    final tempComment = CommentModel(
+      id: tempId,
+      userName: user?.fullName ?? user?.username ?? "Me",
+      userImage: AppUrls.imageUrl(user?.avatar),
+      text: content,
+      timestamp: DateTime.now().toIso8601String(),
+      media: tempMedia,
+      isAuthor: true,
+      parentPost: parentPostId,
+      isUploading: true,
+    );
+
+    if (parentPostId != null && parentPostId != post.id) {
+       final parentComment = post.comments.firstWhereOrNull((c) => c.id == parentPostId);
+       if (parentComment != null) {
+         parentComment.replies.insert(0, tempComment);
+         parentComment.replies.refresh();
+       }
+    } else {
+       post.comments.insert(0, tempComment);
+       post.comments.refresh();
+    }
+    post.isCommenting.value = false;
+
     try {
-      setLoading(true);
       final url = AppUrls.commentPost(circle.id, parentPostId ?? post.id);
 
       final List<http.MultipartFile> files = [];
       if (imageFile != null) {
-        files.add(await http.MultipartFile.fromPath('image', imageFile.path));
+        final mimeType = lookupMimeType(imageFile.path) ?? 'image/jpeg';
+        final mimeParts = mimeType.split('/');
+        files.add(await http.MultipartFile.fromPath(
+          'image',
+          imageFile.path,
+          contentType: MediaType(mimeParts.first, mimeParts[1]),
+        ));
       }
       if (videoFile != null) {
-        files.add(await http.MultipartFile.fromPath('video', videoFile.path));
+        final mimeType = lookupMimeType(videoFile.path) ?? 'video/mp4';
+        final mimeParts = mimeType.split('/');
+        files.add(await http.MultipartFile.fromPath(
+          'video',
+          videoFile.path,
+          contentType: MediaType(mimeParts.first, mimeParts[1]),
+        ));
       }
-
-      final Map<String, dynamic> bodyData = {'content': content};
+      if (anyFile != null) {
+        final mimeType = lookupMimeType(anyFile.path) ?? 'application/octet-stream';
+        final mimeParts = mimeType.split('/');
+        files.add(await http.MultipartFile.fromPath(
+          'file',
+          anyFile.path,
+          contentType: MediaType(mimeParts.first, mimeParts[1]),
+        ));
+      }
 
       final response = await _apiService.multipartRequest(
         'POST',
@@ -465,14 +525,23 @@ class CircleController extends BaseController {
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
         fetchCircleFeed(circle);
-        post.isCommenting.value = false;
-        Get.snackbar("Success", "Comment added successfully");
+      } else {
+        _removeTempComment(post, tempId);
+        Get.snackbar("Error", data['message'] ?? "Failed to add comment");
       }
     } catch (e) {
       debugPrint("Error adding comment: $e");
+      _removeTempComment(post, tempId);
       Get.snackbar("Error", "Failed to add comment");
-    } finally {
-      setLoading(false);
+    }
+  }
+
+  void _removeTempComment(PostModel post, String tempId) {
+    post.comments.removeWhere((c) => c.id == tempId);
+    post.comments.refresh();
+    for (var c in post.comments) {
+      c.replies.removeWhere((r) => r.id == tempId);
+      c.replies.refresh();
     }
   }
 
@@ -497,19 +566,77 @@ class CircleController extends BaseController {
     required String content,
     List<File>? images,
     File? video,
+    File? file,
   }) async {
+    final authController = Get.find<AuthController>();
+    final user = authController.currentUser.value;
+    
+    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    
+    final List<MediaModel> tempMedia = [];
+    final List<String> tempImages = [];
+    
+    if (images != null) {
+      for (var img in images) {
+        tempMedia.add(MediaModel(url: img.path, type: 'image', mimeType: 'image/jpeg', size: 0, localFilePath: img.path, isUploading: true));
+        tempImages.add(img.path);
+      }
+    }
+    if (video != null) {
+      tempMedia.add(MediaModel(url: video.path, type: 'video', mimeType: 'video/mp4', size: 0, localFilePath: video.path, isUploading: true));
+    }
+    if (file != null) {
+      tempMedia.add(MediaModel(url: file.path, type: 'file', mimeType: 'application/octet-stream', size: 0, localFilePath: file.path, isUploading: true));
+    }
+
+    final tempPost = PostModel(
+      id: tempId,
+      userName: user?.fullName ?? user?.username ?? "Me",
+      userImage: AppUrls.imageUrl(user?.avatar),
+      postText: content,
+      media: tempMedia,
+      images: tempImages,
+      createdAt: DateTime.now(),
+      isUploading: true,
+    );
+
+    circle.posts.insert(0, tempPost);
+    circle.posts.refresh();
+
+    Get.back(); // Close sheet immediately
+
     try {
-      setLoading(true);
       final url = '${AppUrls.circles}/${circle.id}/posts';
 
       final List<http.MultipartFile> files = [];
       if (images != null) {
         for (var image in images) {
-          files.add(await http.MultipartFile.fromPath('image', image.path));
+          final mimeType = lookupMimeType(image.path) ?? 'image/jpeg';
+          final mimeParts = mimeType.split('/');
+          files.add(await http.MultipartFile.fromPath(
+            'image',
+            image.path,
+            contentType: MediaType(mimeParts.first, mimeParts[1]),
+          ));
         }
       }
       if (video != null) {
-        files.add(await http.MultipartFile.fromPath('video', video.path));
+        final mimeType = lookupMimeType(video.path) ?? 'video/mp4';
+        final mimeParts = mimeType.split('/');
+        files.add(await http.MultipartFile.fromPath(
+          'video',
+          video.path,
+          contentType: MediaType(mimeParts.first, mimeParts[1]),
+        ));
+      }
+      if (file != null) {
+        final mimeType = lookupMimeType(file.path) ?? 'application/octet-stream';
+        final mimeParts = mimeType.split('/');
+        files.add(await http.MultipartFile.fromPath(
+          'file',
+          file.path,
+          contentType: MediaType(mimeParts.first, mimeParts[1]),
+        ));
       }
 
       final response = await _apiService.multipartRequest(
@@ -524,14 +651,16 @@ class CircleController extends BaseController {
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
         fetchCircleFeed(circle);
-        Get.back(); // Close sheet
-        Get.snackbar("Success", "Post created successfully");
+      } else {
+        circle.posts.removeWhere((p) => p.id == tempId);
+        circle.posts.refresh();
+        Get.snackbar("Error", "Failed to create post");
       }
     } catch (e) {
       debugPrint("Error creating post: $e");
+      circle.posts.removeWhere((p) => p.id == tempId);
+      circle.posts.refresh();
       Get.snackbar("Error", "Failed to create post");
-    } finally {
-      setLoading(false);
     }
   }
 

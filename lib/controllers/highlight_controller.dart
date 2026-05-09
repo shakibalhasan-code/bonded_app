@@ -4,6 +4,8 @@ import 'package:bonded_app/models/highlight_model.dart';
 import 'package:bonded_app/services/api_service.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 import 'package:image_picker/image_picker.dart';
 import 'base_controller.dart';
 
@@ -98,13 +100,25 @@ class HighlightController extends BaseController {
 
       if (images != null) {
         for (var file in images) {
-          multipartFiles.add(await http.MultipartFile.fromPath('image', file.path));
+          final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
+          final mimeParts = mimeType.split('/');
+          multipartFiles.add(await http.MultipartFile.fromPath(
+            'image',
+            file.path,
+            contentType: MediaType(mimeParts.first, mimeParts[1]),
+          ));
         }
       }
 
       if (videos != null) {
         for (var file in videos) {
-          multipartFiles.add(await http.MultipartFile.fromPath('video', file.path));
+          final mimeType = lookupMimeType(file.path) ?? 'video/mp4';
+          final mimeParts = mimeType.split('/');
+          multipartFiles.add(await http.MultipartFile.fromPath(
+            'video',
+            file.path,
+            contentType: MediaType(mimeParts.first, mimeParts[1]),
+          ));
         }
       }
 

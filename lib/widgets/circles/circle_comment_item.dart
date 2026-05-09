@@ -5,6 +5,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/home_models.dart';
 import '../../models/circle_model.dart';
@@ -34,6 +36,7 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
   final TextEditingController _replyController = TextEditingController();
   File? _replyImage;
   File? _replyVideo;
+  File? _replyFile;
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _pickImage() async {
@@ -42,6 +45,7 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
       setState(() {
         _replyImage = File(image.path);
         _replyVideo = null;
+        _replyFile = null;
       });
     }
   }
@@ -52,6 +56,19 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
       setState(() {
         _replyVideo = File(video.path);
         _replyImage = null;
+        _replyFile = null;
+      });
+    }
+  }
+
+  Future<void> _pickFile() async {
+    FilePickerResult? result = await FilePicker.pickFiles();
+
+    if (result != null && result.files.single.path != null) {
+      setState(() {
+        _replyFile = File(result.files.single.path!);
+        _replyImage = null;
+        _replyVideo = null;
       });
     }
   }
@@ -141,7 +158,7 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                                 ),
                               ),
                             );
-                          } else {
+                          } else if (m.type == 'video') {
                             return GestureDetector(
                               onTap: () => Get.to(
                                 () => MockVideoPlayer(videoUrl: m.fullUrl),
@@ -169,6 +186,64 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                                         color: Colors.white70,
                                         size: 24,
                                       ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          } else {
+                            return GestureDetector(
+                              onTap: () async {
+                                final uri = Uri.parse(m.fullUrl);
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(
+                                    uri,
+                                    mode: LaunchMode.externalApplication,
+                                  );
+                                }
+                              },
+                              child: Container(
+                                padding: EdgeInsets.all(12.w),
+                                margin: EdgeInsets.only(top: 4.h),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8.r),
+                                  border: Border.all(color: Colors.grey[200]!),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.insert_drive_file,
+                                      color: AppColors.primary,
+                                      size: 24.sp,
+                                    ),
+                                    SizedBox(width: 8.w),
+                                    Expanded(
+                                      child: Builder(
+                                        builder: (context) {
+                                          String ext = m.fullUrl
+                                              .split('.')
+                                              .last
+                                              .toUpperCase();
+                                          if (ext.length > 5 ||
+                                              ext.contains('?'))
+                                            ext = 'FILE';
+                                          return Text(
+                                            "$ext Attachment",
+                                            style: GoogleFonts.inter(
+                                              fontSize: 13.sp,
+                                              color: Colors.blue,
+                                              decoration:
+                                                  TextDecoration.underline,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.download,
+                                      color: Colors.grey[600],
+                                      size: 20.sp,
                                     ),
                                   ],
                                 ),
@@ -202,16 +277,45 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                         final type = widget.comment.reactionType.value;
                         String label = "React";
                         String emoji = "";
-                        Color reactionColor = isLiked ? AppColors.primary : Colors.grey[700]!;
+                        Color reactionColor = isLiked
+                            ? AppColors.primary
+                            : Colors.grey[700]!;
                         if (type != "none") {
                           switch (type) {
-                            case "like": label = "Liked"; reactionColor = Colors.blue; break;
-                            case "love": label = "Loved"; emoji = "❤️"; reactionColor = Colors.red; break;
-                            case "care": label = "Cared"; emoji = "🤗"; reactionColor = Colors.orange; break;
-                            case "haha": label = "Haha"; emoji = "😆"; reactionColor = Colors.orange; break;
-                            case "wow": label = "Wow"; emoji = "😮"; reactionColor = Colors.orange; break;
-                            case "sad": label = "Sad"; emoji = "😢"; reactionColor = Colors.orange; break;
-                            case "angry": label = "Angry"; emoji = "😡"; reactionColor = Colors.redAccent; break;
+                            case "like":
+                              label = "Liked";
+                              reactionColor = Colors.blue;
+                              break;
+                            case "love":
+                              label = "Loved";
+                              emoji = "❤️";
+                              reactionColor = Colors.red;
+                              break;
+                            case "care":
+                              label = "Cared";
+                              emoji = "🤗";
+                              reactionColor = Colors.orange;
+                              break;
+                            case "haha":
+                              label = "Haha";
+                              emoji = "😆";
+                              reactionColor = Colors.orange;
+                              break;
+                            case "wow":
+                              label = "Wow";
+                              emoji = "😮";
+                              reactionColor = Colors.orange;
+                              break;
+                            case "sad":
+                              label = "Sad";
+                              emoji = "😢";
+                              reactionColor = Colors.orange;
+                              break;
+                            case "angry":
+                              label = "Angry";
+                              emoji = "😡";
+                              reactionColor = Colors.redAccent;
+                              break;
                           }
                         }
                         return GestureDetector(
@@ -260,7 +364,9 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (_replyImage != null || _replyVideo != null)
+                              if (_replyImage != null ||
+                                  _replyVideo != null ||
+                                  _replyFile != null)
                                 Padding(
                                   padding: EdgeInsets.only(bottom: 8.h),
                                   child: Stack(
@@ -281,7 +387,9 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                                                 width: 60.w,
                                                 color: Colors.black12,
                                                 child: Icon(
-                                                  Icons.videocam,
+                                                  _replyVideo != null
+                                                      ? Icons.videocam
+                                                      : Icons.insert_drive_file,
                                                   color: AppColors.primary,
                                                 ),
                                               ),
@@ -293,6 +401,7 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                                           onTap: () => setState(() {
                                             _replyImage = null;
                                             _replyVideo = null;
+                                            _replyFile = null;
                                           }),
                                           child: Container(
                                             padding: EdgeInsets.all(2.w),
@@ -334,6 +443,17 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                                     padding: EdgeInsets.zero,
                                     constraints: BoxConstraints(),
                                   ),
+                                  SizedBox(width: 4.w),
+                                  IconButton(
+                                    onPressed: _pickFile,
+                                    icon: Icon(
+                                      Icons.attach_file,
+                                      color: Colors.grey[600],
+                                      size: 20.sp,
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    constraints: BoxConstraints(),
+                                  ),
                                   SizedBox(width: 8.w),
                                   Expanded(
                                     child: TextField(
@@ -366,11 +486,13 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                                         parentPostId: widget.comment.id,
                                         imageFile: _replyImage,
                                         videoFile: _replyVideo,
+                                        anyFile: _replyFile,
                                       );
                                       _replyController.clear();
                                       setState(() {
                                         _replyImage = null;
                                         _replyVideo = null;
+                                        _replyFile = null;
                                       });
                                     },
                                     icon: Icon(

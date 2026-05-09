@@ -6,12 +6,16 @@ class MediaModel {
   final String type;
   final String mimeType;
   final int size;
+  final String? localFilePath;
+  final bool isUploading;
 
   MediaModel({
     required this.url,
     required this.type,
     required this.mimeType,
     required this.size,
+    this.localFilePath,
+    this.isUploading = false,
   });
 
   factory MediaModel.fromJson(Map<String, dynamic> json) {
@@ -29,10 +33,17 @@ class MediaModel {
       'type': type,
       'mimeType': mimeType,
       'size': size,
+      'localFilePath': localFilePath,
+      'isUploading': isUploading,
     };
   }
 
-  String get fullUrl => AppUrls.imageUrl(url);
+  String get fullUrl {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    return AppUrls.imageUrl(url);
+  }
 }
 
 class CommentModel {
@@ -50,6 +61,7 @@ class CommentModel {
   final int depth;
   final bool isAuthor;
   final List<MediaModel> media;
+  final bool isUploading;
 
   CommentModel({
     required this.id,
@@ -66,6 +78,7 @@ class CommentModel {
     this.depth = 0,
     this.isAuthor = false,
     this.media = const [],
+    this.isUploading = false,
   })  : reactionType = reactionType.obs,
         isLiked = isLiked.obs,
         likesCount = likesCount.obs,
@@ -130,6 +143,7 @@ class PostModel {
   final RxList<CommentModel> comments;
   final String? circleId;
   final DateTime? createdAt;
+  final bool isUploading;
 
   PostModel({
     required this.id,
@@ -149,6 +163,7 @@ class PostModel {
     List<CommentModel>? comments,
     this.circleId,
     this.createdAt,
+    this.isUploading = false,
   })  : likesCount = likesCount.obs,
         commentsCount = commentsCount.obs,
         sharesCount = sharesCount.obs,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:bonded_app/controllers/auth_controller.dart';
 import 'package:bonded_app/core/routes/app_routes.dart';
 import 'package:flutter/material.dart';
@@ -22,9 +23,41 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     (index) => TextEditingController(),
   );
   final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
+  
+  Timer? _timer;
+  int _start = 60;
+  String _email = '';
+
+  @override
+  void initState() {
+    super.initState();
+    final args = Get.arguments as Map<String, dynamic>?;
+    _email = args?['email'] ?? '';
+    startTimer();
+  }
+
+  void startTimer() {
+    const oneSec = Duration(seconds: 1);
+    _timer?.cancel();
+    _timer = Timer.periodic(
+      oneSec,
+      (Timer timer) {
+        if (_start == 0) {
+          setState(() {
+            timer.cancel();
+          });
+        } else {
+          setState(() {
+            _start--;
+          });
+        }
+      },
+    );
+  }
 
   @override
   void dispose() {
+    _timer?.cancel();
     for (var controller in _otpControllers) {
       controller.dispose();
     }
@@ -71,7 +104,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             ),
             SizedBox(height: 12.h),
             Text(
-              "Check your email inbox for the OTP code we sent you. Please enter it below to proceed.",
+              "Check your email inbox for the OTP code we sent to $_email. Please enter it below to proceed.",
               style: GoogleFonts.inter(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w400,
@@ -139,7 +172,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       children: [
                         const TextSpan(text: "You can resend the code in "),
                         TextSpan(
-                          text: "56",
+                          text: "$_start",
                           style: TextStyle(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w600,
@@ -151,15 +184,26 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   ),
                   SizedBox(height: 16.h),
                   GestureDetector(
-                    onTap: () {
-                      // Resend logic
-                    },
+                    onTap: _start == 0
+                        ? () {
+                            final args = Get.arguments as Map<String, dynamic>?;
+                            final email = args?['email'] ?? '';
+                            final reason = args?['reason'] ?? 'verification';
+                            
+                            controller.resendOtp(email, reason == 'forgot_password' ? 'reset' : 'verify').then((_) {
+                              setState(() {
+                                _start = 60;
+                                startTimer();
+                              });
+                            });
+                          }
+                        : null,
                     child: Text(
                       "Resend code",
                       style: GoogleFonts.inter(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w500,
-                        color: Colors.grey[600],
+                        color: _start == 0 ? AppColors.primary : Colors.grey[600],
                         decoration: TextDecoration.underline,
                       ),
                     ),

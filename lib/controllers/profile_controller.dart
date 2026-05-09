@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:bonded_app/core/routes/app_routes.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -10,7 +11,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-
 
 import 'base_controller.dart';
 import '../services/api_service.dart';
@@ -26,6 +26,7 @@ class ProfileController extends BaseController {
   // Profile Building State
   var profileImagePath = ''.obs;
   var isLoadingProfile = false.obs;
+  var isUpdatingProfile = false; // Flag to prevent overwriting during update
   final fullNameController = TextEditingController();
   final usernameController = TextEditingController();
   final bioController = TextEditingController();
@@ -40,12 +41,12 @@ class ProfileController extends BaseController {
   void onInit() {
     super.onInit();
     fetchInterests();
-    
+
     final authController = Get.find<AuthController>();
-    
+
     // Listen to current user changes
     ever(authController.currentUser, (user) {
-      if (user != null) {
+      if (user != null && !isUpdatingProfile) {
         initializeControllers(user);
       }
     });
@@ -68,7 +69,8 @@ class ProfileController extends BaseController {
     if (user.dateOfBirth != null && user.dateOfBirth!.contains('T')) {
       try {
         final date = DateTime.parse(user.dateOfBirth!);
-        dateOfBirth.value = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+        dateOfBirth.value =
+            "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
       } catch (e) {
         dateOfBirth.value = user.dateOfBirth!;
       }
@@ -80,9 +82,10 @@ class ProfileController extends BaseController {
       'male': 'Male',
       'female': 'Female',
       'non-binary': 'Non-Binary',
-      'prefer-not-to-say': 'Prefer Not to Say'
+      'prefer-not-to-say': 'Prefer Not to Say',
     };
-    selectedGender.value = genderDisplayMap[user.gender?.toLowerCase()] ?? 'Male';
+    selectedGender.value =
+        genderDisplayMap[user.gender?.toLowerCase()] ?? 'Male';
     selectedCountry.value = user.country ?? 'United States of America';
     selectedCity.value = user.city ?? 'New Jersey';
     cityController.text = user.city ?? '';
@@ -186,7 +189,9 @@ class ProfileController extends BaseController {
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
         final List<dynamic> interestsJson = data['data'];
-        allInterests.value = interestsJson.map((i) => Interest.fromJson(i)).toList();
+        allInterests.value = interestsJson
+            .map((i) => Interest.fromJson(i))
+            .toList();
       }
     } catch (e) {
       debugPrint("Error fetching interests: $e");
@@ -303,7 +308,7 @@ class ProfileController extends BaseController {
 
   bool validateBasicInfo() {
     bool isValid = true;
-    
+
     // Full Name
     if (fullNameController.text.trim().isEmpty) {
       fullNameError.value = "Full name is required";
@@ -334,7 +339,12 @@ class ProfileController extends BaseController {
 
     // Date of Birth
     if (dateOfBirth.value.isEmpty) {
-      Get.snackbar('Required', 'Please select your date of birth', backgroundColor: Colors.orange, colorText: Colors.white);
+      Get.snackbar(
+        'Required',
+        'Please select your date of birth',
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
       isValid = false;
     }
 
@@ -343,11 +353,21 @@ class ProfileController extends BaseController {
 
   bool validateInterests() {
     if (selectedInterests.length < 5) {
-      Get.snackbar('Interests Required', 'Please select at least 5 interests', backgroundColor: Colors.orange, colorText: Colors.white);
+      Get.snackbar(
+        'Interests Required',
+        'Please select at least 5 interests',
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
       return false;
     }
     if (selectedInterests.length > 10) {
-      Get.snackbar('Too Many Interests', 'You can select up to 10 interests', backgroundColor: Colors.orange, colorText: Colors.white);
+      Get.snackbar(
+        'Too Many Interests',
+        'You can select up to 10 interests',
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
       return false;
     }
     return true;
@@ -355,14 +375,21 @@ class ProfileController extends BaseController {
 
   bool validateConnectionTypes() {
     if (selectedConnectionTypes.isEmpty) {
-      Get.snackbar('Connection Type Required', 'Please select at least one connection type', backgroundColor: Colors.orange, colorText: Colors.white);
+      Get.snackbar(
+        'Connection Type Required',
+        'Please select at least one connection type',
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
       return false;
     }
     return true;
   }
 
   bool validateProfileFields() {
-    return validateBasicInfo() && validateInterests() && validateConnectionTypes();
+    return validateBasicInfo() &&
+        validateInterests() &&
+        validateConnectionTypes();
   }
 
   void toggleInterest(String slug) {
@@ -385,8 +412,9 @@ class ProfileController extends BaseController {
   Future<void> updateProfile({bool isInitialFlow = true}) async {
     // Validate everything before submission
     if (!validateProfileFields()) return;
-    
+
     try {
+      isUpdatingProfile = true;
       setLoading(true);
       final authController = Get.find<AuthController>();
       final user = authController.currentUser.value;
@@ -405,23 +433,27 @@ class ProfileController extends BaseController {
       final token = SharedPrefsService.getString('accessToken');
       final body = <String, dynamic>{};
 
-      if (fullNameController.text != user?.fullName) body["fullName"] = fullNameController.text;
-      if (usernameController.text != user?.username) body["username"] = usernameController.text;
+      if (fullNameController.text != user?.fullName)
+        body["fullName"] = fullNameController.text;
+      if (usernameController.text != user?.username)
+        body["username"] = usernameController.text;
       if (bioController.text != user?.bio) body["bio"] = bioController.text;
-      
+
       bool phoneChanged = phoneController.text != user?.phone;
-      bool countryCodeChanged = selectedCountryCode.value != user?.phoneCountryCode;
+      bool countryCodeChanged =
+          selectedCountryCode.value != user?.phoneCountryCode;
 
       if (phoneChanged || countryCodeChanged) {
         body["phone"] = phoneController.text;
         body["phoneCountryCode"] = selectedCountryCode.value;
       }
-      
+
       String? userDOB;
       if (user?.dateOfBirth != null && user!.dateOfBirth!.contains('T')) {
         try {
           final date = DateTime.parse(user.dateOfBirth!);
-          userDOB = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+          userDOB =
+              "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
         } catch (_) {}
       } else {
         userDOB = user?.dateOfBirth;
@@ -432,45 +464,57 @@ class ProfileController extends BaseController {
         'Male': 'male',
         'Female': 'female',
         'Non-Binary': 'non-binary',
-        'Prefer Not to Say': 'prefer-not-to-say'
+        'Prefer Not to Say': 'prefer-not-to-say',
       };
-      final genderVal = genderMap[selectedGender.value] ?? selectedGender.value.toLowerCase();
+      final genderVal =
+          genderMap[selectedGender.value] ?? selectedGender.value.toLowerCase();
       if (genderVal != user?.gender?.toLowerCase()) body["gender"] = genderVal;
-      
-      if (selectedCountry.value != user?.country) body["country"] = selectedCountry.value;
+
+      if (selectedCountry.value != user?.country)
+        body["country"] = selectedCountry.value;
       if (cityController.text != user?.city) body["city"] = cityController.text;
-      if (currentAddress.value != user?.address) body["address"] = currentAddress.value;
+      if (currentAddress.value != user?.address)
+        body["address"] = currentAddress.value;
 
       final currentLat = user?.location?.coordinates[1];
       final currentLng = user?.location?.coordinates[0];
       if (latitude.value != currentLat || longitude.value != currentLng) {
         body["location"] = {
           "longitude": longitude.value,
-          "latitude": latitude.value
+          "latitude": latitude.value,
         };
       }
 
-      final connectionTypeSlugs = selectedConnectionTypes
-          .map((e) => e.toLowerCase().replaceAll(' ', '_').replaceAll('-', '_'))
-          .map((e) => e == 'event_based_meetup' ? 'event_based_meetups' : e)
-          .toList()..sort();
-      final userConnectionTypes = (user?.connectionType ?? <String>[]).toList()..sort();
-      
+      final connectionTypeSlugs =
+          selectedConnectionTypes
+              .map(
+                (e) =>
+                    e.toLowerCase().replaceAll(' ', '_').replaceAll('-', '_'),
+              )
+              .map((e) => e == 'event_based_meetup' ? 'event_based_meetups' : e)
+              .toList()
+            ..sort();
+      final userConnectionTypes = (user?.connectionType ?? <String>[]).toList()
+        ..sort();
+
       if (!listEquals(connectionTypeSlugs, userConnectionTypes)) {
         body["connectionType"] = connectionTypeSlugs;
       }
 
       final interestsSlugs = selectedInterests.toList()..sort();
-      final userInterestsSlugs = (user?.interests?.map((e) => e.slug).toList() ?? <String>[])..sort();
-      
+      final userInterestsSlugs =
+          (user?.interests?.map((e) => e.slug).toList() ?? <String>[])..sort();
+
       if (!listEquals(interestsSlugs, userInterestsSlugs)) {
         body["interests"] = interestsSlugs;
       }
 
       if (body.isEmpty && profileImagePath.value.isEmpty) {
         setLoading(false);
-        if (!isInitialFlow) Get.back();
-        else Get.offAllNamed(AppRoutes.KYC_DOCUMENT);
+        if (!isInitialFlow)
+          Get.back();
+        else
+          Get.offAllNamed(AppRoutes.KYC_DOCUMENT);
         return;
       }
 
@@ -482,13 +526,21 @@ class ProfileController extends BaseController {
 
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
-        authController.currentUser.value = UserModel.fromJson(data['data']['user']);
+        authController.currentUser.value = UserModel.fromJson(
+          data['data']['user'],
+        );
 
         Get.snackbar(
           'Success',
           data['message'] ?? 'Profile updated successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          icon: const Icon(Icons.check_circle, color: Colors.white),
+          margin: EdgeInsets.all(16.w),
+          borderRadius: 12.r,
         );
-        
+
         if (isInitialFlow) {
           Get.offAllNamed(AppRoutes.KYC_DOCUMENT);
         } else {
@@ -501,11 +553,14 @@ class ProfileController extends BaseController {
       Get.snackbar('Error', e.toString());
     } finally {
       setLoading(false);
+      isUpdatingProfile = false;
     }
   }
 
   // Update Avatar API Call
   Future<bool> updateAvatar() async {
+    bool originalUpdatingState = isUpdatingProfile;
+    isUpdatingProfile = true;
     try {
       final token = SharedPrefsService.getString('accessToken');
       final file = File(profileImagePath.value);
@@ -533,31 +588,54 @@ class ProfileController extends BaseController {
       if (data['success'] == true) {
         // Update global user state with new avatar
         final authController = Get.find<AuthController>();
-        authController.currentUser.value = UserModel.fromJson(data['data']['user']);
+        authController.currentUser.value = UserModel.fromJson(
+          data['data']['user'],
+        );
       }
       return data['success'] == true;
     } catch (e) {
       debugPrint("Error updating avatar: $e");
       return false;
+    } finally {
+      isUpdatingProfile = originalUpdatingState;
     }
   }
 
   Future<void> uploadPickedAvatar() async {
     if (profileImagePath.value.isEmpty) return;
-    
+
     setLoading(true);
     final success = await updateAvatar();
     setLoading(false);
 
     if (success) {
       profileImagePath.value = '';
-      Get.snackbar('Success', 'Profile picture updated successfully');
+      Get.snackbar(
+        'Success',
+        'Profile picture updated successfully',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        icon: const Icon(Icons.check_circle, color: Colors.white),
+        margin: EdgeInsets.all(16.w),
+        borderRadius: 12.r,
+      );
     } else {
-      Get.snackbar('Error', 'Failed to upload profile picture');
+      Get.snackbar(
+        'Error',
+        'Failed to upload profile picture',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
     }
   }
 
-  Future<void> updatePreferences({bool? notifications, bool? emailUpdates, bool? locationSharing}) async {
+  Future<void> updatePreferences({
+    bool? notifications,
+    bool? emailUpdates,
+    bool? locationSharing,
+  }) async {
     try {
       final token = SharedPrefsService.getString('accessToken');
       final body = {
@@ -565,7 +643,7 @@ class ProfileController extends BaseController {
           if (notifications != null) "notifications": notifications,
           if (emailUpdates != null) "emailUpdates": emailUpdates,
           if (locationSharing != null) "locationSharing": locationSharing,
-        }
+        },
       };
 
       final response = await _apiService.patch(
@@ -577,7 +655,9 @@ class ProfileController extends BaseController {
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
         final authController = Get.find<AuthController>();
-        authController.currentUser.value = UserModel.fromJson(data['data']['user']);
+        authController.currentUser.value = UserModel.fromJson(
+          data['data']['user'],
+        );
         if (notifications != null) notificationsEnabled.value = notifications;
       }
     } catch (e) {

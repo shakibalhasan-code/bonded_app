@@ -24,6 +24,7 @@ class ChatMessage {
   final bool isMe;
   final String? type;
   final String? mediaUrl;
+  final String? localFilePath;
 
   ChatMessage({
     required this.id,
@@ -34,58 +35,59 @@ class ChatMessage {
     required this.isMe,
     this.type,
     this.mediaUrl,
+    this.localFilePath,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json, String currentUserId) {
     final senderData = json['sender'];
-    
-    // Extract sender ID from all possible locations in the JSON
+
+    // Extract sender ID — supports both REST format (flat senderId string)
+    // and socket receive-message format (nested sender object with _id).
     String? senderId;
     if (json['senderId'] != null) {
+      // REST API: messages list uses flat senderId string
       senderId = json['senderId'].toString();
-    } else if (json['sender_id'] != null) {
-      senderId = json['sender_id'].toString();
     } else if (senderData != null) {
       if (senderData is Map) {
+        // Socket receive-message: sender is an object { _id, fullName, ... }
         senderId = (senderData['_id'] ?? senderData['id'])?.toString();
       } else {
         senderId = senderData.toString();
       }
     }
-    
-    // STRICT ID MATCHING:
-    // We prioritize our local comparison for reliability across broadcast events.
+
+    // Determine ownership: prefer ID comparison, fall back to backend flag
     bool isOwn = false;
-    // Extraction for comparison
     if (senderId != null && currentUserId.isNotEmpty) {
-      isOwn = senderId.trim().toLowerCase() == currentUserId.trim().toLowerCase();
+      isOwn = senderId.trim() == currentUserId.trim();
     } else {
-      // Fallback to backend flag if ID comparison isn't possible
-      isOwn = json['isOwnMessage'] ?? false;
+      isOwn = json['isOwnMessage'] == true;
     }
-    
-    if (isOwn == false && json['isOwnMessage'] == true) {
-      isOwn = true;
-    }
-    
+
     debugPrint('CHAT_DEBUG: isMe=$isOwn | senderId=$senderId | myId=$currentUserId');
 
+    // Resolve sender display info
     String senderName = 'Unknown';
-    String senderImage = 'https://i.pravatar.cc/150';
+    String senderImage = '';
 
     if (senderData is Map) {
       senderName = senderData['fullName'] ?? senderData['username'] ?? 'Unknown';
-      senderImage = AppUrls.imageUrl(senderData['avatar']);
+      final avatar = senderData['avatar'];
+      senderImage = (avatar != null && avatar.toString().isNotEmpty)
+          ? AppUrls.imageUrl(avatar)
+          : '';
     } else {
       senderName = isOwn ? 'You' : 'User';
     }
-    
+
     return ChatMessage(
       id: json['_id'] ?? '',
       text: json['content'] ?? '',
       senderName: senderName,
       senderImage: senderImage,
-      timestamp: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : DateTime.now(),
+      timestamp: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : DateTime.now(),
       isMe: isOwn,
       type: json['type'],
       mediaUrl: json['mediaUrl'],
@@ -122,28 +124,28 @@ class ChatController extends GetxController {
   }
 
   Future<void> initChat(UserModel user) async {
-    // Ensure we have the most current user ID
+    // Always get the freshest user ID
     currentUserId = _getCurrentUserId();
 
-    // If we're already initialized for this user, don't clear and reload
-    // unless we really need to.
-    if (conversationId != null && messages.isNotEmpty) {
-      log('ChatController: Already initialized for conversation: $conversationId');
-      return;
-    }
-
     isLoading.value = true;
-    messages.clear(); // Clear old messages
+    messages.clear();
+    conversationId = null;
+    _isSocketListenersSetup = false;
 
     try {
+      // Step 1: Get or create the direct conversation
       final response = await _apiService.post('${AppUrls.directChat}/${user.id}', {});
       final data = jsonDecode(response.body);
-      
+
       if (data['success'] == true) {
         conversationId = data['data']['_id'];
         log('ChatController: Conversation ID: $conversationId');
-        
-        _joinConversation();
+
+        // Step 2: Load message history from REST endpoint for reliability
+        await _loadMessageHistory();
+
+        // Step 3: Join socket room & set up real-time listeners
+        _joinConversationSocket();
         _setupSocketListeners();
       } else {
         Get.snackbar('Error', data['message'] ?? 'Failed to start chat');
@@ -156,51 +158,94 @@ class ChatController extends GetxController {
     }
   }
 
-  void _joinConversation() {
+  /// Load message history via the REST API endpoint.
+  Future<void> _loadMessageHistory() async {
     if (conversationId == null) return;
-    
+    try {
+      final response = await _apiService.get(
+        AppUrls.conversationMessages(conversationId!),
+      );
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final List history = data['data']['messages'] ?? [];
+        final uid = _getCurrentUserId();
+        messages.assignAll(
+          history.map((m) => ChatMessage.fromJson(m, uid)).toList(),
+        );
+        _scrollToBottom();
+      }
+    } catch (e) {
+      log('ChatController: Failed to load message history: $e');
+    }
+  }
+
+  /// Notify the server we've joined this conversation room.
+  void _joinConversationSocket() {
+    if (conversationId == null) return;
     _socketService.emit('conversation:join', {
       'conversationId': conversationId,
       'limit': 50
     }, ack: (response) {
       debugPrint('SOCKET_DEBUG: conversation:join ACK response:');
-      if (response['success'] == true) {
-        final List history = response['data']['messages'] ?? [];
-        final currentUserId = _getCurrentUserId();
-        
-        messages.assignAll(history.map((m) => ChatMessage.fromJson(m, currentUserId)).toList());
-        _scrollToBottom();
-      }
+      debugPrint(const JsonEncoder.withIndent('  ').convert(response));
     });
+    debugPrint('SOCKET_DEBUG: Joined conversation room: $conversationId');
   }
+
+  Function(dynamic)? _receiveMessageHandler;
+  Function(dynamic)? _typingHandler;
 
   bool _isSocketListenersSetup = false;
   void _setupSocketListeners() {
     if (_isSocketListenersSetup) return;
     _isSocketListenersSetup = true;
 
-    _socketService.on('conversation:message:new', (data) {
-      debugPrint('SOCKET_DEBUG: conversation:message:new received');
-      final currentUserId = _getCurrentUserId();
-      final newMessage = ChatMessage.fromJson(data['message'], currentUserId);
-      
-      // Check if message already exists (either from optimistic update or previous fetch)
-      final index = messages.indexWhere((m) => m.id == newMessage.id || (m.id.startsWith('temp_') && m.text == newMessage.text && m.isMe));
-      
-      if (index == -1) {
+    _receiveMessageHandler = (data) {
+      debugPrint('SOCKET_DEBUG: conversation:message:new event received');
+      debugPrint(const JsonEncoder.withIndent('  ').convert(data));
+
+      // Payload: { conversation: {...}, message: { _id, chat, content, type, createdAt, sender: {...} } }
+      final messageJson = data is Map ? (data['message'] as Map<String, dynamic>?) : null;
+      if (messageJson == null) return;
+
+      // Only process if this message belongs to our current conversation
+      final chatId = messageJson['chat']?.toString();
+      if (chatId != null && chatId != conversationId) return;
+
+      final uid = _getCurrentUserId();
+      final newMessage = ChatMessage.fromJson(messageJson, uid);
+
+      // Deduplicate: check if already added (by real id or matching temp)
+      final existingIndex = messages.indexWhere(
+        (m) =>
+            m.id == newMessage.id ||
+            (m.id.startsWith('temp_') &&
+                m.text == newMessage.text &&
+                m.isMe),
+      );
+
+      if (existingIndex == -1) {
         messages.add(newMessage);
         _scrollToBottom();
-      } else if (messages[index].id.startsWith('temp_')) {
-        // Replace temporary message with actual message from server
-        messages[index] = newMessage;
+      } else if (messages[existingIndex].id.startsWith('temp_')) {
+        // Promote temporary optimistic message to confirmed server message
+        messages[existingIndex] = newMessage;
+        messages.refresh();
       }
-    });
+    };
 
-    _socketService.on('conversation:typing', (data) {
-      if (data['conversationId'] == conversationId && data['userId'] != _getCurrentUserId()) {
+    // Server broadcasts new messages via 'conversation:message:new'
+    _socketService.on('conversation:message:new', _receiveMessageHandler!);
+
+    // Typing indicators
+    _typingHandler = (data) {
+      final senderUserId = data['userId']?.toString() ?? data['senderId']?.toString();
+      if (data['conversationId'] == conversationId &&
+          senderUserId != _getCurrentUserId()) {
         isOtherUserTyping.value = data['isTyping'] ?? false;
       }
-    });
+    };
+    _socketService.on('conversation:typing', _typingHandler!);
   }
 
   String _getCurrentUserId() {
@@ -267,22 +312,29 @@ class ChatController extends GetxController {
     _socketService.emit('message:send', payload, ack: (response) {
       debugPrint('SOCKET_DEBUG: message:send ACK response:');
       debugPrint(const JsonEncoder.withIndent('  ').convert(response));
-      
-      if (response['success'] == true) {
-        final sentMessage = ChatMessage.fromJson(response['data']['message'], currentUserId);
-        
-        // Find the temporary message and replace it
-        final index = messages.indexWhere((m) => m.id == tempId);
-        if (index != -1) {
-          messages[index] = sentMessage;
-        } else if (!messages.any((m) => m.id == sentMessage.id)) {
-          messages.add(sentMessage);
-          _scrollToBottom();
+
+      if (response != null && response['success'] == true) {
+        final msgData = response['data']?['message'] ?? response['data'];
+        if (msgData != null) {
+          final sentMessage = ChatMessage.fromJson(
+            Map<String, dynamic>.from(msgData),
+            currentUserId,
+          );
+          final index = messages.indexWhere((m) => m.id == tempId);
+          if (index != -1) {
+            messages[index] = sentMessage;
+            messages.refresh();
+          } else if (!messages.any((m) => m.id == sentMessage.id)) {
+            messages.add(sentMessage);
+            _scrollToBottom();
+          }
         }
+        // If the server will also broadcast a receive-message event,
+        // the deduplication in _setupSocketListeners handles it.
       } else {
-        // Handle failure: remove optimistic message and show error
+        // ACK failure — remove the optimistic message
         messages.removeWhere((m) => m.id == tempId);
-        Get.snackbar('Error', response['message'] ?? 'Failed to send message');
+        Get.snackbar('Error', response?['message'] ?? 'Failed to send message');
       }
     });
   }
@@ -303,9 +355,24 @@ class ChatController extends GetxController {
       
       if (file == null) return;
 
-      isLoading.value = true;
-      
       final filePath = file.path;
+      final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+      final currentUserId = _getCurrentUserId();
+      
+      // 1. Add optimistic local message
+      final tempMessage = ChatMessage(
+        id: tempId,
+        text: isVideo ? '[Video]' : '[Image]',
+        senderName: '',
+        senderImage: '',
+        timestamp: DateTime.now(),
+        isMe: true,
+        type: isVideo ? 'video' : 'image',
+        localFilePath: filePath,
+      );
+      messages.add(tempMessage);
+      _scrollToBottom();
+      
       final mimeType = lookupMimeType(filePath) ?? (isVideo ? 'video/mp4' : 'image/jpeg');
       final mimeParts = mimeType.split('/');
       
@@ -330,21 +397,27 @@ class ChatController extends GetxController {
 
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
-        final currentUserId = _getCurrentUserId();
         final newMessage = ChatMessage.fromJson(data['data']['message'], currentUserId);
         
-        if (!messages.any((m) => m.id == newMessage.id)) {
+        final index = messages.indexWhere((m) => m.id == tempId);
+        if (index != -1) {
+          messages[index] = newMessage;
+          messages.refresh();
+        } else if (!messages.any((m) => m.id == newMessage.id)) {
           messages.add(newMessage);
           _scrollToBottom();
         }
       } else {
+        messages.removeWhere((m) => m.id == tempId);
         Get.snackbar('Error', data['message'] ?? 'Failed to upload media');
       }
     } catch (e) {
       log('ChatController Media Upload Error: $e');
+      // If error occurs, we could optionally remove the temporary message here.
+      // But we don't have access to tempId outside try block easily. 
+      // Actually we do have it inside try block.
+      messages.removeWhere((m) => m.id.startsWith('temp_') && m.localFilePath != null);
       Get.snackbar('Error', 'Failed to upload media');
-    } finally {
-      isLoading.value = false;
     }
   }
 
@@ -364,11 +437,14 @@ class ChatController extends GetxController {
   void onClose() {
     if (conversationId != null) {
       _socketService.emit('conversation:leave', {'conversationId': conversationId});
-      _socketService.off('conversation:message:new');
-      _socketService.off('conversation:typing');
     }
-    messageController.dispose();
-    scrollController.dispose();
+    if (_receiveMessageHandler != null) {
+      _socketService.off('conversation:message:new', _receiveMessageHandler!);
+    }
+    if (_typingHandler != null) {
+      _socketService.off('conversation:typing', _typingHandler!);
+    }
+    // Intentionally NOT disposing controllers to prevent Flutter framework crashes during GetX route pops
     super.onClose();
   }
 }

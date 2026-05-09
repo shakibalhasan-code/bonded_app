@@ -9,6 +9,8 @@ import '../services/api_service.dart';
 import '../core/constants/app_endpoints.dart';
 import '../core/theme/app_colors.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 
 class EventDetailsController extends GetxController {
   final ApiService _apiService = ApiService();
@@ -84,10 +86,22 @@ class EventDetailsController extends GetxController {
       List<http.MultipartFile> files = [];
 
       for (var path in imagePaths) {
-        files.add(await http.MultipartFile.fromPath('image', path));
+        final mimeType = lookupMimeType(path) ?? 'image/jpeg';
+        final mimeParts = mimeType.split('/');
+        files.add(await http.MultipartFile.fromPath(
+          'image',
+          path,
+          contentType: MediaType(mimeParts.first, mimeParts[1]),
+        ));
       }
       for (var path in videoPaths) {
-        files.add(await http.MultipartFile.fromPath('video', path));
+        final mimeType = lookupMimeType(path) ?? 'video/mp4';
+        final mimeParts = mimeType.split('/');
+        files.add(await http.MultipartFile.fromPath(
+          'video',
+          path,
+          contentType: MediaType(mimeParts.first, mimeParts[1]),
+        ));
       }
 
       final response = await _apiService.multipartRequest(

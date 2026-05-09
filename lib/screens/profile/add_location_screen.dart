@@ -82,13 +82,15 @@ class AddLocationScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Obx(() => Text(
-                        controller.selectedCountry.value,
-                        style: GoogleFonts.inter(
-                          fontSize: 14.sp,
-                          color: AppColors.textPrimary,
+                      child: Obx(
+                        () => Text(
+                          controller.selectedCountry.value,
+                          style: GoogleFonts.inter(
+                            fontSize: 14.sp,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
-                      )),
+                      ),
                     ),
                     Icon(Icons.keyboard_arrow_down, color: Colors.grey[600]),
                   ],
@@ -144,7 +146,7 @@ class AddLocationScreen extends StatelessWidget {
             ),
             SizedBox(height: 8.h),
             GestureDetector(
-              onTap: () => Get.to(() => const MapSelectionScreen()),
+              // onTap: () => Get.to(() => const MapSelectionScreen()),
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
                 decoration: BoxDecoration(
@@ -155,33 +157,56 @@ class AddLocationScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     Expanded(
-                      child: Obx(() => Text(
-                        controller.currentAddress.value.isEmpty ? "Enter your location" : controller.currentAddress.value,
-                        style: GoogleFonts.inter(
-                          fontSize: 14.sp,
-                          color: controller.currentAddress.value.isEmpty ? Colors.grey[400] : AppColors.textPrimary,
+                      child: Obx(
+                        () => Text(
+                          controller.currentAddress.value.isEmpty
+                              ? "Enter your location"
+                              : controller.currentAddress.value,
+                          style: GoogleFonts.inter(
+                            fontSize: 14.sp,
+                            color: controller.currentAddress.value.isEmpty
+                                ? Colors.grey[400]
+                                : AppColors.textPrimary,
+                          ),
                         ),
-                      )),
+                      ),
                     ),
-                    Icon(Icons.location_on, color: AppColors.primary, size: 24.sp),
+                    // Icon(
+                    //   Icons.location_on,
+                    //   color: AppColors.primary,
+                    //   size: 24.sp,
+                    // ),
                   ],
                 ),
               ),
             ),
-            
+
             SizedBox(height: 12.h),
-            
+
             // Auto-fetch location button
-            Obx(() => TextButton.icon(
-              onPressed: controller.isLoadingLocation.value ? null : controller.fetchCurrentLocation,
-              icon: controller.isLoadingLocation.value 
-                  ? SizedBox(height: 16.h, width: 16.w, child: const CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.my_location, color: AppColors.primary),
-              label: Text(
-                controller.isLoadingLocation.value ? "Fetching location..." : "Use current location",
-                style: GoogleFonts.inter(color: AppColors.primary, fontWeight: FontWeight.w600),
+            Obx(
+              () => TextButton.icon(
+                onPressed: controller.isLoadingLocation.value
+                    ? null
+                    : controller.fetchCurrentLocation,
+                icon: controller.isLoadingLocation.value
+                    ? SizedBox(
+                        height: 16.h,
+                        width: 16.w,
+                        child: const CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.my_location, color: AppColors.primary),
+                label: Text(
+                  controller.isLoadingLocation.value
+                      ? "Fetching location..."
+                      : "Use current location",
+                  style: GoogleFonts.inter(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-            )),
+            ),
 
             SizedBox(height: 100.h),
 

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:bonded_app/core/constants/app_endpoints.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -80,37 +81,18 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                     )
-                  else ...[
-                    // // Today Chip
-                    // Padding(
-                    //   padding: EdgeInsets.symmetric(vertical: 16.h),
-                    //   child: Container(
-                    //     padding: EdgeInsets.symmetric(
-                    //       horizontal: 16.w,
-                    //       vertical: 8.h,
-                    //     ),
-                    //     decoration: BoxDecoration(
-                    //       color: const Color(0xFFFAF7FF),
-                    //       borderRadius: BorderRadius.circular(10.r),
-                    //     ),
-                    //     child: Text(
-                    //       "Chat",
-                    //       style: GoogleFonts.inter(
-                    //         fontSize: 12.sp,
-                    //         fontWeight: FontWeight.w600,
-                    //         color: AppColors.primary,
-                    //       ),
-                    //     ),
-                    //   ),
-                    // ),
-
+                    else ...[
                     // Messages List
                     Expanded(
                       child: ListView.builder(
                         controller: controller.scrollController,
-                        padding: EdgeInsets.symmetric(horizontal: 24.w),
-                        itemCount: controller.messages.length,
+                        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                        itemCount: controller.messages.length +
+                            (controller.isOtherUserTyping.value ? 1 : 0),
                         itemBuilder: (context, index) {
+                          if (index == controller.messages.length) {
+                            return _buildTypingBubble();
+                          }
                           final message = controller.messages[index];
                           return _buildMessageBubble(message);
                         },
@@ -128,32 +110,30 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildMessageBubble(ChatMessage message) {
     return Padding(
-      padding: EdgeInsets.only(bottom: 16.h),
+      padding: EdgeInsets.only(bottom: 12.h),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment: message.isMe
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
+        mainAxisAlignment:
+            message.isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
+          // Avatar for received messages
           if (!message.isMe) ...[
-            CircleAvatar(
-              radius: 16.r,
-              backgroundImage: NetworkImage(message.senderImage),
-              backgroundColor: Colors.grey[200],
-            ),
+            _buildAvatar(message.senderImage, message.senderName),
             SizedBox(width: 8.w),
           ],
+
           Flexible(
             child: Column(
               crossAxisAlignment: message.isMe
                   ? CrossAxisAlignment.end
                   : CrossAxisAlignment.start,
               children: [
+                // Bubble
                 Container(
-                  constraints: BoxConstraints(maxWidth: Get.width * 0.7),
+                  constraints: BoxConstraints(maxWidth: Get.width * 0.72),
                   padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 12.h,
+                    horizontal: 14.w,
+                    vertical: 10.h,
                   ),
                   decoration: BoxDecoration(
                     gradient: message.isMe
@@ -165,22 +145,23 @@ class _ChatScreenState extends State<ChatScreen> {
                         : null,
                     color: message.isMe ? null : const Color(0xFFF3F4F6),
                     borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20.r),
-                      topRight: Radius.circular(20.r),
+                      topLeft: Radius.circular(18.r),
+                      topRight: Radius.circular(18.r),
                       bottomLeft: message.isMe
-                          ? Radius.circular(20.r)
-                          : Radius.zero,
+                          ? Radius.circular(18.r)
+                          : Radius.circular(4.r),
                       bottomRight: message.isMe
-                          ? Radius.zero
-                          : Radius.circular(20.r),
+                          ? Radius.circular(4.r)
+                          : Radius.circular(18.r),
                     ),
                     boxShadow: [
-                      if (message.isMe)
-                        BoxShadow(
-                          color: const Color(0xFF6D28D9).withOpacity(0.2),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
+                      BoxShadow(
+                        color: message.isMe
+                            ? const Color(0xFF6D28D9).withOpacity(0.25)
+                            : Colors.black.withOpacity(0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
                     ],
                   ),
                   child: Column(
@@ -188,46 +169,84 @@ class _ChatScreenState extends State<ChatScreen> {
                         ? CrossAxisAlignment.end
                         : CrossAxisAlignment.start,
                     children: [
-                      if (message.type == 'image' && message.mediaUrl != null)
+                      // Image attachment
+                      if (message.type == 'image' && (message.mediaUrl != null || message.localFilePath != null))
                         Padding(
                           padding: EdgeInsets.only(
-                            bottom:
-                                (message.text == '[Image]' ||
+                            bottom: (message.text == '[Image]' ||
                                     message.text.isEmpty)
                                 ? 0
                                 : 8.h,
                           ),
                           child: GestureDetector(
-                            onTap: () => Get.to(
-                              () => FullScreenImageViewer(
-                                imageUrl: AppUrls.imageUrl(message.mediaUrl),
-                              ),
-                            ),
+                            onTap: () {
+                              if (message.mediaUrl != null) {
+                                Get.to(
+                                  () => FullScreenImageViewer(
+                                    imageUrl: AppUrls.imageUrl(message.mediaUrl),
+                                  ),
+                                );
+                              }
+                            },
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(12.r),
-                              child: Image.network(
-                                AppUrls.imageUrl(message.mediaUrl),
-                                width: 200.w,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Container(
-                                      width: 200.w,
-                                      height: 150.h,
-                                      color: Colors.grey[200],
-                                      child: const Icon(Icons.broken_image),
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  message.localFilePath != null
+                                      ? Image.file(
+                                          File(message.localFilePath!),
+                                          width: 200.w,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) => Container(
+                                            width: 200.w,
+                                            height: 150.h,
+                                            color: Colors.grey[200],
+                                            child: const Icon(Icons.broken_image),
+                                          ),
+                                        )
+                                      : Image.network(
+                                          AppUrls.imageUrl(message.mediaUrl!),
+                                          width: 200.w,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) => Container(
+                                            width: 200.w,
+                                            height: 150.h,
+                                            color: Colors.grey[200],
+                                            child: const Icon(Icons.broken_image),
+                                          ),
+                                        ),
+                                  if (message.id.startsWith('temp_'))
+                                    Positioned.fill(
+                                      child: Container(
+                                        color: Colors.black.withOpacity(0.4),
+                                        child: Center(
+                                          child: SizedBox(
+                                            width: 30.w,
+                                            height: 30.w,
+                                            child: const CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 3,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                     ),
+                                ],
                               ),
                             ),
                           ),
                         ),
+
+                      // Text content
                       if (message.text != '[Image]' &&
                           message.text != '[Video]' &&
                           message.text.isNotEmpty)
                         Text(
                           message.text,
                           style: GoogleFonts.inter(
-                            fontSize: 15.sp,
-                            height: 1.4,
+                            fontSize: 14.5.sp,
+                            height: 1.45,
                             fontWeight: FontWeight.w500,
                             color: message.isMe
                                 ? Colors.white
@@ -237,22 +256,113 @@ class _ChatScreenState extends State<ChatScreen> {
                     ],
                   ),
                 ),
+
+                // Timestamp + read status
                 Padding(
-                  padding: EdgeInsets.only(top: 4.h, left: 4.w, right: 4.w),
-                  child: Text(
-                    DateFormat('hh:mm a').format(message.timestamp),
-                    style: GoogleFonts.inter(
-                      fontSize: 10.sp,
-                      color: Colors.grey[400],
-                      fontWeight: FontWeight.w500,
-                    ),
+                  padding: EdgeInsets.only(
+                    top: 4.h,
+                    left: 4.w,
+                    right: 4.w,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        DateFormat('hh:mm a').format(message.timestamp),
+                        style: GoogleFonts.inter(
+                          fontSize: 10.sp,
+                          color: Colors.grey[400],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      if (message.isMe) ...[
+                        SizedBox(width: 4.w),
+                        Icon(
+                          Icons.done_all,
+                          size: 13.sp,
+                          color: Colors.grey[400],
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          if (message.isMe)
-            SizedBox(width: 24.w), // Extra space on right for sent
+
+          // Small right padding for own messages
+          if (message.isMe) SizedBox(width: 4.w),
+        ],
+      ),
+    );
+  }
+
+  /// Builds a circular avatar with an initials fallback.
+  Widget _buildAvatar(String imageUrl, String name) {
+    if (imageUrl.isNotEmpty) {
+      return CircleAvatar(
+        radius: 16.r,
+        backgroundImage: NetworkImage(imageUrl),
+        backgroundColor: Colors.grey[200],
+        onBackgroundImageError: (_, __) {},
+      );
+    }
+    // Fallback: initials
+    final initials = name.isNotEmpty
+        ? name.trim().split(' ').map((w) => w[0]).take(2).join().toUpperCase()
+        : '?';
+    return CircleAvatar(
+      radius: 16.r,
+      backgroundColor: const Color(0xFFEDE9FE),
+      child: Text(
+        initials,
+        style: GoogleFonts.inter(
+          fontSize: 11.sp,
+          fontWeight: FontWeight.w700,
+          color: const Color(0xFF6D28D9),
+        ),
+      ),
+    );
+  }
+
+  /// Animated typing indicator bubble.
+  Widget _buildTypingBubble() {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 12.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          _buildAvatar(user.avatar != null ? AppUrls.imageUrl(user.avatar) : '', user.fullName ?? user.username ?? ''),
+          SizedBox(width: 8.w),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(18.r),
+                topRight: Radius.circular(18.r),
+                bottomRight: Radius.circular(18.r),
+                bottomLeft: Radius.circular(4.r),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(
+                3,
+                (i) => Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 2.w),
+                  child: Container(
+                    width: 6.w,
+                    height: 6.w,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[400],
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'package:bonded_app/core/constants/app_endpoints.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/home_models.dart';
 import '../../models/circle_model.dart';
@@ -15,7 +17,8 @@ class CirclePostItem extends StatefulWidget {
   final PostModel post;
   final CircleModel circle;
 
-  const CirclePostItem({Key? key, required this.post, required this.circle}) : super(key: key);
+  const CirclePostItem({Key? key, required this.post, required this.circle})
+    : super(key: key);
 
   @override
   State<CirclePostItem> createState() => _CirclePostItemState();
@@ -26,6 +29,7 @@ class _CirclePostItemState extends State<CirclePostItem> {
   final PageController _pageController = PageController();
   File? _commentImage;
   File? _commentVideo;
+  File? _commentFile;
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _pickImage() async {
@@ -34,6 +38,7 @@ class _CirclePostItemState extends State<CirclePostItem> {
       setState(() {
         _commentImage = File(image.path);
         _commentVideo = null;
+        _commentFile = null;
       });
     }
   }
@@ -44,6 +49,18 @@ class _CirclePostItemState extends State<CirclePostItem> {
       setState(() {
         _commentVideo = File(video.path);
         _commentImage = null;
+        _commentFile = null;
+      });
+    }
+  }
+
+  Future<void> _pickFile() async {
+    FilePickerResult? result = await FilePicker.pickFiles();
+    if (result != null && result.files.single.path != null) {
+      setState(() {
+        _commentFile = File(result.files.single.path!);
+        _commentImage = null;
+        _commentVideo = null;
       });
     }
   }
@@ -80,39 +97,50 @@ class _CirclePostItemState extends State<CirclePostItem> {
           const Divider(height: 32),
           _buildInteractionRow(controller),
           SizedBox(height: 10.h),
-          
+
           // Comments Section
-          Obx(() => ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: EdgeInsets.symmetric(horizontal: 20.w),
-                itemCount: widget.post.comments.length,
-                itemBuilder: (context, index) {
-                  return CircleCommentItem(
-                    comment: widget.post.comments[index],
-                    circle: widget.circle,
-                    post: widget.post,
-                  );
-                },
-              )),
-          
+          Obx(
+            () => ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              itemCount: widget.post.comments.length,
+              itemBuilder: (context, index) {
+                return CircleCommentItem(
+                  comment: widget.post.comments[index],
+                  circle: widget.circle,
+                  post: widget.post,
+                );
+              },
+            ),
+          ),
+
           // Comment Input
-          Obx(() => widget.post.isCommenting.value
-              ? _buildCommentInput(commentController, (text, image, video) {
-                  controller.addCommentToPost(
-                    circle: widget.circle,
-                    post: widget.post,
-                    content: text,
-                    imageFile: image,
-                    videoFile: video,
-                  );
-                  commentController.clear();
-                  setState(() {
-                    _commentImage = null;
-                    _commentVideo = null;
-                  });
-                })
-              : const SizedBox.shrink()),
+          Obx(
+            () => widget.post.isCommenting.value
+                ? _buildCommentInput(commentController, (
+                    text,
+                    image,
+                    video,
+                    file,
+                  ) {
+                    controller.addCommentToPost(
+                      circle: widget.circle,
+                      post: widget.post,
+                      content: text,
+                      imageFile: image,
+                      videoFile: video,
+                      anyFile: file,
+                    );
+                    commentController.clear();
+                    setState(() {
+                      _commentImage = null;
+                      _commentVideo = null;
+                      _commentFile = null;
+                    });
+                  })
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
     );
@@ -170,14 +198,55 @@ class _CirclePostItemState extends State<CirclePostItem> {
               });
             },
             itemBuilder: (context, index) {
+              final imagePath = widget.post.images[index];
+              final isNetwork =
+                  imagePath.startsWith('http') ||
+                  imagePath.startsWith('/uploads');
+
+              final displayPath = imagePath.startsWith('/uploads')
+                  ? AppUrls.imageUrl(imagePath)
+                  : imagePath;
+
               return Container(
                 margin: EdgeInsets.symmetric(horizontal: 20.w),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24.r),
-                  image: DecorationImage(
-                    image: NetworkImage(widget.post.images[index]),
-                    fit: BoxFit.cover,
-                  ),
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(24.r),
+                      child: isNetwork
+                          ? Image.network(
+                              displayPath,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                              errorBuilder: (c, e, s) =>
+                                  Container(color: Colors.grey[200]),
+                            )
+                          : Image.file(
+                              File(imagePath),
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                              errorBuilder: (c, e, s) =>
+                                  Container(color: Colors.grey[200]),
+                            ),
+                    ),
+                    if (widget.post.isUploading)
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.4),
+                            borderRadius: BorderRadius.circular(24.r),
+                          ),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 3,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               );
             },
@@ -255,10 +324,7 @@ class _CirclePostItemState extends State<CirclePostItem> {
 
             return Container(
               padding: EdgeInsets.all(4.w),
-              decoration: BoxDecoration(
-                color: bgColor,
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
               child: emoji.isNotEmpty
                   ? Text(emoji, style: TextStyle(fontSize: 10.sp))
                   : Icon(icon, size: 10.sp, color: color),
@@ -279,8 +345,12 @@ class _CirclePostItemState extends State<CirclePostItem> {
         children: [
           Obx(() {
             final reaction = widget.post.reactionType.value;
-            IconData icon = widget.post.isLiked.value ? Icons.thumb_up : Icons.thumb_up_outlined;
-            Color color = widget.post.isLiked.value ? AppColors.primary : AppColors.textHeading;
+            IconData icon = widget.post.isLiked.value
+                ? Icons.thumb_up
+                : Icons.thumb_up_outlined;
+            Color color = widget.post.isLiked.value
+                ? AppColors.primary
+                : AppColors.textHeading;
             String label = "React";
             String emoji = "";
 
@@ -326,7 +396,11 @@ class _CirclePostItemState extends State<CirclePostItem> {
 
             return GestureDetector(
               onTap: () => controller.toggleLikePost(widget.post),
-              onLongPressStart: (details) => _showReactionMenu(context, details.globalPosition, controller),
+              onLongPressStart: (details) => _showReactionMenu(
+                context,
+                details.globalPosition,
+                controller,
+              ),
               child: Row(
                 children: [
                   emoji.isNotEmpty
@@ -345,19 +419,29 @@ class _CirclePostItemState extends State<CirclePostItem> {
               ),
             );
           }),
-          _buildActionButton(Icons.chat_bubble_outline, "Comment",
-              onTap: () => controller.toggleCommentInput(widget.post)),
-          _buildActionButton(Icons.share_outlined, "Share",
-              onTap: () => _showShareBottomSheet(context, controller)),
+          _buildActionButton(
+            Icons.chat_bubble_outline,
+            "Comment",
+            onTap: () => controller.toggleCommentInput(widget.post),
+          ),
+          _buildActionButton(
+            Icons.share_outlined,
+            "Share",
+            onTap: () => _showShareBottomSheet(context, controller),
+          ),
         ],
       ),
     );
   }
 
-  void _showReactionMenu(BuildContext context, Offset position, CircleController controller) {
+  void _showReactionMenu(
+    BuildContext context,
+    Offset position,
+    CircleController controller,
+  ) {
     final screenWidth = MediaQuery.of(context).size.width;
     const menuWidth = 320.0; // Estimated width including padding
-    
+
     // Calculate centered position but clamp to screen edges
     double leftPosition = position.dx - (menuWidth / 2);
     if (leftPosition < 16.w) leftPosition = 16.w;
@@ -385,7 +469,11 @@ class _CirclePostItemState extends State<CirclePostItem> {
     );
   }
 
-  Widget _buildActionButton(IconData icon, String label, {VoidCallback? onTap}) {
+  Widget _buildActionButton(
+    IconData icon,
+    String label, {
+    VoidCallback? onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Row(
@@ -405,11 +493,16 @@ class _CirclePostItemState extends State<CirclePostItem> {
     );
   }
 
-  Widget _buildCommentInput(TextEditingController controller, Function(String, File?, File?) onAdd) {
+  Widget _buildCommentInput(
+    TextEditingController controller,
+    Function(String, File?, File?, File?) onAdd,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_commentImage != null || _commentVideo != null)
+        if (_commentImage != null ||
+            _commentVideo != null ||
+            _commentFile != null)
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
             child: Stack(
@@ -417,12 +510,22 @@ class _CirclePostItemState extends State<CirclePostItem> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12.r),
                   child: _commentImage != null
-                      ? Image.file(_commentImage!, height: 80.h, width: 80.w, fit: BoxFit.cover)
+                      ? Image.file(
+                          _commentImage!,
+                          height: 80.h,
+                          width: 80.w,
+                          fit: BoxFit.cover,
+                        )
                       : Container(
                           height: 80.h,
                           width: 80.w,
                           color: Colors.black12,
-                          child: Icon(Icons.videocam, color: AppColors.primary),
+                          child: Icon(
+                            _commentVideo != null
+                                ? Icons.videocam
+                                : Icons.insert_drive_file,
+                            color: AppColors.primary,
+                          ),
                         ),
                 ),
                 Positioned(
@@ -432,10 +535,14 @@ class _CirclePostItemState extends State<CirclePostItem> {
                     onTap: () => setState(() {
                       _commentImage = null;
                       _commentVideo = null;
+                      _commentFile = null;
                     }),
                     child: Container(
                       padding: EdgeInsets.all(2.w),
-                      decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
                       child: Icon(Icons.close, size: 16.sp, color: Colors.red),
                     ),
                   ),
@@ -449,14 +556,33 @@ class _CirclePostItemState extends State<CirclePostItem> {
             children: [
               IconButton(
                 onPressed: _pickImage,
-                icon: Icon(Icons.image_outlined, color: Colors.grey[600], size: 22.sp),
+                icon: Icon(
+                  Icons.image_outlined,
+                  color: Colors.grey[600],
+                  size: 22.sp,
+                ),
                 padding: EdgeInsets.zero,
                 constraints: BoxConstraints(),
               ),
               SizedBox(width: 8.w),
               IconButton(
                 onPressed: _pickVideo,
-                icon: Icon(Icons.videocam_outlined, color: Colors.grey[600], size: 22.sp),
+                icon: Icon(
+                  Icons.videocam_outlined,
+                  color: Colors.grey[600],
+                  size: 22.sp,
+                ),
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(),
+              ),
+              SizedBox(width: 8.w),
+              IconButton(
+                onPressed: _pickFile,
+                icon: Icon(
+                  Icons.attach_file,
+                  color: Colors.grey[600],
+                  size: 22.sp,
+                ),
                 padding: EdgeInsets.zero,
                 constraints: BoxConstraints(),
               ),
@@ -468,7 +594,10 @@ class _CirclePostItemState extends State<CirclePostItem> {
                   decoration: InputDecoration(
                     hintText: "Write a comment...",
                     isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 12.h,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(20.r),
                       borderSide: BorderSide(color: Colors.grey[200]!),
@@ -478,7 +607,12 @@ class _CirclePostItemState extends State<CirclePostItem> {
               ),
               SizedBox(width: 8.w),
               IconButton(
-                onPressed: () => onAdd(controller.text, _commentImage, _commentVideo),
+                onPressed: () => onAdd(
+                  controller.text,
+                  _commentImage,
+                  _commentVideo,
+                  _commentFile,
+                ),
                 icon: Icon(Icons.send, color: AppColors.primary, size: 22.sp),
               ),
             ],
@@ -488,7 +622,10 @@ class _CirclePostItemState extends State<CirclePostItem> {
     );
   }
 
-  void _showShareBottomSheet(BuildContext context, CircleController controller) {
+  void _showShareBottomSheet(
+    BuildContext context,
+    CircleController controller,
+  ) {
     Get.bottomSheet(
       Container(
         padding: EdgeInsets.all(24.w),
@@ -502,18 +639,28 @@ class _CirclePostItemState extends State<CirclePostItem> {
             Container(
               width: 40.w,
               height: 4.h,
-              decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2.r)),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2.r),
+              ),
             ),
             SizedBox(height: 24.h),
             Text(
               "Share Post",
-              style: GoogleFonts.inter(fontSize: 18.sp, fontWeight: FontWeight.w700, color: const Color(0xFF1B0B3B)),
+              style: GoogleFonts.inter(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF1B0B3B),
+              ),
             ),
             SizedBox(height: 16.h),
             Text(
               "Shared a post from ${widget.post.userName}. Download Bonded to view more.",
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[600]),
+              style: GoogleFonts.inter(
+                fontSize: 14.sp,
+                color: Colors.grey[600],
+              ),
             ),
             SizedBox(height: 32.h),
             ElevatedButton(
@@ -524,17 +671,29 @@ class _CirclePostItemState extends State<CirclePostItem> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 minimumSize: Size(double.infinity, 56.h),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.r)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.r),
+                ),
               ),
               child: Text(
                 "Share Now",
-                style: GoogleFonts.inter(fontSize: 16.sp, fontWeight: FontWeight.w700, color: Colors.white),
+                style: GoogleFonts.inter(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
               ),
             ),
             SizedBox(height: 12.h),
             TextButton(
               onPressed: () => Get.back(),
-              child: Text("Cancel", style: GoogleFonts.inter(color: Colors.grey[600], fontWeight: FontWeight.w600)),
+              child: Text(
+                "Cancel",
+                style: GoogleFonts.inter(
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
             SizedBox(height: 10.h),
           ],
