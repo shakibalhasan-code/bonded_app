@@ -563,7 +563,16 @@ class ProfileController extends BaseController {
     isUpdatingProfile = true;
     try {
       final token = SharedPrefsService.getString('accessToken');
-      final file = File(profileImagePath.value);
+      final filePath = profileImagePath.value;
+      
+      if (filePath.isEmpty) return false;
+      
+      final file = File(filePath);
+      if (!await file.exists()) {
+        debugPrint("Avatar file does not exist at path: $filePath");
+        profileImagePath.value = ''; // Clear the invalid path
+        return false;
+      }
 
       final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
       final mimeParts = mimeType.split('/');

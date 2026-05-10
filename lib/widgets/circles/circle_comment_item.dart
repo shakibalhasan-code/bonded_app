@@ -12,6 +12,7 @@ import '../../models/home_models.dart';
 import '../../models/circle_model.dart';
 import '../../controllers/circle_controller.dart';
 import 'package:intl/intl.dart';
+import '../../core/utils/date_utils.dart';
 import '../events/media_viewers.dart';
 
 class CircleCommentItem extends StatefulWidget {
@@ -85,7 +86,7 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
     final controller = Get.find<CircleController>();
 
     return Padding(
-      padding: EdgeInsets.only(bottom: 16.h, left: widget.isReply ? 38.w : 0),
+      padding: EdgeInsets.only(bottom: 8.h, left: widget.isReply ? 38.w : 0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -588,11 +589,6 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
 
   String _formatTimestamp(String timestamp) {
     if (timestamp.isEmpty) return "";
-    try {
-      final dateTime = DateTime.parse(timestamp);
-      return DateFormat('d/M/y h:mm a').format(dateTime).toLowerCase();
-    } catch (e) {
-      return timestamp;
-    }
+    return AppDateUtils.formatLocal(timestamp, format: 'd/M/y h:mm a').toLowerCase();
   }
 }

@@ -18,7 +18,7 @@ class SubscriptionController extends GetxController {
   }
 
   Future<void> completeSubscription(BuildContext context) async {
-    if (selectedPlan.value == 'Free Tier') {
+    if (selectedPlan.value == 'Free ') {
       _showSuccessDialog();
       return;
     }
@@ -31,7 +31,8 @@ class SubscriptionController extends GetxController {
     Get.dialog(
       VerificationSuccessDialog(
         title: "Subscription Purchased Successfully!",
-        description: "Your subscription is active! Enjoy all the premium features and make the most of your experience.",
+        description:
+            "Your subscription is active! Enjoy all the premium features and make the most of your experience.",
         onPressed: () {
           Get.offAllNamed(AppRoutes.PROFILE_READY);
         },

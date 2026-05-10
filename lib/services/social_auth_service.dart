@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -6,72 +5,155 @@ import 'package:flutter/foundation.dart';
 import 'dart:io';
 import '../core/constants/social_auth_config.dart';
 
-class SocialAuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+/// Result container for a social sign-in.
+class SocialAuthResult {
+  final String provider; // 'google' | 'facebook' | 'apple'
+  final String? idToken; // Google ID token / Apple identity token
+  final String? accessToken; // Facebook access token
+  final String? fullName;
+  final String? email;
+  final String? avatar;
 
-  // Google Sign In
-  Future<UserCredential?> signInWithGoogle() async {
+  const SocialAuthResult({
+    required this.provider,
+    this.idToken,
+    this.accessToken,
+    this.fullName,
+    this.email,
+    this.avatar,
+  });
+}
+
+class SocialAuthService {
+  // Whether GoogleSignIn has been initialized this app session.
+  // NOT static — avoids stale-flag issues across instances.
+  bool _googleInitialized = false;
+
+  // ──────────────────────────────────────────────
+  // Google Sign-In  (google_sign_in v7.x API)
+  //
+  // On Android:
+  //   • serverClientId = Web Client ID (required to get an idToken back)
+  //   • clientId is ignored on Android
+  // On iOS:
+  //   • clientId = iOS Client ID
+  //   • serverClientId is optional
+  // ──────────────────────────────────────────────
+  Future<SocialAuthResult?> signInWithGoogle() async {
     try {
-      // Determine client ID based on platform
-      String? clientId;
-      if (!kIsWeb) {
-        if (Platform.isIOS) {
-          clientId = SocialAuthConfig.googleClientIdIos;
-        } else if (Platform.isAndroid) {
-          clientId = SocialAuthConfig.googleClientIdAndroid;
-        }
+      if (!_googleInitialized) {
+        debugPrint('GOOGLE_AUTH: Initializing GoogleSignIn...');
+        await GoogleSignIn.instance.initialize(
+          // iOS needs the iOS client ID; on Android clientId is ignored.
+          clientId: Platform.isIOS ? SocialAuthConfig.googleClientIdIos : null,
+          // Android Credential Manager requires serverClientId to issue an idToken.
+          serverClientId: SocialAuthConfig.googleClientIdAndroid,
+        );
+        _googleInitialized = true;
+        debugPrint('GOOGLE_AUTH: Initialized successfully');
       }
 
-      // Initialize the singleton with your config before use
-      await GoogleSignIn.instance.initialize(
-        clientId: clientId,
+      debugPrint('GOOGLE_AUTH: Calling authenticate()...');
+      final GoogleSignInAccount account =
+          await GoogleSignIn.instance.authenticate();
+
+      debugPrint('GOOGLE_AUTH: Signed in as ${account.email}');
+
+      // In v7.x, authentication is a synchronous getter backed by the token
+      // data returned by the platform during authenticate(). On Android, the
+      // idToken is always present when serverClientId is correctly configured.
+      final String? idToken = account.authentication.idToken;
+
+      if (idToken == null || idToken.isEmpty) {
+        debugPrint(
+          'GOOGLE_AUTH: ERROR — idToken is null.\n'
+          'Fix: Ensure SocialAuthConfig.googleClientIdAndroid is the '
+          'WEB client ID from Google Cloud Console (not the Android client ID). '
+          'In google-services.json this is the client with client_type:3.',
+        );
+        throw Exception(
+          'Google sign-in failed: could not obtain an ID token. '
+          'Please contact support.',
+        );
+      }
+
+      debugPrint('GOOGLE_AUTH: idToken obtained (${idToken.length} chars) ✓');
+
+      return SocialAuthResult(
+        provider: 'google',
+        idToken: idToken,
+        email: account.email,
+        avatar: account.photoUrl,
+        fullName: account.displayName,
       );
-
-      final GoogleSignInAccount? googleUser = await GoogleSignIn.instance
-          .authenticate();
-      if (googleUser == null) return null;
-
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-
-      // New for 7.0+: Retrieve accessToken via authorizationClient
-      final authorizedUser = await googleUser.authorizationClient
-          .authorizeScopes(['email', 'profile']);
-      final String? accessToken = authorizedUser.accessToken;
-
-      final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      return await _auth.signInWithCredential(credential);
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        debugPrint('GOOGLE_AUTH: User cancelled sign-in');
+        return null; // silent — user chose to cancel
+      }
+      debugPrint('GOOGLE_AUTH: GoogleSignInException: ${e.code} — ${e.description}');
+      // Re-throw so loginWithGoogle() shows a snackbar
+      rethrow;
     } catch (e) {
-      debugPrint("Google Sign-In Error: $e");
+      debugPrint('GOOGLE_AUTH: Error: $e');
       rethrow;
     }
   }
 
-  // Facebook Sign In
-  Future<UserCredential?> signInWithFacebook() async {
+  // ──────────────────────────────────────────────
+  // Facebook Sign-In
+  // ──────────────────────────────────────────────
+  Future<SocialAuthResult?> signInWithFacebook() async {
     try {
-      final LoginResult result = await FacebookAuth.instance.login();
+      debugPrint('FACEBOOK_AUTH: Starting Facebook login...');
+      final LoginResult result = await FacebookAuth.instance.login(
+        permissions: ['email', 'public_profile'],
+      );
+
+      debugPrint('FACEBOOK_AUTH: Status: ${result.status}');
 
       if (result.status == LoginStatus.success) {
-        final OAuthCredential credential = FacebookAuthProvider.credential(
-          result.accessToken!.tokenString,
+        final accessToken = result.accessToken?.tokenString;
+        if (accessToken == null) {
+          debugPrint('FACEBOOK_AUTH: accessToken is null after success');
+          throw Exception('Facebook sign-in failed: could not obtain an access token.');
+        }
+
+        debugPrint('FACEBOOK_AUTH: Got access token, fetching profile...');
+        final userData = await FacebookAuth.instance.getUserData(
+          fields: 'name,email,picture.width(200)',
         );
-        return await _auth.signInWithCredential(credential);
+        debugPrint('FACEBOOK_AUTH: Profile fetched: email=${userData['email']}');
+
+        return SocialAuthResult(
+          provider: 'facebook',
+          accessToken: accessToken,
+          email: userData['email'] as String?,
+          fullName: userData['name'] as String?,
+          avatar: (userData['picture']?['data']?['url']) as String?,
+        );
       }
-      return null;
+
+      // cancelled or failed
+      if (result.status == LoginStatus.cancelled) {
+        debugPrint('FACEBOOK_AUTH: User cancelled');
+        return null;
+      }
+
+      debugPrint('FACEBOOK_AUTH: Login failed: ${result.message}');
+      throw Exception('Facebook sign-in failed: ${result.message}');
     } catch (e) {
-      debugPrint("Facebook Sign-In Error: $e");
+      debugPrint('FACEBOOK_AUTH: Error: $e');
       rethrow;
     }
   }
 
-  // Apple Sign In
-  Future<UserCredential?> signInWithApple() async {
+  // ──────────────────────────────────────────────
+  // Apple Sign-In
+  // ──────────────────────────────────────────────
+  Future<SocialAuthResult?> signInWithApple() async {
     try {
+      debugPrint('APPLE_AUTH: Starting Apple sign-in...');
       final appleCredential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
@@ -79,22 +161,42 @@ class SocialAuthService {
         ],
       );
 
-      final OAuthCredential credential = OAuthProvider("apple.com").credential(
-        idToken: appleCredential.identityToken,
-        accessToken: appleCredential.authorizationCode,
-      );
+      final identityToken = appleCredential.identityToken;
+      if (identityToken == null || identityToken.isEmpty) {
+        debugPrint('APPLE_AUTH: identityToken is null');
+        throw Exception('Apple sign-in failed: could not obtain an identity token.');
+      }
 
-      return await _auth.signInWithCredential(credential);
+      debugPrint('APPLE_AUTH: identityToken obtained ✓');
+
+      // Apple only gives fullName on the very first sign-in
+      final fullName = [
+        appleCredential.givenName,
+        appleCredential.familyName,
+      ].where((s) => s != null && s.isNotEmpty).join(' ').trim();
+
+      return SocialAuthResult(
+        provider: 'apple',
+        idToken: identityToken,
+        fullName: fullName.isEmpty ? null : fullName,
+        email: appleCredential.email,
+      );
     } catch (e) {
-      debugPrint("Apple Sign-In Error: $e");
+      debugPrint('APPLE_AUTH: Error: $e');
       rethrow;
     }
   }
 
-  // Logout from all
+  // ──────────────────────────────────────────────
+  // Sign out helpers
+  // ──────────────────────────────────────────────
   Future<void> signOut() async {
-    await _auth.signOut();
-    await GoogleSignIn.instance.signOut();
-    await FacebookAuth.instance.logOut();
+    _googleInitialized = false; // Allow re-initialization after sign out
+    try {
+      await GoogleSignIn.instance.signOut();
+    } catch (_) {}
+    try {
+      await FacebookAuth.instance.logOut();
+    } catch (_) {}
   }
 }

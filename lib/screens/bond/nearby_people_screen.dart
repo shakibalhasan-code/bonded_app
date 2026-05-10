@@ -24,7 +24,7 @@ class NearbyPeopleScreen extends StatelessWidget {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          "Nearby People",
+          "Find Bond",
           style: GoogleFonts.inter(
             fontSize: 18.sp,
             fontWeight: FontWeight.w700,
@@ -36,17 +36,17 @@ class NearbyPeopleScreen extends StatelessWidget {
         () => controller.isLoadingNearby.value
             ? const Center(child: CircularProgressIndicator())
             : controller.filteredNearbyPeople.isEmpty
-                ? const Center(child: Text("No one nearby found"))
-                : ListView.builder(
-                    padding: EdgeInsets.all(24.w),
-                    itemCount: controller.filteredNearbyPeople.length,
-                    itemBuilder: (context, index) {
-                      return BondUserCard(
-                        connection: controller.filteredNearbyPeople[index],
-                        status: BondStatus.nearby,
-                      );
-                    },
-                  ),
+            ? const Center(child: Text("No one nearby found"))
+            : ListView.builder(
+                padding: EdgeInsets.all(24.w),
+                itemCount: controller.filteredNearbyPeople.length,
+                itemBuilder: (context, index) {
+                  return BondUserCard(
+                    connection: controller.filteredNearbyPeople[index],
+                    status: BondStatus.nearby,
+                  );
+                },
+              ),
       ),
     );
   }

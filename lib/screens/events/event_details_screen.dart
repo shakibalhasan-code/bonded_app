@@ -66,7 +66,10 @@ class EventDetailsScreen extends StatelessWidget {
           child: ElevatedButton(
             onPressed: isOwner || controller.isBooking.value
                 ? null
-                : () => Get.toNamed(AppRoutes.BOOK_EVENT, arguments: currentEvent),
+                : () => Get.toNamed(
+                    AppRoutes.BOOK_EVENT,
+                    arguments: currentEvent,
+                  ),
             style: ElevatedButton.styleFrom(
               backgroundColor: isOwner ? Colors.grey[400] : AppColors.primary,
               minimumSize: Size(double.infinity, 56.h),
@@ -84,7 +87,7 @@ class EventDetailsScreen extends StatelessWidget {
                     ),
                   )
                 : Text(
-                    isOwner ? "own this event" : "Book Event",
+                    isOwner ? "Your event" : "Book Event",
                     style: GoogleFonts.inter(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
@@ -216,8 +219,11 @@ class EventDetailsScreen extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 24.r,
-                      backgroundImage: NetworkImage(AppUrls.imageUrl(currentEvent.hostDetails!['avatar'])),
-                      onBackgroundImageError: (_, __) => const Icon(Icons.person),
+                      backgroundImage: NetworkImage(
+                        AppUrls.imageUrl(currentEvent.hostDetails!['avatar']),
+                      ),
+                      onBackgroundImageError: (_, __) =>
+                          const Icon(Icons.person),
                     ),
                     SizedBox(width: 12.w),
                     Expanded(
@@ -246,7 +252,10 @@ class EventDetailsScreen extends StatelessWidget {
                     OutlinedButton(
                       onPressed: () {
                         if (currentEvent.hostId != null) {
-                           Get.toNamed(AppRoutes.HOST_DETAILS, arguments: currentEvent.hostId);
+                          Get.toNamed(
+                            AppRoutes.HOST_DETAILS,
+                            arguments: currentEvent.hostId,
+                          );
                         }
                       },
                       style: OutlinedButton.styleFrom(
@@ -254,7 +263,10 @@ class EventDetailsScreen extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20.r),
                         ),
-                        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 16.w,
+                          vertical: 8.h,
+                        ),
                       ),
                       child: Text(
                         "View Profile",
@@ -309,11 +321,15 @@ class EventDetailsScreen extends StatelessWidget {
               ],
 
               // Location
-              if (currentEvent.address != null || currentEvent.city != null) ...[
+              if (currentEvent.address != null ||
+                  currentEvent.city != null) ...[
                 Row(
                   children: [
-                    Icon(Icons.location_on,
-                        color: AppColors.primary, size: 20.sp),
+                    Icon(
+                      Icons.location_on,
+                      color: AppColors.primary,
+                      size: 20.sp,
+                    ),
                     SizedBox(width: 8.w),
                     Expanded(
                       child: Text(
@@ -368,8 +384,8 @@ class EventDetailsScreen extends StatelessWidget {
                 currentEvent.category == EventCategory.virtual
                     ? "Virtual Event"
                     : currentEvent.category == EventCategory.highlights
-                        ? "Event Highlight"
-                        : "In-Person Event",
+                    ? "Event Highlight"
+                    : "In-Person Event",
                 style: GoogleFonts.inter(
                   fontSize: 14.sp,
                   color: Colors.grey[700],
@@ -428,7 +444,9 @@ class EventDetailsScreen extends StatelessWidget {
 
               // Highlights Section
               Obx(() {
-                if (controller.highlights.isNotEmpty || (currentEvent.hostId == authController.currentUser.value?.id)) {
+                if (controller.highlights.isNotEmpty ||
+                    (currentEvent.hostId ==
+                        authController.currentUser.value?.id)) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -436,13 +454,18 @@ class EventDetailsScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           _buildSectionTitle("Event Highlights"),
-                          if (currentEvent.hostId == authController.currentUser.value?.id)
+                          if (currentEvent.hostId ==
+                              authController.currentUser.value?.id)
                             TextButton.icon(
                               onPressed: () => Get.toNamed(
                                 AppRoutes.ADD_EVENT_HIGHLIGHT,
                                 arguments: currentEvent,
                               ),
-                              icon: Icon(Icons.add_a_photo, size: 16.sp, color: AppColors.primary),
+                              icon: Icon(
+                                Icons.add_a_photo,
+                                size: 16.sp,
+                                color: AppColors.primary,
+                              ),
                               label: Text(
                                 "Add",
                                 style: GoogleFonts.inter(
@@ -458,7 +481,10 @@ class EventDetailsScreen extends StatelessWidget {
                       if (controller.highlights.isEmpty)
                         Text(
                           "No highlights available yet.",
-                          style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[600]),
+                          style: GoogleFonts.inter(
+                            fontSize: 14.sp,
+                            color: Colors.grey[600],
+                          ),
                         )
                       else
                         SizedBox(
@@ -564,9 +590,13 @@ class EventDetailsScreen extends StatelessWidget {
   Widget _buildHighlightCard(HighlightModel highlight) {
     final images = highlight.images ?? [];
     final videos = highlight.videos ?? [];
-    
-    String? displayImage = images.isNotEmpty ? AppUrls.imageUrl(images.first.url) : null;
-    String? displayVideo = videos.isNotEmpty ? AppUrls.imageUrl(videos.first.url) : null;
+
+    String? displayImage = images.isNotEmpty
+        ? AppUrls.imageUrl(images.first.url)
+        : null;
+    String? displayVideo = videos.isNotEmpty
+        ? AppUrls.imageUrl(videos.first.url)
+        : null;
 
     return GestureDetector(
       onTap: () {
@@ -602,7 +632,11 @@ class EventDetailsScreen extends StatelessWidget {
             children: [
               if (displayVideo != null && displayImage == null)
                 Center(
-                  child: Icon(Icons.play_circle_fill, color: AppColors.primary.withOpacity(0.7), size: 32.sp),
+                  child: Icon(
+                    Icons.play_circle_fill,
+                    color: AppColors.primary.withOpacity(0.7),
+                    size: 32.sp,
+                  ),
                 ),
               if (displayVideo != null && displayImage != null)
                 Positioned(
@@ -614,7 +648,11 @@ class EventDetailsScreen extends StatelessWidget {
                       color: Colors.black.withOpacity(0.5),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.play_arrow, color: Colors.white, size: 12.sp),
+                    child: Icon(
+                      Icons.play_arrow,
+                      color: Colors.white,
+                      size: 12.sp,
+                    ),
                   ),
                 ),
             ],
@@ -623,5 +661,4 @@ class EventDetailsScreen extends StatelessWidget {
       ),
     );
   }
-
 }

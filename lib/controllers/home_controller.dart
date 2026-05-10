@@ -24,6 +24,10 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    // Ensure CircleController is registered — CirclePostItem depends on it
+    if (!Get.isRegistered<CircleController>()) {
+      Get.put(CircleController());
+    }
     Get.put(BondController()); // Ensure BondController is available
     fetchHomeData();
     // Initialize Socket Connection

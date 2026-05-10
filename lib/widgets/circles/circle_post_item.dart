@@ -10,6 +10,7 @@ import '../../core/theme/app_colors.dart';
 import '../../models/home_models.dart';
 import '../../models/circle_model.dart';
 import '../../controllers/circle_controller.dart';
+import '../../core/utils/date_utils.dart';
 import 'circle_comment_item.dart';
 import 'reaction_selector.dart';
 
@@ -72,11 +73,14 @@ class _CirclePostItemState extends State<CirclePostItem> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<CircleController>();
+    // Safely resolve CircleController — may not yet be registered on home screen
+    final CircleController controller = Get.isRegistered<CircleController>()
+        ? Get.find<CircleController>()
+        : Get.put(CircleController());
     final commentController = TextEditingController();
 
     return Container(
-      margin: EdgeInsets.only(bottom: 20.h),
+      margin: EdgeInsets.only(bottom: 12.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -99,9 +103,9 @@ class _CirclePostItemState extends State<CirclePostItem> {
           if (widget.post.images.isNotEmpty) _buildImageCarousel(),
           SizedBox(height: 12.h),
           _buildStatsRow(),
-          const Divider(height: 32),
+          const Divider(height: 16),
           _buildInteractionRow(controller),
-          SizedBox(height: 10.h),
+          SizedBox(height: 8.h),
 
           // Comments Section
           Obx(
@@ -158,22 +162,92 @@ class _CirclePostItemState extends State<CirclePostItem> {
         children: [
           CircleAvatar(
             radius: 22.r,
-            backgroundImage: NetworkImage(widget.post.userImage),
+            backgroundImage: widget.post.userImage.isNotEmpty
+                ? NetworkImage(widget.post.userImage)
+                : null,
+            backgroundColor: AppColors.primary.withOpacity(0.1),
+            child: widget.post.userImage.isEmpty
+                ? Icon(Icons.person, color: AppColors.primary, size: 22.r)
+                : null,
           ),
           SizedBox(width: 12.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  widget.post.userName,
-                  style: GoogleFonts.inter(
-                    fontSize: 15.sp,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1B0B3B),
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        widget.post.userName,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1B0B3B),
+                        ),
+                      ),
+                    ),
+                    if (widget.post.createdAt != null) ...[
+                      SizedBox(width: 8.w),
+                      Text(
+                        AppDateUtils.timeAgo(widget.post.createdAt!.toIso8601String()),
+                        style: GoogleFonts.inter(
+                          fontSize: 11.sp,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                if (widget.post.userBio != null)
+                // Circle badge — shown on home feed when circleName is available
+                if (widget.post.circleName != null)
+                  Padding(
+                    padding: EdgeInsets.only(top: 4.h),
+                    child: GestureDetector(
+                      onTap: () {
+                        // Navigate to the circle if possible
+                        if (widget.circle != null) {
+                          Get.toNamed(
+                            widget.circle!.isJoined.value
+                                ? '/joined-circle-details'
+                                : '/public-circle-details',
+                            arguments: widget.circle,
+                          );
+                        }
+                      },
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(20.r),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.group_outlined,
+                              size: 11.sp,
+                              color: AppColors.primary,
+                            ),
+                            SizedBox(width: 4.w),
+                            Flexible(
+                              child: Text(
+                                widget.post.circleName!,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                else if (widget.post.userBio != null)
                   Text(
                     widget.post.userBio!,
                     style: GoogleFonts.inter(

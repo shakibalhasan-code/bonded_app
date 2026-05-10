@@ -9,7 +9,6 @@ import '../models/user_model.dart';
 import '../services/socket_service.dart';
 import '../services/social_auth_service.dart';
 import 'base_controller.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthController extends BaseController {
   final ApiService _apiService = ApiService();
@@ -364,14 +363,21 @@ class AuthController extends BaseController {
     Get.offAllNamed(AppRoutes.LOGIN);
   }
 
+  // ──────────────────────────────────────────────
   // Social Login Methods
+  // ──────────────────────────────────────────────
+
   Future<void> loginWithGoogle() async {
     try {
       setLoading(true);
-      final credential = await _socialAuthService.signInWithGoogle();
-      if (credential != null) {
-        await _handleSocialLoginSuccess(credential, 'google');
+      final result = await _socialAuthService.signInWithGoogle();
+      if (result == null) {
+        // null = cancelled by user OR idToken was null (see debug logs)
+        debugPrint('AUTH_CONTROLLER: Google sign-in returned null result');
+        return;
       }
+      debugPrint('AUTH_CONTROLLER: Google sign-in success, calling backend...');
+      await _sendSocialLoginToBackend(result);
     } catch (e) {
       Get.snackbar('Error', 'Google Sign-In failed: ${e.toString()}');
     } finally {
@@ -382,10 +388,8 @@ class AuthController extends BaseController {
   Future<void> loginWithFacebook() async {
     try {
       setLoading(true);
-      final credential = await _socialAuthService.signInWithFacebook();
-      if (credential != null) {
-        await _handleSocialLoginSuccess(credential, 'facebook');
-      }
+      final result = await _socialAuthService.signInWithFacebook();
+      if (result != null) await _sendSocialLoginToBackend(result);
     } catch (e) {
       Get.snackbar('Error', 'Facebook Sign-In failed: ${e.toString()}');
     } finally {
@@ -396,10 +400,8 @@ class AuthController extends BaseController {
   Future<void> loginWithApple() async {
     try {
       setLoading(true);
-      final credential = await _socialAuthService.signInWithApple();
-      if (credential != null) {
-        await _handleSocialLoginSuccess(credential, 'apple');
-      }
+      final result = await _socialAuthService.signInWithApple();
+      if (result != null) await _sendSocialLoginToBackend(result);
     } catch (e) {
       Get.snackbar('Error', 'Apple Sign-In failed: ${e.toString()}');
     } finally {
@@ -407,50 +409,63 @@ class AuthController extends BaseController {
     }
   }
 
-  Future<void> _handleSocialLoginSuccess(UserCredential credential, String provider) async {
+  /// Builds the correct per-provider payload and calls POST /auth/social-login.
+  /// Per the backend docs:
+  ///   Google  → { provider, idToken }
+  ///   Facebook → { provider, accessToken }
+  ///   Apple   → { provider, identityToken, fullName? }
+  Future<void> _sendSocialLoginToBackend(SocialAuthResult result) async {
     try {
-      // Get Firebase ID token to send to backend
-      final String? idToken = await credential.user?.getIdToken();
-      if (idToken == null) {
-        Get.snackbar('Error', 'Failed to get authentication token');
-        return;
+      // Build payload per provider
+      final Map<String, dynamic> payload = {'provider': result.provider};
+
+      switch (result.provider) {
+        case 'google':
+          payload['idToken'] = result.idToken;
+          break;
+        case 'facebook':
+          payload['accessToken'] = result.accessToken;
+          break;
+        case 'apple':
+          payload['identityToken'] = result.idToken;
+          if (result.fullName != null && result.fullName!.isNotEmpty) {
+            payload['fullName'] = result.fullName;
+          }
+          break;
       }
 
-      // Send Firebase token to your backend for verification & JWT issuance
-      final response = await _apiService.post(
-        AppUrls.socialLogin,
-        {
-          "idToken": idToken,
-          "provider": provider,
-          "email": credential.user?.email,
-          "name": credential.user?.displayName,
-          "photoUrl": credential.user?.photoURL,
-        },
-      );
+      // Optional profile hints (ignored by backend if not useful)
+      if (result.avatar != null) payload['avatar'] = result.avatar;
 
+      debugPrint('SOCIAL_LOGIN: Sending payload to backend: ${payload.keys.toList()}');
+      debugPrint('SOCIAL_LOGIN: provider=${result.provider}, idToken=${result.idToken != null ? 'present' : 'null'}, accessToken=${result.accessToken != null ? 'present' : 'null'}');
+
+      final response = await _apiService.post(AppUrls.socialLogin, payload);
+      debugPrint('SOCIAL_LOGIN: Response status: ${response.statusCode}');
+      debugPrint('SOCIAL_LOGIN: Response body: ${response.body}');
       final data = jsonDecode(response.body);
+
       if (data['success'] == true) {
         final authData = data['data'];
         final accessToken = authData['accessToken'];
         final refreshToken = authData['refreshToken'];
 
-        // Save tokens and user ID
+        // Persist tokens and user ID
         await SharedPrefsService.saveString('accessToken', accessToken);
         if (refreshToken != null) {
           await SharedPrefsService.saveString('refreshToken', refreshToken);
         }
-        if (authData['user'] != null && authData['user']['_id'] != null) {
+        if (authData['user']?['_id'] != null) {
           await SharedPrefsService.saveString('userId', authData['user']['_id']);
         }
 
-        // Update user state
         currentUser.value = UserModel.fromJson(authData['user']);
         userData.value = authData['user'];
 
-        // Initialize Socket
+        // Boot socket with fresh token
         Get.find<SocketService>().initSocket(token: accessToken);
 
-        Get.snackbar('Success', 'Logged in with ${provider.capitalizeFirst}');
+        Get.snackbar('Success', 'Logged in with ${result.provider.capitalizeFirst}');
 
         // Navigate based on profile completion
         if (authData['isCompleteProfile'] == true) {
@@ -459,11 +474,17 @@ class AuthController extends BaseController {
           Get.offAllNamed(AppRoutes.PROFILE_BUILDING);
         }
       } else {
-        Get.snackbar('Error', data['message'] ?? '${provider.capitalizeFirst} Sign-In failed');
+        Get.snackbar(
+          'Error',
+          data['message'] ?? '${result.provider.capitalizeFirst} Sign-In failed',
+        );
       }
     } catch (e) {
       debugPrint('Social login backend error: $e');
-      Get.snackbar('Error', 'Failed to complete ${provider.capitalizeFirst} Sign-In');
+      Get.snackbar(
+        'Error',
+        'Failed to complete ${result.provider.capitalizeFirst} Sign-In',
+      );
     }
   }
 }

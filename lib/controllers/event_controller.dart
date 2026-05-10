@@ -35,6 +35,16 @@ class EventController extends GetxController {
   final RxList<String> activeFilterCategories = <String>[].obs;
   final RxString selectedLocation = '2464 Royal Ln. Mesa, New Jersey 45463'.obs;
 
+  // Search
+  final RxString searchQuery = ''.obs;
+  final TextEditingController searchController = TextEditingController();
+
+  void updateSearch(String query) => searchQuery.value = query.trim();
+  void clearSearch() {
+    searchQuery.value = '';
+    searchController.clear();
+  }
+
   final List<String> availableFilterCategories = [
     "Fitness",
     "Networking",
@@ -51,6 +61,12 @@ class EventController extends GetxController {
     _loadMockTickets();
     fetchWallet();
     checkStripeStatus();
+  }
+
+  @override
+  void onClose() {
+    searchController.dispose();
+    super.onClose();
   }
 
   Future<void> checkStripeStatus() async {
@@ -199,22 +215,32 @@ class EventController extends GetxController {
   }
 
   List<EventModel> get filteredEvents {
+    final query = searchQuery.value.toLowerCase();
+
+    List<EventModel> base;
     if (selectedTab.value == 0) {
       if (selectedCategory.value == 0) {
-        return events
-            .where((e) => e.category == EventCategory.inPerson)
-            .toList();
+        base = events.where((e) => e.category == EventCategory.inPerson).toList();
       } else if (selectedCategory.value == 1) {
-        return events
-            .where((e) => e.category == EventCategory.virtual)
-            .toList();
+        base = events.where((e) => e.category == EventCategory.virtual).toList();
       } else if (selectedCategory.value == 2) {
-        return events
-            .where((e) => e.category == EventCategory.highlights)
-            .toList();
+        base = events.where((e) => e.category == EventCategory.highlights).toList();
+      } else {
+        base = events.toList();
       }
+    } else {
+      base = events.toList();
     }
-    return events;
+
+    if (query.isEmpty) return base;
+
+    return base.where((e) {
+      return e.title.toLowerCase().contains(query) ||
+          (e.city ?? '').toLowerCase().contains(query) ||
+          (e.venueName ?? '').toLowerCase().contains(query) ||
+          (e.description ?? '').toLowerCase().contains(query) ||
+          e.category.name.toLowerCase().contains(query);
+    }).toList();
   }
 
   void changeTab(int tabIndex) {
@@ -232,6 +258,16 @@ class EventController extends GetxController {
     if (categoryIndex == 2) {
       fetchPublicHighlights();
     }
+  }
+
+  List<HighlightModel> get filteredHighlights {
+    final query = searchQuery.value.toLowerCase();
+    if (query.isEmpty) return publicHighlights;
+
+    return publicHighlights.where((h) {
+      return (h.event?.title ?? '').toLowerCase().contains(query) ||
+          (h.caption ?? '').toLowerCase().contains(query);
+    }).toList();
   }
 
   Future<void> fetchPublicHighlights({bool showLoader = true}) async {
@@ -259,6 +295,15 @@ class EventController extends GetxController {
       fetchWallet();
       checkStripeStatus();
     }
+  }
+
+  List<TicketModel> get filteredTickets {
+    final query = searchQuery.value.toLowerCase();
+    if (query.isEmpty) return tickets;
+
+    return tickets.where((t) {
+      return t.title.toLowerCase().contains(query);
+    }).toList();
   }
 
   void resetFilters() {

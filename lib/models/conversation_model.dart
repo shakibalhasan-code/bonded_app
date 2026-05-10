@@ -27,8 +27,8 @@ class ConversationModel {
       lastMessage: json['lastMessage'] ?? '',
       lastMessageType: json['lastMessageType'] ?? 'text',
       lastMessageAt: json['lastMessageAt'] != null 
-          ? DateTime.parse(json['lastMessageAt']) 
-          : (json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : DateTime.now()),
+          ? DateTime.parse(json['lastMessageAt']).toLocal() 
+          : (json['updatedAt'] != null ? DateTime.parse(json['updatedAt']).toLocal() : DateTime.now()),
       kind: json['kind'] ?? 'direct',
       unreadCount: json['unreadCount'] ?? 0,
     );

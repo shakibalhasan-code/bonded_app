@@ -142,6 +142,8 @@ class PostModel {
   final RxBool isCommenting;
   final RxList<CommentModel> comments;
   final String? circleId;
+  final String? circleName;   // name of the circle (for home feed badge)
+  final String? circleSlug;   // slug for navigation
   final DateTime? createdAt;
   final bool isUploading;
 
@@ -162,6 +164,8 @@ class PostModel {
     bool isCommenting = false,
     List<CommentModel>? comments,
     this.circleId,
+    this.circleName,
+    this.circleSlug,
     this.createdAt,
     this.isUploading = false,
   })  : likesCount = likesCount.obs,
@@ -177,10 +181,23 @@ class PostModel {
     final author = json['author'];
     String userName = "Unknown";
     String userImage = "";
-    
+
     if (author is Map) {
       userName = author['fullName'] ?? "Unknown";
       userImage = AppUrls.imageUrl(author['avatar']);
+    }
+
+    // circle can be a full object (home feed) or a plain ID string (circle feed)
+    final circleRaw = json['circle'];
+    String? circleId;
+    String? circleName;
+    String? circleSlug;
+    if (circleRaw is Map) {
+      circleId = circleRaw['_id'] as String?;
+      circleName = circleRaw['name'] as String?;
+      circleSlug = circleRaw['slug'] as String?;
+    } else if (circleRaw is String) {
+      circleId = circleRaw;
     }
 
     final mediaList = (json['media'] as List?)
@@ -207,8 +224,12 @@ class PostModel {
           : (json['myReaction'] is Map
               ? (json['myReaction']['reactionType'] ?? "none")
               : "none"),
-      circleId: json['circle'],
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      circleId: circleId,
+      circleName: circleName,
+      circleSlug: circleSlug,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt']).toLocal()
+          : null,
       comments: (json['previewComments'] as List?)
               ?.map((c) => CommentModel.fromJson(c))
               .toList() ??

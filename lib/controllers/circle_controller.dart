@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:bonded_app/controllers/home_controller.dart';
 import 'package:bonded_app/core/theme/app_colors.dart';
 import 'package:bonded_app/models/event_model.dart';
 import 'package:flutter/material.dart';
@@ -183,7 +184,7 @@ class CircleController extends BaseController {
       setLoading(true);
 
       final List<http.MultipartFile> files = [];
-      if (imageFile != null) {
+      if (imageFile != null && await imageFile.exists()) {
         final mimeType = lookupMimeType(imageFile.path) ?? 'image/jpeg';
         final mimeParts = mimeType.split('/');
         files.add(
@@ -193,6 +194,8 @@ class CircleController extends BaseController {
             contentType: MediaType(mimeParts.first, mimeParts[1]),
           ),
         );
+      } else if (imageFile != null) {
+        debugPrint("Circle image file does not exist: ${imageFile.path}");
       }
 
       final response = await _apiService.multipartRequest(
@@ -345,6 +348,16 @@ class CircleController extends BaseController {
     final originalIsLiked = isLikedObs.value;
     final originalCount = likesCountObs.value;
 
+    if (id.startsWith('temp_')) {
+      Get.snackbar(
+        "Please Wait",
+        "Please wait for the post to finish uploading.",
+        backgroundColor: Colors.amber.withOpacity(0.9),
+        colorText: Colors.black,
+      );
+      return;
+    }
+
     try {
       final url = AppUrls.reactPost(id);
 
@@ -382,6 +395,15 @@ class CircleController extends BaseController {
   }
 
   Future<void> updatePostReaction(PostModel post, String type) async {
+    if (post.id.startsWith('temp_')) {
+      Get.snackbar(
+        "Please Wait",
+        "Please wait for the post to finish uploading.",
+        backgroundColor: Colors.amber.withOpacity(0.9),
+        colorText: Colors.black,
+      );
+      return;
+    }
     try {
       final url = AppUrls.reactPost(post.id);
 
@@ -410,6 +432,15 @@ class CircleController extends BaseController {
 
   Future<void> sharePost(CircleModel? circle, PostModel post) async {
     try {
+      if (post.id.startsWith('temp_')) {
+        Get.snackbar(
+          "Please Wait",
+          "Please wait for the post to finish uploading.",
+          backgroundColor: Colors.amber.withOpacity(0.9),
+          colorText: Colors.black,
+        );
+        return;
+      }
       final targetCircleId = circle?.id ?? post.circleId;
       if (targetCircleId == null) return;
 
@@ -444,6 +475,17 @@ class CircleController extends BaseController {
     final String targetCircleId = circle?.id ?? post.circleId ?? "";
     if (targetCircleId.isEmpty) {
       Get.snackbar("Error", "Circle ID not found for this post");
+      return;
+    }
+
+    // Check if post or parent comment is still uploading
+    if (post.id.startsWith('temp_') || (parentPostId != null && parentPostId.startsWith('temp_'))) {
+      Get.snackbar(
+        "Please Wait",
+        "Please wait for the post to finish uploading before commenting.",
+        backgroundColor: Colors.amber.withOpacity(0.9),
+        colorText: Colors.black,
+      );
       return;
     }
     final authController = Get.find<AuthController>();
@@ -519,7 +561,7 @@ class CircleController extends BaseController {
       final url = AppUrls.commentPost(targetCircleId, parentPostId ?? post.id);
 
       final List<http.MultipartFile> files = [];
-      if (imageFile != null) {
+      if (imageFile != null && await imageFile.exists()) {
         final mimeType = lookupMimeType(imageFile.path) ?? 'image/jpeg';
         final mimeParts = mimeType.split('/');
         files.add(
@@ -530,7 +572,7 @@ class CircleController extends BaseController {
           ),
         );
       }
-      if (videoFile != null) {
+      if (videoFile != null && await videoFile.exists()) {
         final mimeType = lookupMimeType(videoFile.path) ?? 'video/mp4';
         final mimeParts = mimeType.split('/');
         files.add(
@@ -541,7 +583,7 @@ class CircleController extends BaseController {
           ),
         );
       }
-      if (anyFile != null) {
+      if (anyFile != null && await anyFile.exists()) {
         final mimeType =
             lookupMimeType(anyFile.path) ?? 'application/octet-stream';
         final mimeParts = mimeType.split('/');
@@ -672,7 +714,7 @@ class CircleController extends BaseController {
     try {
       isInviteLoading.value = true;
       final url =
-          '${AppUrls.circles}/$circleId/members/search-invite?search=$query';
+          '${AppUrls.circles}/$circleId/members/search-invite?searchTerm=$query';
       final response = await _apiService.get(url);
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
@@ -798,18 +840,20 @@ class CircleController extends BaseController {
       final List<http.MultipartFile> files = [];
       if (images != null) {
         for (var image in images) {
-          final mimeType = lookupMimeType(image.path) ?? 'image/jpeg';
-          final mimeParts = mimeType.split('/');
-          files.add(
-            await http.MultipartFile.fromPath(
-              'image',
-              image.path,
-              contentType: MediaType(mimeParts.first, mimeParts[1]),
-            ),
-          );
+          if (await image.exists()) {
+            final mimeType = lookupMimeType(image.path) ?? 'image/jpeg';
+            final mimeParts = mimeType.split('/');
+            files.add(
+              await http.MultipartFile.fromPath(
+                'image',
+                image.path,
+                contentType: MediaType(mimeParts.first, mimeParts[1]),
+              ),
+            );
+          }
         }
       }
-      if (video != null) {
+      if (video != null && await video.exists()) {
         final mimeType = lookupMimeType(video.path) ?? 'video/mp4';
         final mimeParts = mimeType.split('/');
         files.add(
@@ -820,7 +864,7 @@ class CircleController extends BaseController {
           ),
         );
       }
-      if (file != null) {
+      if (file != null && await file.exists()) {
         final mimeType =
             lookupMimeType(file.path) ?? 'application/octet-stream';
         final mimeParts = mimeType.split('/');
@@ -930,7 +974,9 @@ class CircleController extends BaseController {
   Future<void> joinCircle(CircleModel circle) async {
     if (circle.isPaid) {
       // Import BillingController at the top or access it via Get
-      final billingController = Get.isRegistered<BillingController>() ? Get.find<BillingController>() : Get.put(BillingController());
+      final billingController = Get.isRegistered<BillingController>()
+          ? Get.find<BillingController>()
+          : Get.put(BillingController());
       await billingController.purchaseCircleJoin(circle.id);
       return;
     }
@@ -946,6 +992,12 @@ class CircleController extends BaseController {
         circle.isJoined.value = true;
         // Refresh joined list
         fetchCircles(scope: 'joined');
+
+        // Refresh Home Screen data
+        if (Get.isRegistered<HomeController>()) {
+          Get.find<HomeController>().fetchHomeData();
+        }
+
         Get.snackbar(
           "Success",
           data['message'] ?? "Joined circle successfully",

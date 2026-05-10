@@ -1,9 +1,9 @@
 class SocialAuthConfig {
   // Google Configs
   static const String googleClientIdAndroid =
-      "73661093102-gt0pbuclrdh62nin2rl5f6ffg29q3r12.apps.googleusercontent.com"; // Add your web client ID if needed for certain flows
+      "507580696837-qi7qdh8o9vkqifjolelru679q8b4b98h.apps.googleusercontent.com"; // Web Client ID from google-services.json
   static const String googleClientIdIos =
-      "73661093102-lv4kcna9bh0g6usgas83usb1kqbult3e.apps.googleusercontent.com"; // Add your web client ID if needed for certain flows
+      "507580696837-dl810gsdcoqm6p6qq7j37d1rmdo0gbd4.apps.googleusercontent.com"; // iOS Client ID from google-services.json
 
   // Facebook Configs
   static const String facebookAppId = "";

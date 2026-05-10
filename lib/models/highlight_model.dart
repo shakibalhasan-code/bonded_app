@@ -39,8 +39,8 @@ class HighlightModel {
       taggedCircles: (json['taggedCircles'] as List?)
           ?.map((c) => HighlightCircle.fromJson(c))
           .toList(),
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']).toLocal() : null,
+      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']).toLocal() : null,
     );
   }
 }

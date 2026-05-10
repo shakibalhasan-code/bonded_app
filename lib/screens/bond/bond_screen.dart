@@ -38,7 +38,7 @@ class BondScreen extends StatelessWidget {
               ),
               SizedBox(width: 12.w),
               Text(
-                "Bonded Connections",
+                "Bond",
                 style: GoogleFonts.inter(
                   fontSize: 18.sp,
                   fontWeight: FontWeight.w700,
@@ -74,7 +74,7 @@ class BondScreen extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
             tabs: const [
-              Tab(text: "Nearby People"),
+              Tab(text: "Find Bond"),
               Tab(text: "Bond Request"),
               Tab(text: "My Bond"),
             ],
@@ -132,9 +132,9 @@ class BondScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Meet People Nearby",
+                  "Nearby Bond",
                   style: GoogleFonts.inter(
-                    fontSize: 18.sp,
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF1B0B3B),
                   ),
@@ -144,7 +144,7 @@ class BondScreen extends StatelessWidget {
                   child: Text(
                     "See All",
                     style: GoogleFonts.inter(
-                      fontSize: 14.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w600,
                       color: AppColors.primary,
                     ),
@@ -163,7 +163,9 @@ class BondScreen extends StatelessWidget {
                           physics: const AlwaysScrollableScrollPhysics(),
                           child: SizedBox(
                             height: 400.h,
-                            child: const Center(child: Text("No one nearby found")),
+                            child: const Center(
+                              child: Text("No one nearby found"),
+                            ),
                           ),
                         ),
                       )
@@ -208,7 +210,7 @@ class BondScreen extends StatelessWidget {
                         ? "Bond Request Sent"
                         : "Bond Request for you",
                     style: GoogleFonts.inter(
-                      fontSize: 18.sp,
+                      fontSize: 12.sp,
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFF1B0B3B),
                     ),
@@ -222,7 +224,7 @@ class BondScreen extends StatelessWidget {
                           ? "View incoming"
                           : "View sent",
                       style: GoogleFonts.inter(
-                        fontSize: 14.sp,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.w600,
                         color: AppColors.primary,
                       ),
@@ -292,7 +294,7 @@ class BondScreen extends StatelessWidget {
             Text(
               "People I know",
               style: GoogleFonts.inter(
-                fontSize: 18.sp,
+                fontSize: 12.sp,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF1B0B3B),
               ),
@@ -308,7 +310,9 @@ class BondScreen extends StatelessWidget {
                           physics: const AlwaysScrollableScrollPhysics(),
                           child: SizedBox(
                             height: 400.h,
-                            child: const Center(child: Text("You have no bonds yet")),
+                            child: const Center(
+                              child: Text("You have no bonds yet"),
+                            ),
                           ),
                         ),
                       )

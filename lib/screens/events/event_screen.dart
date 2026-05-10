@@ -10,12 +10,12 @@ import '../../core/constants/app_assets.dart';
 import '../../controllers/event_controller.dart';
 import '../../widgets/events/event_card.dart';
 import '../../widgets/events/highlight_card.dart';
-import '../../models/highlight_model.dart';
 import '../../core/routes/app_routes.dart';
 import '../../widgets/events/my_events_sub_nav.dart';
 import '../../widgets/events/e_ticket_card.dart';
 import '../../widgets/events/wallet_widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../widgets/custom_search_field.dart';
 
 
 class EventScreen extends StatelessWidget {
@@ -98,7 +98,9 @@ class EventScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildMainTabs(controller),
-        SizedBox(height: 24.h),
+        SizedBox(height: 16.h),
+        _buildSearchBar(controller),
+        SizedBox(height: 16.h),
         CategoryFilter(
           categories: const [
             "In-Person Events",
@@ -124,7 +126,7 @@ class EventScreen extends StatelessWidget {
                             controller.selectedCategory.value == 1
                                 ? "Upcoming Events"
                                 : controller.selectedCategory.value == 2
-                                ? "Recently Happened"
+                                ? "Event Highlights"
                                 : "Explore Events Nearby",
                             style: GoogleFonts.inter(
                               fontSize: 18.sp,
@@ -165,11 +167,11 @@ class EventScreen extends StatelessWidget {
                                   mainAxisSpacing: 16.h,
                                 ),
                                 itemCount: controller.selectedCategory.value == 2 
-                                    ? controller.publicHighlights.length 
+                                    ? controller.filteredHighlights.length 
                                     : controller.filteredEvents.length,
                                 itemBuilder: (context, index) {
                                   if (controller.selectedCategory.value == 2) {
-                                    final highlight = controller.publicHighlights[index];
+                                    final highlight = controller.filteredHighlights[index];
                                     return HighlightCard(
                                       highlight: highlight,
                                       onTap: () => Get.toNamed(
@@ -208,7 +210,9 @@ class EventScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildMainTabs(controller),
-        SizedBox(height: 24.h),
+        SizedBox(height: 16.h),
+        _buildSearchBar(controller),
+        SizedBox(height: 16.h),
         MyEventsSubNav(
           selectedIndex: controller.selectedMyEventTab.value,
           onTabChanged: controller.changeMyEventTab,
@@ -256,14 +260,14 @@ class EventScreen extends StatelessWidget {
       return RefreshIndicator(
         onRefresh: controller.refreshData,
         color: AppColors.primary,
-        child: controller.tickets.isEmpty
+        child: controller.filteredTickets.isEmpty
             ? _buildEmptyEventsState(message: "No tickets found")
             : ListView.builder(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
-                itemCount: controller.tickets.length,
+                itemCount: controller.filteredTickets.length,
                 itemBuilder: (context, index) =>
-                    ETicketCard(ticket: controller.tickets[index]),
+                    ETicketCard(ticket: controller.filteredTickets[index]),
               ),
       );
     } else {
@@ -641,6 +645,18 @@ class EventScreen extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(EventController controller) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      child: CustomSearchField(
+        controller: controller.searchController,
+        hintText: "Search events, cities, or venues...",
+        onChanged: (value) => controller.updateSearch(value),
+        onClear: () => controller.clearSearch(),
       ),
     );
   }

@@ -22,37 +22,48 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: const HomeAppBar(),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Circle Highlights / Discovery Circles Section
-            Obx(() {
-              if (controller.circleHighlights.isNotEmpty) {
+      body: RefreshIndicator(
+        onRefresh: () => controller.fetchHomeData(),
+        color: AppColors.primary,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Circle Posts (Circle Highlights) ──────────────────────
+              Obx(() {
+                if (controller.circleHighlights.isEmpty) return const SizedBox.shrink();
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SectionHeader(title: "Circle Highlights"),
                     ListView.builder(
                       shrinkWrap: true,
+                      padding: EdgeInsets.zero,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: controller.circleHighlights.length,
                       itemBuilder: (context, index) {
                         return CirclePostItem(
                           post: controller.circleHighlights[index],
-                          circle: null,
+                          circle: null, // no CircleModel context on home feed
+                          showCircleName: true,
                         );
                       },
                     ),
                   ],
                 );
-              } else if (controller.discoveryCircles.isNotEmpty) {
+              }),
+
+              // ── Discovery Circles ──────────────────────────────────────
+              Obx(() {
+                if (controller.discoveryCircles.isEmpty) return const SizedBox.shrink();
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SectionHeader(title: "Circles You May Like"),
                     ListView.builder(
                       shrinkWrap: true,
+                      padding: EdgeInsets.zero,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: controller.discoveryCircles.length,
                       itemBuilder: (context, index) {
@@ -70,57 +81,55 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ],
                 );
-              }
-              return const SizedBox.shrink();
-            }),
-            
-            // Upcoming Events Section
-            Obx(() {
-              if (controller.upcomingEvents.isEmpty) return const SizedBox.shrink();
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 8.h),
-                  const SectionHeader(title: "Upcoming Events"),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: controller.upcomingEvents.length,
-                    itemBuilder: (context, index) {
-                      return UpcomingEventCard(event: controller.upcomingEvents[index]);
-                    },
-                  ),
-                ],
-              );
-            }),
-            
-            // People You May Know Section
-            Obx(() {
-              if (controller.peopleRecommendations.isEmpty) return const SizedBox.shrink();
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 8.h),
-                  const SectionHeader(title: "People You May Know?"),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    itemCount: controller.peopleRecommendations.length,
-                    itemBuilder: (context, index) {
-                      return BondUserCard(
-                        connection: controller.peopleRecommendations[index],
-                        status: BondStatus.nearby,
-                      );
-                    },
-                  ),
-                ],
-              );
-            }),
-            
-            // Bottom Padding for Nav Bar
-            SizedBox(height: 80.h),
-          ],
+              }),
+              
+              // Upcoming Events Section
+              Obx(() {
+                if (controller.upcomingEvents.isEmpty) return const SizedBox.shrink();
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SectionHeader(title: "Upcoming Events"),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      padding: EdgeInsets.zero,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: controller.upcomingEvents.length,
+                      itemBuilder: (context, index) {
+                        return UpcomingEventCard(event: controller.upcomingEvents[index]);
+                      },
+                    ),
+                  ],
+                );
+              }),
+              
+              // People You May Know Section
+              Obx(() {
+                if (controller.peopleRecommendations.isEmpty) return const SizedBox.shrink();
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SectionHeader(title: "People You May Know?"),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      itemCount: controller.peopleRecommendations.length,
+                      itemBuilder: (context, index) {
+                        return BondUserCard(
+                          connection: controller.peopleRecommendations[index],
+                          status: BondStatus.nearby,
+                        );
+                      },
+                    ),
+                  ],
+                );
+              }),
+              
+              // Bottom Padding for Nav Bar
+              SizedBox(height: 80.h),
+            ],
+          ),
         ),
       ),
     );

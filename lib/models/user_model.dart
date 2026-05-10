@@ -105,10 +105,10 @@ class UserModel {
       visibility: json['visibility'],
       stripeConnectAccountId: json['stripeConnectAccountId'],
       createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
+          ? DateTime.parse(json['createdAt']).toLocal()
           : null,
       updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'])
+          ? DateTime.parse(json['updatedAt']).toLocal()
           : null,
     );
   }

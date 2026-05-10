@@ -10,6 +10,7 @@ import '../../models/user_model.dart';
 import '../../controllers/chat_controller.dart';
 import '../../core/theme/app_colors.dart';
 import '../../widgets/messages/full_screen_image_viewer.dart';
+import '../../widgets/messages/video_message_bubble.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({Key? key}) : super(key: key);
@@ -235,6 +236,22 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ],
                               ),
                             ),
+                          ),
+                        ),
+
+                      // Video attachment
+                      if (message.type == 'video' && (message.mediaUrl != null || message.localFilePath != null))
+                        Padding(
+                          padding: EdgeInsets.only(
+                            bottom: (message.text == '[Video]' ||
+                                    message.text.isEmpty)
+                                ? 0
+                                : 8.h,
+                          ),
+                          child: VideoMessageBubble(
+                            videoUrl: message.localFilePath ?? AppUrls.imageUrl(message.mediaUrl!),
+                            isLocal: message.localFilePath != null,
+                            isMe: message.isMe,
                           ),
                         ),
 

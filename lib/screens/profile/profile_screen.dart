@@ -61,7 +61,9 @@ class ProfileScreen extends StatelessWidget {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               image: DecorationImage(
-                                image: NetworkImage(AppUrls.imageUrl(user.avatar)),
+                                image: NetworkImage(
+                                  AppUrls.imageUrl(user.avatar),
+                                ),
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -107,7 +109,10 @@ class ProfileScreen extends StatelessWidget {
                           ),
                           if (user.selfieVerification == 'verified') ...[
                             SizedBox(width: 5.w),
-                            const Icon(Icons.verified, color: Colors.deepPurple),
+                            const Icon(
+                              Icons.verified,
+                              color: Colors.deepPurple,
+                            ),
                           ],
                         ],
                       ),
@@ -147,7 +152,7 @@ class ProfileScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "${user.subscriptionTier.capitalizeFirst} Tier",
+                                "${user.subscriptionTier.capitalizeFirst}",
                                 style: GoogleFonts.inter(
                                   fontSize: 18.sp,
                                   fontWeight: FontWeight.w700,
@@ -194,7 +199,8 @@ class ProfileScreen extends StatelessWidget {
                   trailing: Obx(
                     () => Switch(
                       value: controller.notificationsEnabled.value,
-                      onChanged: (val) => controller.updatePreferences(notifications: val),
+                      onChanged: (val) =>
+                          controller.updatePreferences(notifications: val),
                       activeColor: Colors.white,
                       activeTrackColor: AppColors.primary,
                       inactiveThumbColor: Colors.white,
@@ -231,10 +237,7 @@ class ProfileScreen extends StatelessWidget {
                     onConfirm: () => authController.logout(),
                   ),
                 ),
-                _buildMenuItem(
-                  title: "Disable Account",
-                  onTap: () => _showDisableConfirmationDialog(),
-                ),
+
                 _buildMenuItem(
                   title: "Delete Account",
                   color: Colors.red,
@@ -245,26 +248,6 @@ class ProfileScreen extends StatelessWidget {
           ),
         );
       }),
-    );
-  }
-
-  /// Disable Dialog
-  void _showDisableConfirmationDialog() {
-    Get.dialog(
-      AlertDialog(
-        title: const Text("Warning!"),
-        content: const Text("Are you sure? You want to disable your account."),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
-          TextButton(
-            onPressed: () {
-              Get.back();
-              Get.snackbar("Status", "Account disabled");
-            },
-            child: const Text("Disable", style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
     );
   }
 

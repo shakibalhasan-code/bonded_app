@@ -294,16 +294,20 @@ class CreateEventController extends BaseController {
       // Add image file
       if (coverImagePath.value.isNotEmpty) {
         final file = File(coverImagePath.value);
-        final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
-        final mimeParts = mimeType.split('/');
+        if (await file.exists()) {
+          final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
+          final mimeParts = mimeType.split('/');
 
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'image',
-            file.path,
-            contentType: MediaType(mimeParts[0], mimeParts[1]),
-          ),
-        );
+          request.files.add(
+            await http.MultipartFile.fromPath(
+              'image',
+              file.path,
+              contentType: MediaType(mimeParts[0], mimeParts[1]),
+            ),
+          );
+        } else {
+          debugPrint("Cover image file does not exist: ${file.path}");
+        }
       }
 
       final streamedResponse = await request.send();

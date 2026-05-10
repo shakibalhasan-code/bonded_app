@@ -86,7 +86,7 @@ class ChatMessage {
       senderName: senderName,
       senderImage: senderImage,
       timestamp: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'])
+          ? DateTime.parse(json['createdAt']).toLocal()
           : DateTime.now(),
       isMe: isOwn,
       type: json['type'],
@@ -391,7 +391,10 @@ class ChatController extends GetxController {
         endpoint,
         files: [multipartFile],
         fields: {
-          'data': jsonEncode({'content': isVideo ? '[Video]' : '[Image]'})
+          'data': jsonEncode({
+            'content': isVideo ? '[Video]' : '[Image]',
+            'type': isVideo ? 'video' : 'image'
+          })
         }
       );
 

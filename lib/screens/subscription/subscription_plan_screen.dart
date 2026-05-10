@@ -17,7 +17,7 @@ class SubscriptionPlanScreen extends StatelessWidget {
 
     final List<Map<String, dynamic>> plans = [
       {
-        'name': 'Free Tier',
+        'name': 'Free',
         'price': '0.00',
         'features': [
           'Join up to 2 circles',
@@ -29,37 +29,6 @@ class SubscriptionPlanScreen extends StatelessWidget {
           'Message mutual matches',
           'View event highlights',
           'Basic visibility',
-        ],
-      },
-      {
-        'name': 'Pro Tier',
-        'price': '14.99',
-        'features': [
-          'Join unlimited circles',
-          'Create paid or free circles',
-          'Create paid or free events',
-          'Lower platform fee (10%)',
-          'Unlimited event participation',
-          'Limited advanced filters',
-          'Circle & event analytics (basic)',
-          'Visibility Boost (10%)',
-          'Unlock full interest matching',
-          'Upload premium event highlights',
-          'Priority listing in circles & events',
-        ],
-      },
-      {
-        'name': 'Premium Tier',
-        'price': '29.99',
-        'features': [
-          'Everything in Pro',
-          'Platform fee reduced to 5%',
-          'Premium Visibility Boost (25%)',
-          'Premium event & circle analytics',
-          'Verified badge',
-          'Advanced persona filters',
-          'Premium event badge',
-          'Priority support',
         ],
       },
       {
