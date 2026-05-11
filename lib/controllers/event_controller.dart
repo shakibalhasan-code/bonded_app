@@ -43,6 +43,7 @@ class EventController extends GetxController {
   void clearSearch() {
     searchQuery.value = '';
     searchController.clear();
+    fetchEvents();
   }
 
   final List<String> availableFilterCategories = [
@@ -65,7 +66,7 @@ class EventController extends GetxController {
 
   @override
   void onClose() {
-    searchController.dispose();
+    // searchController.dispose();
     super.onClose();
   }
 
@@ -150,10 +151,16 @@ class EventController extends GetxController {
     }
   }
 
-  Future<void> fetchEvents({bool showLoader = true}) async {
+  Future<void> fetchEvents({bool showLoader = true, String? searchTerm}) async {
     try {
       if (showLoader) isLoading.value = true;
-      final response = await _apiService.get(AppUrls.events);
+      
+      String url = AppUrls.events;
+      if (searchTerm != null && searchTerm.isNotEmpty) {
+        url = "$url?searchTerm=${Uri.encodeComponent(searchTerm)}";
+      }
+      
+      final response = await _apiService.get(url);
       final data = jsonDecode(response.body);
 
       if (data['success'] == true) {

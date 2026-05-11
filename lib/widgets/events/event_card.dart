@@ -96,13 +96,15 @@ class EventCard extends StatelessWidget {
                       left: 0,
                       child: Container(
                         padding: EdgeInsets.symmetric(
-                            horizontal: 8.w, vertical: 4.h),
+                          horizontal: 8.w,
+                          vertical: 4.h,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.orange,
                           borderRadius: BorderRadius.circular(6.r),
                         ),
                         child: Text(
-                          "External",
+                          event.providerName,
                           style: GoogleFonts.inter(
                             fontSize: 8.sp,
                             fontWeight: FontWeight.w800,
@@ -117,7 +119,9 @@ class EventCard extends StatelessWidget {
                       left: 0,
                       child: Container(
                         padding: EdgeInsets.symmetric(
-                            horizontal: 8.w, vertical: 4.h),
+                          horizontal: 8.w,
+                          vertical: 4.h,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primary,
                           borderRadius: BorderRadius.circular(6.r),
@@ -189,36 +193,39 @@ class EventCard extends StatelessWidget {
                       ),
                       SizedBox(height: 8.h),
                       if (event.category != EventCategory.highlights) ...[
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.location_on,
-                              color: AppColors.primary,
-                              size: 14.sp,
-                            ),
-                            SizedBox(width: 4.w),
-                            Expanded(
-                              child: Text(
-                                event.address ?? '',
-                                style: GoogleFonts.inter(
-                                  fontSize: 10.sp,
-                                  color: Colors.white.withOpacity(0.9),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                        if (event.address != null || event.city != null)
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.location_on,
+                                color: Colors.white,
+                                size: 14.sp,
                               ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          '${event.date}, ${event.time}',
-                          style: GoogleFonts.inter(
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
+                              SizedBox(width: 4.w),
+                              Expanded(
+                                child: Text(
+                                  event.address ?? event.city ?? '',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10.sp,
+                                    color: Colors.white,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
+                        if (event.date != null) ...[
+                          SizedBox(height: 4.h),
+                          Text(
+                            '${event.date}${event.time != null ? ', ${event.time}' : ''}',
+                            style: GoogleFonts.inter(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ] else ...[
                         Text(
                           '${event.highlightsCount} Highlights',

@@ -7,12 +7,13 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/home_models.dart';
 import '../../models/circle_model.dart';
 import '../../controllers/circle_controller.dart';
-import 'package:intl/intl.dart';
 import '../../core/utils/date_utils.dart';
+import '../messages/full_screen_video_player.dart';
 import '../events/media_viewers.dart';
 
 class CircleCommentItem extends StatefulWidget {
@@ -92,7 +93,17 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
         children: [
           CircleAvatar(
             radius: widget.isReply ? 12.r : 16.r,
-            backgroundImage: NetworkImage(widget.comment.userImage),
+            backgroundImage: widget.comment.userImage.isNotEmpty
+                ? NetworkImage(widget.comment.userImage)
+                : null,
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+            child: widget.comment.userImage.isEmpty
+                ? Icon(
+                    Icons.person,
+                    color: AppColors.primary,
+                    size: widget.isReply ? 12.r : 16.r,
+                  )
+                : null,
           ),
           SizedBox(width: 10.w),
           Expanded(
@@ -145,26 +156,45 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8.r),
-                                child: Image.network(
-                                  m.fullUrl,
+                                child: CachedNetworkImage(
+                                  imageUrl: m.fullUrl,
                                   height: 150.h,
                                   width: double.infinity,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
+                                  placeholder: (context, url) => Container(
+                                    height: 150.h,
+                                    width: double.infinity,
+                                    color: Colors.grey[100],
+                                    child: const Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) =>
                                       Container(
                                         height: 150.h,
                                         width: double.infinity,
-                                        color: Colors.grey[200],
-                                        child: const Icon(Icons.error_outline),
+                                        color: Colors.grey[100],
+                                        child: const Icon(
+                                          Icons.broken_image,
+                                          color: Colors.grey,
+                                        ),
                                       ),
                                 ),
                               ),
                             );
                           } else if (m.type == 'video') {
                             return GestureDetector(
-                              onTap: () => Get.to(
-                                () => MockVideoPlayer(videoUrl: m.fullUrl),
-                              ),
+                              onTap: () {
+                                if (m.isUploading) return;
+                                Get.to(
+                                  () => FullScreenVideoPlayer(
+                                    videoUrl: m.fullUrl,
+                                    isLocal: false,
+                                  ),
+                                );
+                              },
                               child: Container(
                                 height: 150.h,
                                 width: double.infinity,
@@ -180,15 +210,20 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                                       color: Colors.white70,
                                       size: 40,
                                     ),
-                                    const Positioned(
-                                      bottom: 8,
-                                      right: 8,
-                                      child: Icon(
-                                        Icons.play_circle_fill,
-                                        color: Colors.white70,
-                                        size: 24,
+                                    if (m.isUploading)
+                                      const CircularProgressIndicator(
+                                        color: Colors.white,
+                                      )
+                                    else
+                                      const Positioned(
+                                        bottom: 8,
+                                        right: 8,
+                                        child: Icon(
+                                          Icons.play_circle_fill,
+                                          color: Colors.white70,
+                                          size: 24,
+                                        ),
                                       ),
-                                    ),
                                   ],
                                 ),
                               ),
@@ -196,6 +231,7 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                           } else {
                             return GestureDetector(
                               onTap: () async {
+                                if (m.isUploading) return;
                                 final uri = Uri.parse(m.fullUrl);
                                 if (await canLaunchUrl(uri)) {
                                   await launchUrl(
@@ -223,13 +259,17 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                                     Expanded(
                                       child: Builder(
                                         builder: (context) {
+                                          if (m.isUploading) {
+                                            return const Text("Uploading...");
+                                          }
                                           String ext = m.fullUrl
                                               .split('.')
                                               .last
                                               .toUpperCase();
                                           if (ext.length > 5 ||
-                                              ext.contains('?'))
+                                              ext.contains('?')) {
                                             ext = 'FILE';
+                                          }
                                           return Text(
                                             "$ext Attachment",
                                             style: GoogleFonts.inter(
@@ -242,11 +282,20 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                                         },
                                       ),
                                     ),
-                                    Icon(
-                                      Icons.download,
-                                      color: Colors.grey[600],
-                                      size: 20.sp,
-                                    ),
+                                    if (m.isUploading)
+                                      SizedBox(
+                                        width: 20.sp,
+                                        height: 20.sp,
+                                        child: const CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    else
+                                      Icon(
+                                        Icons.download,
+                                        color: Colors.grey[600],
+                                        size: 20.sp,
+                                      ),
                                   ],
                                 ),
                               ),
@@ -286,6 +335,7 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                           switch (type) {
                             case "like":
                               label = "Liked";
+                              emoji = "👍";
                               reactionColor = Colors.blue;
                               break;
                             case "love":
@@ -503,6 +553,7 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                                       size: 18.sp,
                                     ),
                                   ),
+                                  SizedBox(width: 8.w),
                                 ],
                               ),
                             ],
@@ -589,6 +640,9 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
 
   String _formatTimestamp(String timestamp) {
     if (timestamp.isEmpty) return "";
-    return AppDateUtils.formatLocal(timestamp, format: 'd/M/y h:mm a').toLowerCase();
+    return AppDateUtils.formatLocal(
+      timestamp,
+      format: 'd/M/y h:mm a',
+    ).toLowerCase();
   }
 }

@@ -1,67 +1,84 @@
+import 'dart:convert';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../models/notification_model.dart';
+import '../services/api_service.dart';
+import '../core/constants/app_endpoints.dart';
+import '../services/shared_prefs_service.dart';
+import 'package:flutter/foundation.dart';
 
 class NotificationController extends GetxController {
+  final ApiService _apiService = ApiService();
+  
   final notificationsByDay = <String, List<NotificationModel>>{}.obs;
+  final isLoading = false.obs;
 
   @override
   void onInit() {
     super.onInit();
-    _loadMockNotifications();
+    fetchNotifications();
   }
 
-  void _loadMockNotifications() {
-    final today = [
-      NotificationModel(
-        id: '1',
-        title: "Account Security Alert",
-        description: "We've noticed some unusual activity on your account. Please review your recent logins and update your password if necessary.",
-        timestamp: "09:41 AM",
-        type: NotificationType.security,
-        isRead: false,
-      ),
-      NotificationModel(
-        id: '2',
-        title: "System Update Available",
-        description: "A new system update is ready for installation. It includes performance improvements and bug fixes.",
-        timestamp: "09:41 AM",
-        type: NotificationType.update,
-        isRead: false,
-      ),
-    ];
+  Future<void> fetchNotifications() async {
+    try {
+      isLoading.value = true;
+      final token = SharedPrefsService.getString('accessToken');
+      if (token == null) return;
 
-    final yesterday = [
-      NotificationModel(
-        id: '3',
-        title: "Password Reset Successful",
-        description: "Your password has been successfully reset. If you didn't request this change. Please contact support immediately.",
-        timestamp: "09:41 AM",
-        type: NotificationType.success,
-        isRead: true,
-      ),
-      NotificationModel(
-        id: '4',
-        title: "Password Reset Successful",
-        description: "Your password has been successfully reset. If you didn't request this change. Please contact support immediately.",
-        timestamp: "09:41 AM",
-        type: NotificationType.success,
-        isRead: true,
-      ),
-      NotificationModel(
-        id: '5',
-        title: "Exciting New Feature",
-        description: "We've just launched a new feature that will enhance your user experience, check it out",
-        timestamp: "09:41 AM",
-        type: NotificationType.success, // Design uses lock icon for this too in mockup
-        isRead: true,
-      ),
-    ];
+      final response = await _apiService.get(
+        AppUrls.notifications,
+        headers: {'Authorization': 'Bearer $token'},
+      );
 
-    notificationsByDay['Today'] = today;
-    notificationsByDay['Yesterday'] = yesterday;
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final List<dynamic> notificationsData = data['data'];
+        final notifications = notificationsData
+            .map((n) => NotificationModel.fromJson(n))
+            .toList();
+        
+        _groupNotificationsByDay(notifications);
+      }
+    } catch (e) {
+      debugPrint("Error fetching notifications: $e");
+    } finally {
+      isLoading.value = false;
+    }
   }
 
-  void markAsRead(String id) {
+  void _groupNotificationsByDay(List<NotificationModel> notifications) {
+    final Map<String, List<NotificationModel>> grouped = {};
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    for (var notification in notifications) {
+      final date = DateTime(
+        notification.createdAt.year,
+        notification.createdAt.month,
+        notification.createdAt.day,
+      );
+
+      String dayKey;
+      if (date == today) {
+        dayKey = 'Today';
+      } else if (date == yesterday) {
+        dayKey = 'Yesterday';
+      } else {
+        dayKey = DateFormat('MMMM dd, yyyy').format(date);
+      }
+
+      if (!grouped.containsKey(dayKey)) {
+        grouped[dayKey] = [];
+      }
+      grouped[dayKey]!.add(notification);
+    }
+
+    notificationsByDay.value = grouped;
+  }
+
+  Future<void> markAsRead(String id) async {
+    // Optimistic UI update
     for (var day in notificationsByDay.keys) {
       final list = notificationsByDay[day]!;
       final index = list.indexWhere((n) => n.id == id);
@@ -71,5 +88,8 @@ class NotificationController extends GetxController {
         break;
       }
     }
+
+    // Backend call could be implemented here if there's an endpoint
+    // await _apiService.patch('${AppUrls.notifications}/$id/read', {});
   }
 }

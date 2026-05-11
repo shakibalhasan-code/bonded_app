@@ -37,7 +37,8 @@ class PaymentMethodScreen extends StatelessWidget {
       {
         'id': 'paypal',
         'name': 'Paypal',
-        'icon': Icons.payment, // Using generic payment icon for PayPal as asset is missing
+        'icon': Icons
+            .payment, // Using generic payment icon for PayPal as asset is missing
         'isSvg': false,
       },
     ];
@@ -75,63 +76,68 @@ class PaymentMethodScreen extends StatelessWidget {
               ),
             ),
           ),
-          Divider(color: Colors.grey[200], thickness: 1, indent: 24.w, endIndent: 24.w),
+          Divider(
+            color: Colors.grey[200],
+            thickness: 1,
+            indent: 24.w,
+            endIndent: 24.w,
+          ),
           SizedBox(height: 24.h),
-          Expanded(
-            child: ListView.separated(
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
-              itemCount: methods.length,
-              separatorBuilder: (context, index) => SizedBox(height: 16.h),
-              itemBuilder: (context, index) {
-                final method = methods[index];
-                return Obx(() {
-                  final isSelected = controller.selectedPaymentMethod.value == method['id'];
-                  return _PaymentMethodCard(
-                    id: method['id'],
-                    name: method['name'],
-                    icon: method['icon'],
-                    isSvg: method['isSvg'],
-                    isSelected: isSelected,
-                    onTap: () => controller.selectPaymentMethod(method['id']),
-                  );
-                });
-              },
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 32.h),
-            child: GestureDetector(
-              onTap: () {
-                if (controller.selectedPaymentMethod.value == 'credit_card') {
-                  Get.to(() => const AddCardScreen());
-                } else if (controller.selectedPaymentMethod.value.isNotEmpty) {
-                  // Simulate other payment flows
-                  controller.completeSubscription(context);
-                }
-              },
-              child: Obx(() => Container(
-                height: 56.h,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: controller.selectedPaymentMethod.value.isEmpty 
-                    ? AppColors.primary.withOpacity(0.05) 
-                    : AppColors.primary,
-                  borderRadius: BorderRadius.circular(28.r),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  "Continue",
-                  style: GoogleFonts.inter(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: controller.selectedPaymentMethod.value.isEmpty 
-                      ? AppColors.primary.withOpacity(0.4) 
-                      : Colors.white,
-                  ),
-                ),
-              )),
-            ),
-          ),
+          // Expanded(
+          //   child: ListView.separated(
+          //     padding: EdgeInsets.symmetric(horizontal: 24.w),
+          //     itemCount: methods.length,
+          //     separatorBuilder: (context, index) => SizedBox(height: 16.h),
+          //     itemBuilder: (context, index) {
+          //       final method = methods[index];
+          //       return Obx(() {
+          //         final isSelected = controller.selectedPaymentMethod.value == method['id'];
+          //         return _PaymentMethodCard(
+          //           id: method['id'],
+          //           name: method['name'],
+          //           icon: method['icon'],
+          //           isSvg: method['isSvg'],
+          //           isSelected: isSelected,
+          //           onTap: () => controller.selectPaymentMethod(method['id']),
+          //         );
+          //       });
+          //     },
+          //   ),
+          // ),
+          // Padding(
+          //   padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 32.h),
+          //   child: GestureDetector(
+          //     onTap: () {
+          //       if (controller.selectedPaymentMethod.value == 'credit_card') {
+          //         Get.to(() => const AddCardScreen());
+          //       } else if (controller.selectedPaymentMethod.value.isNotEmpty) {
+          //         // Simulate other payment flows
+          //         controller.completeSubscription(context);
+          //       }
+          //     },
+          //     child: Obx(() => Container(
+          //       height: 56.h,
+          //       width: double.infinity,
+          //       decoration: BoxDecoration(
+          //         color: controller.selectedPaymentMethod.value.isEmpty
+          //           ? AppColors.primary.withOpacity(0.05)
+          //           : AppColors.primary,
+          //         borderRadius: BorderRadius.circular(28.r),
+          //       ),
+          //       alignment: Alignment.center,
+          //       child: Text(
+          //         "Continue",
+          //         style: GoogleFonts.inter(
+          //           fontSize: 16.sp,
+          //           fontWeight: FontWeight.w600,
+          //           color: controller.selectedPaymentMethod.value.isEmpty
+          //             ? AppColors.primary.withOpacity(0.4)
+          //             : Colors.white,
+          //         ),
+          //       ),
+          //     )),
+          //   ),
+          // ),
         ],
       ),
     );
@@ -175,9 +181,13 @@ class _PaymentMethodCard extends StatelessWidget {
             Container(
               width: 48.w,
               alignment: Alignment.center,
-              child: isSvg 
-                ? SvgPicture.asset(icon, height: 24.h)
-                : Icon(icon as IconData, color: AppColors.textHeading, size: 28.sp),
+              child: isSvg
+                  ? SvgPicture.asset(icon, height: 24.h)
+                  : Icon(
+                      icon as IconData,
+                      color: AppColors.textHeading,
+                      size: 28.sp,
+                    ),
             ),
             SizedBox(width: 12.w),
             Expanded(

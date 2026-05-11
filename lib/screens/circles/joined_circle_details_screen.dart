@@ -28,20 +28,26 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final CircleModel circle = Get.arguments;
+      final dynamic args = Get.arguments;
+      final CircleModel circle = args is CircleModel 
+          ? args 
+          : CircleModel.fromJson(args as Map<String, dynamic>);
       Get.find<CircleController>().fetchCircleFeed(circle);
     });
   }
 
   @override
   void dispose() {
-    _memberSearchController.dispose();
+    // _memberSearchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final CircleModel circle = Get.arguments;
+    final dynamic args = Get.arguments;
+    final CircleModel circle = args is CircleModel 
+        ? args 
+        : CircleModel.fromJson(args as Map<String, dynamic>);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -111,7 +117,13 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                   //   Icons.delete_outline,
                   //   "Delete Circle",
                   // ),
-                  _buildPopupItem('lock', circle.isLocked ? Icons.lock_open_outlined : Icons.lock_outline, circle.isLocked ? "Unlock Circle" : "Lock Circle"),
+                  _buildPopupItem(
+                    'lock',
+                    circle.isLocked
+                        ? Icons.lock_open_outlined
+                        : Icons.lock_outline,
+                    circle.isLocked ? "Unlock Circle" : "Lock Circle",
+                  ),
                   _buildPopupItem(
                     'add_member',
                     Icons.person_add_outlined,
@@ -130,11 +142,7 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                     Icons.people_outline,
                     "Group Members",
                   ),
-                  _buildPopupItem(
-                    'leave',
-                    Icons.exit_to_app,
-                    "Leave Circle",
-                  ),
+                  _buildPopupItem('leave', Icons.exit_to_app, "Leave Circle"),
                 ];
               }
             },
@@ -162,9 +170,12 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                           child: GestureDetector(
                             onTap: () {
                               setState(() => _selectedTabIndex = index);
-                              if (index == 0) controller.fetchCircleFeed(circle);
-                              if (index == 1) controller.fetchCircleEvents(circle);
-                              if (index == 2) controller.fetchCircleMembers(circle);
+                              if (index == 0)
+                                controller.fetchCircleFeed(circle);
+                              if (index == 1)
+                                controller.fetchCircleEvents(circle);
+                              if (index == 2)
+                                controller.fetchCircleMembers(circle);
                             },
                             child: Container(
                               padding: EdgeInsets.symmetric(
@@ -210,10 +221,9 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
             if (controller.isLoading.value)
               Container(
                 color: Colors.black.withOpacity(0.2),
-                child: const Center(
-                  child: CircularProgressIndicator(),
-                ),
+                child: const Center(child: CircularProgressIndicator()),
               ),
+            SizedBox(height: 200.h),
           ],
         );
       }),
@@ -224,35 +234,44 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
     final controller = Get.find<CircleController>();
     switch (_selectedTabIndex) {
       case 0: // Feed
-        return Obx(() => RefreshIndicator(
-          onRefresh: () => controller.fetchCircleFeed(circle),
-          child: circle.posts.isEmpty
-              ? ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: [
-                    SizedBox(height: 100.h),
-                    _buildEmptyState("No posts yet."),
-                  ],
-                )
-              : ListView.builder(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.only(bottom: 20.h),
-                  itemCount: circle.posts.length,
-                  itemBuilder: (context, index) {
-                    return CirclePostItem(post: circle.posts[index], circle: circle);
-                  },
-                ),
-        ));
+        return Obx(
+          () => RefreshIndicator(
+            onRefresh: () => controller.fetchCircleFeed(circle),
+            child: circle.posts.isEmpty
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(height: 100.h),
+                      _buildEmptyState("No posts yet."),
+                    ],
+                  )
+                : ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.only(bottom: 100.h),
+                    itemCount: circle.posts.length,
+                    itemBuilder: (context, index) {
+                      return CirclePostItem(
+                        post: circle.posts[index],
+                        circle: circle,
+                      );
+                    },
+                  ),
+          ),
+        );
       case 1: // Events
-        return Obx(() => RefreshIndicator(
-          onRefresh: () => controller.fetchCircleEvents(circle),
-          child: _buildEventsView(circle),
-        ));
+        return Obx(
+          () => RefreshIndicator(
+            onRefresh: () => controller.fetchCircleEvents(circle),
+            child: _buildEventsView(circle),
+          ),
+        );
       case 2: // Members
-        return Obx(() => RefreshIndicator(
-          onRefresh: () => controller.fetchCircleMembers(circle),
-          child: _buildMembersView(circle),
-        ));
+        return Obx(
+          () => RefreshIndicator(
+            onRefresh: () => controller.fetchCircleMembers(circle),
+            child: _buildMembersView(circle),
+          ),
+        );
       default:
         return const SizedBox.shrink();
     }
@@ -271,7 +290,7 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
 
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.symmetric(horizontal: 8.w),
+      padding: EdgeInsets.only(left: 8.w, right: 8.w, bottom: 100.h),
       itemCount: circle.events.length,
       itemBuilder: (context, index) {
         return UpcomingEventCard(event: circle.events[index]);
@@ -302,37 +321,46 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                   fontSize: 14.sp,
                   color: Colors.grey[500],
                 ),
-                prefixIcon: Icon(Icons.search, color: AppColors.primary, size: 20.sp),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: AppColors.primary,
+                  size: 20.sp,
+                ),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(vertical: 12.h),
               ),
             ),
           ),
         ),
-        
+
         Expanded(
           child: Obx(() {
             final query = _memberSearchController.text.toLowerCase();
-            final filteredMembers = circle.detailedMembers.where((m) =>
-              m.name.toLowerCase().contains(query) || 
-              m.role.toLowerCase().contains(query)
-            ).toList();
+            final filteredMembers = circle.detailedMembers
+                .where(
+                  (m) =>
+                      m.name.toLowerCase().contains(query) ||
+                      m.role.toLowerCase().contains(query),
+                )
+                .toList();
 
             if (filteredMembers.isEmpty) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
                   SizedBox(height: 100.h),
-                  _buildEmptyState(query.isEmpty 
-                    ? "No members information available."
-                    : "No members found for \"$query\""),
+                  _buildEmptyState(
+                    query.isEmpty
+                        ? "No members information available."
+                        : "No members found for \"$query\"",
+                  ),
                 ],
               );
             }
 
             return ListView.builder(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.symmetric(horizontal: 24.w),
+              padding: EdgeInsets.only(left: 24.w, right: 24.w, bottom: 100.h),
               itemCount: filteredMembers.length,
               itemBuilder: (context, index) {
                 return CircleMemberTile(member: filteredMembers[index]);
@@ -502,7 +530,7 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                     AppRoutes.CREATE_EVENT,
                     arguments: {
                       'isVirtual': false,
-                      'category': 'Birthday Celebration',
+                      'category': 'Celebrations',
                       'circleId': circle.id,
                     },
                   );
@@ -535,7 +563,7 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                     AppRoutes.CREATE_EVENT,
                     arguments: {
                       'isVirtual': true,
-                      'category': 'Birthday Celebration',
+                      'category': 'Celebrations',
                       'circleId': circle.id,
                     },
                   );
@@ -617,14 +645,16 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                       ],
                     ),
                     SizedBox(height: 20.h),
-                    
+
                     // Circle Cover Image
                     Hero(
                       tag: 'circle_image_${circle.id}',
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20.r),
                         child: Image.network(
-                          circle.image.isNotEmpty ? circle.image : _getPlaceholderImage(circle.id),
+                          circle.image.isNotEmpty
+                              ? circle.image
+                              : _getPlaceholderImage(circle.id),
                           width: double.infinity,
                           height: 180.h,
                           fit: BoxFit.cover,
@@ -633,7 +663,9 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                             return Container(
                               height: 180.h,
                               color: const Color(0xFFF8F7FF),
-                              child: const Center(child: CircularProgressIndicator()),
+                              child: const Center(
+                                child: CircularProgressIndicator(),
+                              ),
                             );
                           },
                           errorBuilder: (context, error, stackTrace) {
@@ -642,7 +674,11 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                               width: double.infinity,
                               color: const Color(0xFFFAF7FF),
                               child: Center(
-                                child: Icon(Icons.image_not_supported_outlined, color: AppColors.primary.withOpacity(0.3), size: 40.sp),
+                                child: Icon(
+                                  Icons.image_not_supported_outlined,
+                                  color: AppColors.primary.withOpacity(0.3),
+                                  size: 40.sp,
+                                ),
                               ),
                             );
                           },
@@ -650,7 +686,7 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                       ),
                     ),
                     SizedBox(height: 20.h),
-                    
+
                     Text(
                       circle.name,
                       style: GoogleFonts.inter(
@@ -660,10 +696,13 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                       ),
                     ),
                     SizedBox(height: 8.h),
-                    
+
                     // Category Chip
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 6.h,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(20.r),
@@ -678,7 +717,7 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                       ),
                     ),
                     SizedBox(height: 16.h),
-                    
+
                     Text(
                       circle.description,
                       style: GoogleFonts.inter(
@@ -688,17 +727,23 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                       ),
                     ),
                     SizedBox(height: 24.h),
-                    
+
                     // Stats Row
                     Row(
                       children: [
-                        _buildStatItem(Icons.people_outline, "${circle.memberCount.value} Members"),
+                        _buildStatItem(
+                          Icons.people_outline,
+                          "${circle.memberCount.value} Members",
+                        ),
                         SizedBox(width: 24.w),
-                        _buildStatItem(Icons.article_outlined, "${circle.postCount.value} Posts"),
+                        _buildStatItem(
+                          Icons.article_outlined,
+                          "${circle.postCount.value} Posts",
+                        ),
                       ],
                     ),
                     SizedBox(height: 24.h),
-                    
+
                     // Interests / Tags
                     if (circle.hashtags.isNotEmpty) ...[
                       Text(
@@ -713,25 +758,34 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                       Wrap(
                         spacing: 8.w,
                         runSpacing: 8.h,
-                        children: circle.hashtags.map((tag) => Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: const Color(0xFFE5E0FF)),
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Text(
-                            tag,
-                            style: GoogleFonts.inter(
-                              fontSize: 12.sp,
-                              color: const Color(0xFF6B4DFF),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        )).toList(),
+                        children: circle.hashtags
+                            .map(
+                              (tag) => Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                  vertical: 6.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: const Color(0xFFE5E0FF),
+                                  ),
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                child: Text(
+                                  tag,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12.sp,
+                                    color: const Color(0xFF6B4DFF),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
                       ),
                       SizedBox(height: 32.h),
                     ],
-                    
+
                     // Close Button
                     ElevatedButton(
                       onPressed: () => Get.back(),
@@ -803,6 +857,7 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
       ),
     );
   }
+
   String _getPlaceholderImage(String id) {
     final List<String> placeholders = [
       'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&q=80',

@@ -7,27 +7,29 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/routes/app_routes.dart';
 import '../../controllers/create_event_controller.dart';
+import '../../widgets/circles/interest_selection_sheet.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class CreateEventScreen extends GetView<CreateEventController> {
   const CreateEventScreen({Key? key}) : super(key: key);
 
-  final List<String> _categories = const [
-    "Celebrations",
-    "Social",
-    "Food & Drinks",
-    "Nightlife",
-    "Networking & Professional",
-    "Fitness & Wellness",
-    "Arts & Culture",
-    "Music & Entertainment",
-    "Travel & Adventure",
-    "Education & Workshops",
-    "Dating & Singles",
-    "Community & Causes",
-    "Virtual Events",
-    "Graduation",
-    "Religious/Faith-based",
-    "Other",
+  final List<Map<String, String>> _categories = const [
+    {"slug": "Celebrations", "name": "Celebrations"},
+    {"slug": "Social", "name": "Social"},
+    {"slug": "Food & Drinks", "name": "Food & Drinks"},
+    {"slug": "Nightlife", "name": "Nightlife"},
+    {"slug": "Networking & Professional", "name": "Networking & Professional"},
+    {"slug": "Fitness & Wellness", "name": "Fitness & Wellness"},
+    {"slug": "Arts & Culture", "name": "Arts & Culture"},
+    {"slug": "Music & Entertainment", "name": "Music & Entertainment"},
+    {"slug": "Travel & Adventure", "name": "Travel & Adventure"},
+    {"slug": "Education & Workshops", "name": "Education & Workshops"},
+    {"slug": "Dating & Singles", "name": "Dating & Singles"},
+    {"slug": "Community & Causes", "name": "Community & Causes"},
+    {"slug": "Virtual Events", "name": "Virtual Events"},
+    {"slug": "Graduation", "name": "Graduation"},
+    {"slug": "Religious/Faith-based", "name": "Religious/Faith-based"},
+    {"slug": "Other", "name": "Other"},
   ];
 
   final List<String> _suggestedVenues = const [
@@ -118,51 +120,182 @@ class CreateEventScreen extends GetView<CreateEventController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: 20.h),
-              // Image Picker
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  height: 180.h,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFAF7FF),
-                    borderRadius: BorderRadius.circular(16.r),
-                    border: Border.all(
-                      color: AppColors.primary.withOpacity(0.3),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: controller.coverImagePath.value.isEmpty
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.image_outlined,
-                              color: Colors.grey[400],
-                              size: 48.sp,
-                            ),
-                            SizedBox(height: 12.h),
-                            Text(
-                              "Add event cover image",
-                              style: GoogleFonts.inter(
-                                fontSize: 14.sp,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF1B0B3B),
-                              ),
-                            ),
-                          ],
-                        )
-                      : ClipRRect(
-                          borderRadius: BorderRadius.circular(16.r),
-                          child: Image.file(
-                            File(controller.coverImagePath.value),
-                            fit: BoxFit.cover,
-                            width: double.infinity,
+              SizedBox(height: 24.h),
+
+              // CATEGORY SELECTION (REPLACED INTERESTS)
+              _buildLabel("Select Event Category"),
+              _buildDropdown(),
+              SizedBox(height: 24.h),
+
+              // Cover Image Selection (Category-based)
+              Obx(() {
+                if (controller.categoryImages.isEmpty &&
+                    !controller.isLoadingImages.value) {
+                  return const SizedBox.shrink();
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLabel("Choose cover image"),
+                    if (controller.isLoadingImages.value)
+                      const Center(child: CircularProgressIndicator())
+                    else
+                      SizedBox(
+                        height: 120.h,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: controller.categoryImages.length,
+                          itemBuilder: (context, index) {
+                            final imageUrl = controller.categoryImages[index];
+                            return Obx(() {
+                              final isSelected =
+                                  controller.selectedCoverImageUrl.value ==
+                                  imageUrl;
+                              return GestureDetector(
+                                onTap: () {
+                                  controller.selectedCoverImageUrl.value =
+                                      imageUrl;
+                                  controller.coverImagePath.value = '';
+                                },
+                                child: Container(
+                                  margin: EdgeInsets.only(right: 12.w),
+                                  width: 120.w,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12.r),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? AppColors.primary
+                                          : Colors.transparent,
+                                      width: 2.w,
+                                    ),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10.r),
+                                    child: Stack(
+                                      children: [
+                                        CachedNetworkImage(
+                                          imageUrl: imageUrl,
+                                          fit: BoxFit.cover,
+                                          width: 120.w,
+                                          height: 120.h,
+                                          placeholder: (context, url) =>
+                                              Container(
+                                                color: Colors.grey[100],
+                                                child: const Center(
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
+                                                ),
+                                              ),
+                                          errorWidget: (context, url, error) =>
+                                              const Icon(Icons.error),
+                                        ),
+                                        if (isSelected)
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.black.withOpacity(
+                                                0.3,
+                                              ),
+                                            ),
+                                            child: const Center(
+                                              child: Icon(
+                                                Icons.check_circle,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            });
+                          },
+                        ),
+                      ),
+                    SizedBox(height: 24.h),
+                  ],
+                );
+              }),
+
+              // Preview of selected image
+              Obx(() {
+                if (controller.selectedCoverImageUrl.value == null) {
+                  return const SizedBox.shrink();
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLabel("Preview"),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16.r),
+                      child: CachedNetworkImage(
+                        imageUrl: controller.selectedCoverImageUrl.value!,
+                        width: double.infinity,
+                        height: 180.h,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          height: 180.h,
+                          color: Colors.grey[100],
+                          child: const Center(
+                            child: CircularProgressIndicator(),
                           ),
                         ),
-                ),
-              ),
+                        errorWidget: (context, url, error) =>
+                            const Icon(Icons.error),
+                      ),
+                    ),
+                    SizedBox(height: 24.h),
+                  ],
+                );
+              }),
+
+              SizedBox(height: 24.h),
+              // Image Picker
+              // GestureDetector(
+              //   onTap: _pickImage,
+              //   child: Obx(() => Container(
+              //         height: 180.h,
+              //         width: double.infinity,
+              //         decoration: BoxDecoration(
+              //           color: const Color(0xFFFAF7FF),
+              //           borderRadius: BorderRadius.circular(16.r),
+              //           border: Border.all(
+              //             color: AppColors.primary.withOpacity(0.3),
+              //             width: 1.5,
+              //           ),
+              //         ),
+              //         child: controller.coverImagePath.value.isEmpty
+              //             ? Column(
+              //                 mainAxisAlignment: MainAxisAlignment.center,
+              //                 children: [
+              //                   Icon(
+              //                     Icons.image_outlined,
+              //                     color: Colors.grey[400],
+              //                     size: 48.sp,
+              //                   ),
+              //                   SizedBox(height: 12.h),
+              //                   Text(
+              //                     "Or upload your own cover image",
+              //                     style: GoogleFonts.inter(
+              //                       fontSize: 14.sp,
+              //                       fontWeight: FontWeight.w600,
+              //                       color: const Color(0xFF1B0B3B),
+              //                     ),
+              //                   ),
+              //                 ],
+              //               )
+              //             : ClipRRect(
+              //                 borderRadius: BorderRadius.circular(16.r),
+              //                 child: Image.file(
+              //                   File(controller.coverImagePath.value),
+              //                   fit: BoxFit.cover,
+              //                   width: double.infinity,
+              //                 ),
+              //               ),
+              //       )),
+              // ),
               SizedBox(height: 24.h),
 
               _buildLabel("Event Name"),
@@ -210,7 +343,7 @@ class CreateEventScreen extends GetView<CreateEventController> {
               ),
               SizedBox(height: 24.h),
 
-              _buildLabel("Add Social Media Links"),
+              _buildLabel("Add Social Media Links (Optional)"),
               _buildSocialInput(
                 Icons.facebook,
                 controller.fbController,
@@ -262,10 +395,10 @@ class CreateEventScreen extends GetView<CreateEventController> {
               ),
               SizedBox(height: 24.h),
 
-              _buildLabel("Event Category"),
-              _buildDropdown(),
-              SizedBox(height: 24.h),
-
+              // Duplicate category removed from here as it's now at the top
+              // _buildLabel("Event Category"),
+              // _buildDropdown(),
+              // SizedBox(height: 24.h),
               _buildLabel("Date"),
               _buildPickerField(
                 controller.selectedDate.value == null
@@ -302,7 +435,9 @@ class CreateEventScreen extends GetView<CreateEventController> {
                         _buildPickerField(
                           controller.selectedEndTime.value == null
                               ? "HH:MM"
-                              : controller.selectedEndTime.value!.format(context),
+                              : controller.selectedEndTime.value!.format(
+                                  context,
+                                ),
                           Icons.access_time,
                           () => _selectTime(context, isStart: false),
                         ),
@@ -327,11 +462,16 @@ class CreateEventScreen extends GetView<CreateEventController> {
                   if (controller.suggestedVenues.isEmpty) {
                     return Text(
                       "No suggested venues found nearby",
-                      style: GoogleFonts.inter(fontSize: 12.sp, color: Colors.grey),
+                      style: GoogleFonts.inter(
+                        fontSize: 12.sp,
+                        color: Colors.grey,
+                      ),
                     );
                   }
                   return Column(
-                    children: controller.suggestedVenues.asMap().entries.map((entry) {
+                    children: controller.suggestedVenues.asMap().entries.map((
+                      entry,
+                    ) {
                       return _buildVenueItem(entry.value, entry.key);
                     }).toList(),
                   );
@@ -402,6 +542,42 @@ class CreateEventScreen extends GetView<CreateEventController> {
           ),
         );
       }),
+    );
+  }
+
+  void _showInterestSelectionSheet(BuildContext context) {
+    Get.bottomSheet(
+      InterestSelectionSheet(
+        initialSelected: controller.selectedInterestNames.toList(),
+        onSelected: (selectedNames) {
+          final List<String> slugs = [];
+          for (var name in selectedNames) {
+            final interest = controller.allInterests.firstWhereOrNull(
+              (i) => i.name == name,
+            );
+            if (interest != null) {
+              slugs.add(interest.slug);
+            }
+          }
+          controller.selectedInterestNames.assignAll(selectedNames);
+          controller.selectedInterests.assignAll(slugs);
+
+          // Fetch images based on the first selected interest's category
+          if (slugs.isNotEmpty) {
+            final interest = controller.allInterests.firstWhereOrNull(
+              (i) => i.slug == slugs.first,
+            );
+            if (interest != null) {
+              controller.fetchEventInterestImages(interest.category);
+            }
+          } else {
+            controller.categoryImages.clear();
+            controller.selectedCoverImageUrl.value = null;
+          }
+        },
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
     );
   }
 
@@ -505,17 +681,28 @@ class CreateEventScreen extends GetView<CreateEventController> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           isExpanded: true,
-          value: _categories.contains(controller.selectedCategory.value)
+          value:
+              _categories.any(
+                (c) => c['slug'] == controller.selectedCategory.value,
+              )
               ? controller.selectedCategory.value
               : null,
           hint: Text(
-            "Dropdown to select",
+            "Select Category",
             style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[400]),
           ),
           items: _categories
-              .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+              .map(
+                (c) =>
+                    DropdownMenuItem(value: c['slug'], child: Text(c['name']!)),
+              )
               .toList(),
-          onChanged: (val) => controller.selectedCategory.value = val,
+          onChanged: (val) {
+            if (val != null) {
+              controller.selectedCategory.value = val;
+              controller.fetchEventInterestImages(val);
+            }
+          },
         ),
       ),
     );
@@ -553,38 +740,40 @@ class CreateEventScreen extends GetView<CreateEventController> {
         color: const Color(0xFFFAF7FF),
         borderRadius: BorderRadius.circular(12.r),
       ),
-      child: Obx(() => TextField(
-        controller: controller.locationController,
-        decoration: InputDecoration(
-          hintText: "Location",
-          hintStyle: GoogleFonts.inter(
-            fontSize: 14.sp,
-            color: Colors.grey[400],
-          ),
-          suffixIcon: controller.isLocating.value
-              ? Padding(
-                  padding: EdgeInsets.all(12.w),
-                  child: SizedBox(
-                    width: 16.w,
-                    height: 16.w,
-                    child: const CircularProgressIndicator(strokeWidth: 2),
+      child: Obx(
+        () => TextField(
+          controller: controller.locationController,
+          decoration: InputDecoration(
+            hintText: "Location",
+            hintStyle: GoogleFonts.inter(
+              fontSize: 14.sp,
+              color: Colors.grey[400],
+            ),
+            suffixIcon: controller.isLocating.value
+                ? Padding(
+                    padding: EdgeInsets.all(12.w),
+                    child: SizedBox(
+                      width: 16.w,
+                      height: 16.w,
+                      child: const CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                : IconButton(
+                    icon: Icon(
+                      Icons.my_location,
+                      color: AppColors.primary,
+                      size: 20.sp,
+                    ),
+                    onPressed: () => controller.getCurrentLocation(),
                   ),
-                )
-              : IconButton(
-                  icon: Icon(
-                    Icons.my_location,
-                    color: AppColors.primary,
-                    size: 20.sp,
-                  ),
-                  onPressed: () => controller.getCurrentLocation(),
-                ),
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 16.w,
-            vertical: 14.h,
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: 16.w,
+              vertical: 14.h,
+            ),
+            border: InputBorder.none,
           ),
-          border: InputBorder.none,
         ),
-      )),
+      ),
     );
   }
 
@@ -627,8 +816,12 @@ class CreateEventScreen extends GetView<CreateEventController> {
               child: ElevatedButton(
                 onPressed: () => controller.selectVenue(index),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isSelected ? AppColors.primary : Colors.white,
-                  foregroundColor: isSelected ? Colors.white : AppColors.primary,
+                  backgroundColor: isSelected
+                      ? AppColors.primary
+                      : Colors.white,
+                  foregroundColor: isSelected
+                      ? Colors.white
+                      : AppColors.primary,
                   elevation: 0,
                   side: BorderSide(color: AppColors.primary, width: 1.w),
                   shape: RoundedRectangleBorder(

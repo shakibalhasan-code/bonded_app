@@ -154,7 +154,10 @@ class EventDetailsController extends GetxController {
               ? Get.find<BillingController>() 
               : Get.put(BillingController());
               
-          await billingController.purchaseVirtualTicket(bookingId, productId);
+          await billingController.purchaseVirtualTicket(
+            bookingId: bookingId,
+            productId: productId,
+          );
         } else if (data['clientSecret'] != null) {
           // Stripe (In-Person Event)
           Get.snackbar("Info", "Stripe payment required. Please use a card in the web checkout.");

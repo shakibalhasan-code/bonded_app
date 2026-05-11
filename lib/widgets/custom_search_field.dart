@@ -12,6 +12,7 @@ class CustomSearchField extends StatelessWidget {
   final bool isExpanded;
   final VoidCallback? onToggle;
   final String? title;
+  final VoidCallback? onSearch;
 
   const CustomSearchField({
     Key? key,
@@ -23,6 +24,7 @@ class CustomSearchField extends StatelessWidget {
     this.isExpanded = true,
     this.onToggle,
     this.title,
+    this.onSearch,
   }) : super(key: key);
 
   @override
@@ -41,7 +43,10 @@ class CustomSearchField extends StatelessWidget {
               ),
             ),
           GestureDetector(
-            onTap: onToggle,
+            onTap: () {
+              if (onToggle != null) onToggle!();
+              if (onSearch != null) onSearch!();
+            },
             child: Icon(
               Icons.search,
               color: AppColors.primary,
@@ -64,16 +69,12 @@ class CustomSearchField extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.search,
-                  color: Colors.grey,
-                  size: 20.sp,
-                ),
-                SizedBox(width: 10.w),
                 Expanded(
                   child: TextField(
                     controller: controller,
                     onChanged: onChanged,
+                    onSubmitted: (value) => onSearch?.call(),
+                    textInputAction: TextInputAction.search,
                     autofocus: isExpandable && isExpanded,
                     style: GoogleFonts.inter(
                       fontSize: 14.sp,
@@ -97,10 +98,30 @@ class CustomSearchField extends StatelessWidget {
                       onChanged("");
                       if (onClear != null) onClear!();
                     },
-                    child: Icon(
-                      Icons.close,
-                      color: Colors.grey,
-                      size: 18.sp,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 4.w),
+                      child: Icon(
+                        Icons.close,
+                        color: Colors.grey,
+                        size: 18.sp,
+                      ),
+                    ),
+                  ),
+                if (onSearch != null)
+                  GestureDetector(
+                    onTap: onSearch,
+                    child: Container(
+                      margin: EdgeInsets.only(left: 8.w),
+                      padding: EdgeInsets.all(6.w),
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.search,
+                        color: Colors.white,
+                        size: 16.sp,
+                      ),
                     ),
                   ),
               ],

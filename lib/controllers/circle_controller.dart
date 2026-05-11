@@ -176,6 +176,49 @@ class CircleController extends BaseController {
     }
   }
 
+  // Interest Images related state
+  var categoryImages = <String>[].obs;
+  var isLoadingImages = false.obs;
+
+  // Store Products for Paid Circles
+  var storeProducts = <Map<String, dynamic>>[].obs;
+  var isLoadingProducts = false.obs;
+
+  Future<void> fetchStoreProducts() async {
+    try {
+      isLoadingProducts.value = true;
+      final platform = GetPlatform.isIOS ? 'apple' : 'android';
+      final url = '${AppUrls.storeProducts}?platform=$platform';
+      final response = await _apiService.get(url);
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final List<dynamic> products = data['data'];
+        storeProducts.assignAll(products.cast<Map<String, dynamic>>());
+      }
+    } catch (e) {
+      debugPrint("Error fetching store products: $e");
+    } finally {
+      isLoadingProducts.value = false;
+    }
+  }
+
+  Future<void> fetchInterestImages(String category) async {
+    try {
+      isLoadingImages.value = true;
+      final url = '${AppUrls.interestImages}?category=$category';
+      final response = await _apiService.get(url);
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final List<dynamic> images = data['data']['images'];
+        categoryImages.assignAll(images.map((i) => i['url'] as String).toList());
+      }
+    } catch (e) {
+      debugPrint("Error fetching interest images: $e");
+    } finally {
+      isLoadingImages.value = false;
+    }
+  }
+
   Future<void> createCircle({
     required Map<String, dynamic> circleData,
     File? imageFile,
@@ -183,77 +226,73 @@ class CircleController extends BaseController {
     try {
       setLoading(true);
 
-      final List<http.MultipartFile> files = [];
-      if (imageFile != null && await imageFile.exists()) {
-        final mimeType = lookupMimeType(imageFile.path) ?? 'image/jpeg';
-        final mimeParts = mimeType.split('/');
-        files.add(
-          await http.MultipartFile.fromPath(
-            'image',
-            imageFile.path,
-            contentType: MediaType(mimeParts.first, mimeParts[1]),
-          ),
+      // Determine if we should use multipart or regular POST
+      // If coverImage URL is provided in circleData, we use regular POST
+      if (circleData.containsKey('coverImage') && circleData['coverImage'] != null) {
+        final response = await _apiService.post(
+          AppUrls.circles,
+          {'data': circleData},
         );
-      } else if (imageFile != null) {
-        debugPrint("Circle image file does not exist: ${imageFile.path}");
-      }
 
-      final response = await _apiService.multipartRequest(
-        'POST',
-        AppUrls.circles,
-        fields: {'data': jsonEncode(circleData)},
-        files: files,
-      );
-
-      final data = jsonDecode(response.body);
-      if (data['success'] == true) {
-        // Refresh lists
-        fetchCircles(visibility: 'public');
-        fetchCircles(visibility: 'private');
-        fetchCircles(scope: 'created');
-
-        Get.back(); // Go back to previous screen
-
-        // Use a small delay to ensure the screen transition is stable before showing snackbar
-        Future.delayed(const Duration(milliseconds: 500), () {
-          Get.snackbar(
-            'Success',
-            'Circle created successfully',
-            snackPosition: SnackPosition.TOP,
-            backgroundColor: Colors.green.withOpacity(0.9),
-            colorText: Colors.white,
-            icon: const Icon(Icons.check_circle, color: Colors.white),
-            margin: const EdgeInsets.all(15),
-            borderRadius: 12,
-            duration: const Duration(seconds: 3),
-            snackStyle: SnackStyle.FLOATING,
-          );
-        });
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          _handleCreateSuccess();
+        } else {
+          Get.snackbar('Error', data['message'] ?? 'Failed to create circle');
+        }
       } else {
-        Get.snackbar(
-          'Error',
-          data['message'] ?? 'Failed to create circle',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red.withOpacity(0.9),
-          colorText: Colors.white,
+        // Fallback to legacy multipart if needed (though user said no multipart)
+        final List<http.MultipartFile> files = [];
+        if (imageFile != null && await imageFile.exists()) {
+          final mimeType = lookupMimeType(imageFile.path) ?? 'image/jpeg';
+          final mimeParts = mimeType.split('/');
+          files.add(
+            await http.MultipartFile.fromPath(
+              'image',
+              imageFile.path,
+              contentType: MediaType(mimeParts.first, mimeParts[1]),
+            ),
+          );
+        }
+
+        final response = await _apiService.multipartRequest(
+          'POST',
+          AppUrls.circles,
+          fields: {'data': jsonEncode(circleData)},
+          files: files,
         );
+
+        final data = jsonDecode(response.body);
+        if (data['success'] == true) {
+          _handleCreateSuccess();
+        } else {
+          Get.snackbar('Error', data['message'] ?? 'Failed to create circle');
+        }
       }
     } catch (e) {
       debugPrint("Error creating circle: $e");
-      String errorMessage = e.toString();
-      if (errorMessage.startsWith('ApiException: ')) {
-        errorMessage = errorMessage.replaceFirst('ApiException: ', '');
-      }
-      Get.snackbar(
-        'Error',
-        errorMessage,
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red.withOpacity(0.9),
-        colorText: Colors.white,
-      );
+      Get.snackbar('Error', 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
+  }
+
+  void _handleCreateSuccess() {
+    fetchCircles(visibility: 'public');
+    fetchCircles(visibility: 'private');
+    fetchCircles(scope: 'created');
+
+    Get.back();
+    Future.delayed(const Duration(milliseconds: 500), () {
+      Get.snackbar(
+        'Success',
+        'Circle created successfully',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green.withOpacity(0.9),
+        colorText: Colors.white,
+        icon: const Icon(Icons.check_circle, color: Colors.white),
+      );
+    });
   }
 
   void _setLoadingState(String? visibility, String? scope, bool value) {
@@ -922,6 +961,15 @@ class CircleController extends BaseController {
   }
 
   Future<void> updateCommentReaction(CommentModel comment, String type) async {
+    if (comment.id.startsWith('temp_')) {
+      Get.snackbar(
+        "Please Wait",
+        "Please wait for the comment to finish uploading.",
+        backgroundColor: Colors.amber.withOpacity(0.9),
+        colorText: Colors.black,
+      );
+      return;
+    }
     try {
       final url = AppUrls.reactPost(
         comment.id,
@@ -992,6 +1040,8 @@ class CircleController extends BaseController {
         circle.isJoined.value = true;
         // Refresh joined list
         fetchCircles(scope: 'joined');
+        fetchCircles(visibility: 'public');
+        fetchCircles(visibility: 'private');
 
         // Refresh Home Screen data
         if (Get.isRegistered<HomeController>()) {

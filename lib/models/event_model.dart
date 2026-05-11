@@ -1,3 +1,4 @@
+import 'package:get/get.dart';
 import 'package:bonded_app/core/constants/app_endpoints.dart';
 
 enum EventCategory { inPerson, virtual, highlights }
@@ -94,6 +95,7 @@ class EventModel {
   final String? meetingLink;
   final String? hostId;
   final Map<String, dynamic>? hostDetails;
+  final String? sourceType;
 
   EventModel({
     required this.id,
@@ -127,7 +129,14 @@ class EventModel {
     this.meetingLink,
     this.hostId,
     this.hostDetails,
+    this.sourceType,
   });
+
+  String get providerName {
+    if (sourceType == 'viator') return 'Viator';
+    if (sourceType == 'tripadvisor') return 'TripAdvisor';
+    return sourceType?.capitalizeFirst ?? 'External';
+  }
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
     final eventData = json['event'] ?? json;
@@ -148,21 +157,29 @@ class EventModel {
     }
 
     final coverImg = json['image'] ?? json['coverImage'] ?? eventData['coverImage'] ?? eventData['image'];
+    
+    // Handle external event price and rating
+    final price = (eventData['price'] ?? eventData['ticketPrice'] ?? 0).toDouble();
+    final rating = (eventData['rating'] ?? 0).toDouble();
+    final reviewsCount = eventData['reviewCount'] ?? eventData['reviewsCount'] ?? 0;
+    final city = json['location']?['city'] ?? eventData['location']?['city'] ?? eventData['city'] ?? eventData['destinationName'];
 
     return EventModel(
       id: json['id'] ?? json['_id'] ?? eventData['_id'] ?? eventData['id'] ?? '',
       title: json['title'] ?? eventData['title'] ?? '',
       imageUrl: AppUrls.imageUrl(coverImg),
       address: json['location']?['address'] ?? eventData['location']?['address'] ?? eventData['address'],
-      city: json['location']?['city'] ?? eventData['location']?['city'] ?? eventData['city'],
+      city: city,
       country: json['location']?['country'] ?? eventData['location']?['country'] ?? eventData['country'],
       date: date,
       time: time,
-      price: (eventData['ticketPrice'] ?? 0).toDouble(),
+      price: price,
+      rating: rating,
+      reviewsCount: reviewsCount,
       category: cat,
-      description: eventData['description'],
+      description: eventData['description'] ?? eventData['raw']?['description'],
       isExternal: json['isExternal'] ?? eventData['isExternal'] ?? false,
-      externalLink: json['externalLink'] ?? eventData['externalLink'],
+      externalLink: json['externalLink'] ?? eventData['externalLink'] ?? eventData['productUrl'],
       totalSeats: eventData['totalSeats'],
       remainingSeats: eventData['remainingSeats'],
       phoneNumber: eventData['phoneNumber'],
@@ -173,6 +190,7 @@ class EventModel {
       meetingLink: eventData['meetingLink'],
       hostId: eventData['host'] is String ? eventData['host'] : (eventData['host']?['_id'] ?? eventData['host']?['id']),
       hostDetails: eventData['hostDetails'] ?? json['hostDetails'],
+      sourceType: json['sourceType'] ?? eventData['provider'],
     );
   }
 }

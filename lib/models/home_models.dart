@@ -117,7 +117,7 @@ class CommentModel {
               ?.map((m) => MediaModel.fromJson(m))
               .toList() ??
           [],
-      replies: ((json['previewComments'] ?? json['replies']) as List?)
+      replies: ((json['previewComments'] ?? json['replies'] ?? json['comments']) as List?)
               ?.map((c) => CommentModel.fromJson(c))
               .toList() ??
           [],
@@ -185,6 +185,8 @@ class PostModel {
     if (author is Map) {
       userName = author['fullName'] ?? "Unknown";
       userImage = AppUrls.imageUrl(author['avatar']);
+    } else if (author is String) {
+      userName = "User $author";
     }
 
     // circle can be a full object (home feed) or a plain ID string (circle feed)
@@ -230,7 +232,7 @@ class PostModel {
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt']).toLocal()
           : null,
-      comments: (json['previewComments'] as List?)
+      comments: ((json['previewComments'] ?? json['comments']) as List?)
               ?.map((c) => CommentModel.fromJson(c))
               .toList() ??
           [],

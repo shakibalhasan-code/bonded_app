@@ -79,15 +79,15 @@ class ProfileScreen extends StatelessWidget {
                                   vertical: 2.h,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary,
+                                  color: user.isPro ? const Color(0xFFFFD700) : AppColors.primary,
                                   borderRadius: BorderRadius.circular(10.r),
                                 ),
                                 child: Text(
-                                  user.subscriptionTier.toUpperCase(),
+                                  user.isPro ? "HOST PRO" : user.subscriptionTier.toUpperCase(),
                                   style: GoogleFonts.inter(
                                     fontSize: 10.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    color: user.isPro ? Colors.black : Colors.white,
                                   ),
                                 ),
                               ),
@@ -107,7 +107,14 @@ class ProfileScreen extends StatelessWidget {
                               color: const Color(0xFF1B0B3B),
                             ),
                           ),
-                          if (user.selfieVerification == 'verified') ...[
+                          if (user.isPro) ...[
+                            SizedBox(width: 6.w),
+                            const Icon(
+                              Icons.stars,
+                              color: Color(0xFFFFD700),
+                              size: 20,
+                            ),
+                          ] else if (user.selfieVerification == 'verified') ...[
                             SizedBox(width: 5.w),
                             const Icon(
                               Icons.verified,
@@ -132,18 +139,24 @@ class ProfileScreen extends StatelessWidget {
 
                 /// Subscription Card
                 GestureDetector(
-                  onTap: () => Get.toNamed(AppRoutes.SUBSCRIPTION_PLAN),
+                  onTap: user.isPro 
+                      ? null 
+                      : () => Get.toNamed(AppRoutes.SUBSCRIPTION_PLAN),
                   child: Container(
                     padding: EdgeInsets.all(20.w),
                     decoration: BoxDecoration(
+                      color: user.isPro ? const Color(0xFFFDF7E7) : Colors.white,
                       borderRadius: BorderRadius.circular(20.r),
-                      border: Border.all(color: AppColors.primary, width: 1.5),
+                      border: Border.all(
+                        color: user.isPro ? const Color(0xFFFFD700) : AppColors.primary, 
+                        width: 1.5,
+                      ),
                     ),
                     child: Row(
                       children: [
                         Icon(
-                          Icons.workspace_premium,
-                          color: AppColors.primary,
+                          user.isPro ? Icons.verified_user : Icons.workspace_premium,
+                          color: user.isPro ? const Color(0xFFB8860B) : AppColors.primary,
                           size: 40.sp,
                         ),
                         SizedBox(width: 16.w),
@@ -152,7 +165,7 @@ class ProfileScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "${user.subscriptionTier.capitalizeFirst}",
+                                user.isPro ? "Host Pro Member" : "${user.subscriptionTier.capitalizeFirst}",
                                 style: GoogleFonts.inter(
                                   fontSize: 18.sp,
                                   fontWeight: FontWeight.w700,
@@ -161,23 +174,24 @@ class ProfileScreen extends StatelessWidget {
                               ),
                               SizedBox(height: 4.h),
                               Text(
-                                user.subscriptionTier == 'free'
-                                    ? "Free Plan"
-                                    : "Premium Plan",
+                                user.isPro 
+                                    ? "Subscription Active" 
+                                    : (user.subscriptionTier == 'free' ? "Free Plan" : "Premium Plan"),
                                 style: GoogleFonts.inter(
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
+                                  color: user.isPro ? const Color(0xFFB8860B) : AppColors.primary,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        Icon(
-                          Icons.arrow_forward_ios,
-                          color: AppColors.primary,
-                          size: 20.sp,
-                        ),
+                        if (!user.isPro)
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            color: AppColors.primary,
+                            size: 20.sp,
+                          ),
                       ],
                     ),
                   ),

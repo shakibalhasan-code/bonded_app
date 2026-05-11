@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 
+import '../../core/constants/social_auth_config.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_assets.dart';
 import '../../core/routes/app_routes.dart';
@@ -141,23 +142,36 @@ class LoginScreen extends GetView<AuthController> {
             SizedBox(height: 32.h),
 
             // Social Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                SocialIconButton(
-                  iconPath: AppAssets.googleIcon,
-                  onPressed: () => controller.loginWithGoogle(),
-                ),
-                SocialIconButton(
-                  iconPath: AppAssets.facebookIcon,
-                  onPressed: () => controller.loginWithFacebook(),
-                ),
-                SocialIconButton(
-                  iconPath: AppAssets.appleIcon,
-                  onPressed: () => controller.loginWithApple(),
-                ),
-              ],
-            ),
+            Obx(() {
+              final active = controller.loadingProvider.value;
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  SocialIconButton(
+                    iconPath: AppAssets.googleIcon,
+                    loaderColor: const Color(0xFF4285F4),
+                    isLoading: active == 'google',
+                    isDisabled: active != null && active != 'google',
+                    onPressed: () => controller.loginWithGoogle(),
+                  ),
+                  SocialIconButton(
+                    iconPath: AppAssets.appleIcon,
+                    loaderColor: const Color(0xFF000000),
+                    isLoading: active == 'apple',
+                    isDisabled: active != null && active != 'apple',
+                    onPressed: () => controller.loginWithApple(),
+                  ),
+                  if (SocialAuthConfig.enableFacebook)
+                    SocialIconButton(
+                      iconPath: AppAssets.facebookIcon,
+                      loaderColor: const Color(0xFF1877F2),
+                      isLoading: active == 'facebook',
+                      isDisabled: active != null && active != 'facebook',
+                      onPressed: () => controller.loginWithFacebook(),
+                    ),
+                ],
+              );
+            }),
 
             SizedBox(height: 60.h),
 

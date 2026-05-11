@@ -70,16 +70,20 @@ class EventScreen extends StatelessWidget {
           SizedBox(width: 20.w),
         ],
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (controller.selectedTab.value == 0) {
-          return _buildPublicEvents(controller);
-        } else {
-          return _buildMyEvents(controller);
-        }
-      }),
+      body: Column(
+        children: [
+          _buildMainTabs(controller),
+          Expanded(
+            child: Obx(() {
+              if (controller.selectedTab.value == 0) {
+                return _buildPublicEvents(controller);
+              } else {
+                return _buildMyEvents(controller);
+              }
+            }),
+          ),
+        ],
+      ),
       floatingActionButton: Padding(
         padding: EdgeInsets.only(bottom: 100.h),
         child: FloatingActionButton(
@@ -97,7 +101,6 @@ class EventScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildMainTabs(controller),
         SizedBox(height: 16.h),
         _buildSearchBar(controller),
         SizedBox(height: 16.h),
@@ -126,8 +129,8 @@ class EventScreen extends StatelessWidget {
                             controller.selectedCategory.value == 1
                                 ? "Upcoming Events"
                                 : controller.selectedCategory.value == 2
-                                ? "Event Highlights"
-                                : "Explore Events Nearby",
+                                    ? "Event Highlights"
+                                    : "Explore Events Nearby",
                             style: GoogleFonts.inter(
                               fontSize: 18.sp,
                               fontWeight: FontWeight.w700,
@@ -142,61 +145,65 @@ class EventScreen extends StatelessWidget {
                               color: AppColors.primary,
                               size: 24.sp,
                             ),
-                            onPressed: () =>
-                                Get.toNamed(AppRoutes.EVENT_FILTER),
+                            onPressed: () => Get.toNamed(AppRoutes.EVENT_FILTER),
                           ),
                         ],
                       ),
                     ),
                     SizedBox(height: 20.h),
                     Expanded(
-                      child: RefreshIndicator(
-                        onRefresh: controller.refreshData,
-                        color: AppColors.primary,
-                        child: (controller.selectedCategory.value == 2 
-                                ? controller.publicHighlights.isEmpty 
-                                : controller.filteredEvents.isEmpty)
-                            ? _buildEmptyEventsState()
-                            : GridView.builder(
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
-                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  childAspectRatio: 0.8,
-                                  crossAxisSpacing: 16.w,
-                                  mainAxisSpacing: 16.h,
-                                ),
-                                itemCount: controller.selectedCategory.value == 2 
-                                    ? controller.filteredHighlights.length 
-                                    : controller.filteredEvents.length,
-                                itemBuilder: (context, index) {
-                                  if (controller.selectedCategory.value == 2) {
-                                    final highlight = controller.filteredHighlights[index];
-                                    return HighlightCard(
-                                      highlight: highlight,
-                                      onTap: () => Get.toNamed(
-                                        AppRoutes.EVENT_HIGHLIGHT_DETAILS,
-                                        arguments: highlight,
-                                      ),
+                      child: Obx(() {
+                        if (controller.isLoading.value) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        return RefreshIndicator(
+                          onRefresh: controller.refreshData,
+                          color: AppColors.primary,
+                          child: (controller.selectedCategory.value == 2
+                                  ? controller.publicHighlights.isEmpty
+                                  : controller.filteredEvents.isEmpty)
+                              ? _buildEmptyEventsState()
+                              : GridView.builder(
+                                  physics: const AlwaysScrollableScrollPhysics(),
+                                  padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
+                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    childAspectRatio: 0.8,
+                                    crossAxisSpacing: 16.w,
+                                    mainAxisSpacing: 16.h,
+                                  ),
+                                  itemCount: controller.selectedCategory.value == 2
+                                      ? controller.filteredHighlights.length
+                                      : controller.filteredEvents.length,
+                                  itemBuilder: (context, index) {
+                                    if (controller.selectedCategory.value == 2) {
+                                      final highlight = controller.filteredHighlights[index];
+                                      return HighlightCard(
+                                        highlight: highlight,
+                                        onTap: () => Get.toNamed(
+                                          AppRoutes.EVENT_HIGHLIGHT_DETAILS,
+                                          arguments: highlight,
+                                        ),
+                                      );
+                                    }
+                                    final event = controller.filteredEvents[index];
+                                    return EventCard(
+                                      event: event,
+                                      onTap: () {
+                                        if (event.isExternal) {
+                                          _showExternalEventBottomSheet(context, event);
+                                        } else {
+                                          Get.toNamed(
+                                            AppRoutes.EVENT_DETAILS,
+                                            arguments: event,
+                                          );
+                                        }
+                                      },
                                     );
-                                  }
-                                  final event = controller.filteredEvents[index];
-                                  return EventCard(
-                                    event: event,
-                                    onTap: () {
-                                      if (event.isExternal) {
-                                        _showExternalEventDialog(context, event);
-                                      } else {
-                                        Get.toNamed(
-                                          AppRoutes.EVENT_DETAILS,
-                                          arguments: event,
-                                        );
-                                      }
-                                    },
-                                  );
-                                },
-                              ),
-                      ),
+                                  },
+                                ),
+                        );
+                      }),
                     ),
                   ],
                 ),
@@ -209,7 +216,6 @@ class EventScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildMainTabs(controller),
         SizedBox(height: 16.h),
         _buildSearchBar(controller),
         SizedBox(height: 16.h),
@@ -228,7 +234,11 @@ class EventScreen extends StatelessWidget {
 
     if (subTab == 0 || subTab == 1) {
       final list = controller.filteredEvents;
-      return RefreshIndicator(
+      return Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return RefreshIndicator(
         onRefresh: controller.refreshData,
         color: AppColors.primary,
         child: list.isEmpty
@@ -248,14 +258,15 @@ class EventScreen extends StatelessWidget {
                   showOptions: subTab == 0,
                   onTap: () {
                     if (list[index].isExternal) {
-                      _showExternalEventDialog(context, list[index]);
+                      _showExternalEventBottomSheet(context, list[index]);
                     } else {
                       Get.toNamed(AppRoutes.EVENT_DETAILS, arguments: list[index]);
                     }
                   },
                 ),
               ),
-      );
+            );
+          });
     } else if (subTab == 2) {
       return RefreshIndicator(
         onRefresh: controller.refreshData,
@@ -320,96 +331,191 @@ class EventScreen extends StatelessWidget {
     }
   }
 
-  void _showExternalEventDialog(BuildContext context, EventModel event) {
-    Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(28.r),
+  void _showExternalEventBottomSheet(BuildContext context, EventModel event) {
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 24.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
         ),
-        child: Container(
-          padding: EdgeInsets.all(24.w),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(28.r),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 80.h,
-                height: 80.h,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40.w,
+                height: 4.h,
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
-                  shape: BoxShape.circle,
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2.r),
                 ),
-                child: Icon(Icons.open_in_new, color: Colors.orange, size: 40.sp),
               ),
-              SizedBox(height: 24.h),
+            ),
+            SizedBox(height: 20.h),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16.r),
+                  child: Image.network(
+                    event.imageUrl,
+                    width: 100.w,
+                    height: 100.w,
+                    fit: BoxFit.cover,
+                    errorBuilder: (c, e, s) => Container(
+                      width: 100.w,
+                      height: 100.w,
+                      color: Colors.grey[200],
+                      child: Icon(Icons.image_not_supported_outlined, color: Colors.grey[400]),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 16.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6.r),
+                        ),
+                        child: Text(
+                          "External Event",
+                          style: GoogleFonts.inter(
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        event.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textHeading,
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Row(
+                        children: [
+                          Icon(Icons.star, color: Colors.amber, size: 14.sp),
+                          SizedBox(width: 4.w),
+                          Text(
+                            "${event.rating?.toStringAsFixed(1) ?? '0.0'} (${event.reviewsCount ?? 0} reviews)",
+                            style: GoogleFonts.inter(
+                              fontSize: 12.sp,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 20.h),
+            if (event.description != null && event.description!.isNotEmpty) ...[
               Text(
-                "External Event",
-                textAlign: TextAlign.center,
+                "About this Event",
                 style: GoogleFonts.inter(
-                  fontSize: 20.sp,
+                  fontSize: 14.sp,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textHeading,
                 ),
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: 8.h),
               Text(
-                "This event is hosted on an external platform. You will be redirected to the event page to complete your booking.",
-                textAlign: TextAlign.center,
+                event.description!,
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
-                  fontSize: 14.sp,
+                  fontSize: 13.sp,
                   color: Colors.grey[600],
                   height: 1.5,
                 ),
               ),
-              SizedBox(height: 32.h),
-              ElevatedButton(
-                onPressed: () async {
-                  Get.back();
-                  if (event.externalLink != null) {
-                    final uri = Uri.parse(event.externalLink!);
-                    if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri, mode: LaunchMode.externalApplication);
-                    } else {
-                      Get.snackbar("Error", "Could not launch external link");
-                    }
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  minimumSize: Size(double.infinity, 56.h),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30.r),
-                  ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  "Visit Event",
-                  style: GoogleFonts.inter(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              SizedBox(height: 12.h),
-              TextButton(
-                onPressed: () => Get.back(),
-                child: Text(
-                  "Cancel",
-                  style: GoogleFonts.inter(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ),
+              SizedBox(height: 20.h),
             ],
-          ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Price from",
+                      style: GoogleFonts.inter(
+                        fontSize: 12.sp,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    Text(
+                      "\$${event.price?.toStringAsFixed(2) ?? '0.00'}",
+                      style: GoogleFonts.inter(
+                        fontSize: 20.sp,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (event.externalLink != null) {
+                      final uri = Uri.parse(event.externalLink!);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      } else {
+                        Get.snackbar("Error", "Could not launch external link");
+                      }
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        "Visit ${event.providerName}",
+                        style: GoogleFonts.inter(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      Icon(Icons.open_in_new, size: 16.sp),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
     );
   }
 
@@ -498,7 +604,7 @@ class EventScreen extends StatelessWidget {
                     AppRoutes.CREATE_EVENT,
                     arguments: {
                       'isVirtual': true,
-                      'category': 'Celebrations',
+                      'category': 'celebrations',
                     },
                   );
                 },
@@ -657,6 +763,7 @@ class EventScreen extends StatelessWidget {
         hintText: "Search events, cities, or venues...",
         onChanged: (value) => controller.updateSearch(value),
         onClear: () => controller.clearSearch(),
+        onSearch: () => controller.fetchEvents(searchTerm: controller.searchQuery.value),
       ),
     );
   }

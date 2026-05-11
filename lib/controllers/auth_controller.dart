@@ -8,16 +8,20 @@ import '../core/routes/app_routes.dart';
 import '../models/user_model.dart';
 import '../services/socket_service.dart';
 import '../services/social_auth_service.dart';
+import '../services/notification_service.dart';
+import '../widgets/social_auth_error_dialog.dart';
 import 'base_controller.dart';
 
 class AuthController extends BaseController {
   final ApiService _apiService = ApiService();
   final SocialAuthService _socialAuthService = SocialAuthService();
+  final NotificationService _notificationService = Get.find<NotificationService>();
 
   // Observable variables
   final RxBool isPasswordVisible = false.obs;
   final RxMap<String, dynamic> userData = <String, dynamic>{}.obs;
   final Rxn<UserModel> currentUser = Rxn<UserModel>();
+  final Rxn<String> loadingProvider = Rxn<String>(); // 'google' | 'apple' | 'facebook'
 
   // Controllers
   final emailController = TextEditingController();
@@ -50,11 +54,14 @@ class AuthController extends BaseController {
   Future<void> register(String email, String password) async {
     try {
       setLoading(true);
+      final fcmToken = await _notificationService.getFcmToken();
       final response = await _apiService.post(
         AppUrls.register,
         {
           "email": email,
           "password": password,
+          "loginProvider": "email",
+          if (fcmToken != null) "fcmToken": fcmToken,
         },
       );
 
@@ -76,11 +83,13 @@ class AuthController extends BaseController {
   Future<void> login(String email, String password) async {
     try {
       setLoading(true);
+      final fcmToken = await _notificationService.getFcmToken();
       final response = await _apiService.post(
         AppUrls.login,
         {
           "email": email,
           "password": password,
+          if (fcmToken != null) "fcmToken": fcmToken,
         },
       );
 
@@ -369,7 +378,7 @@ class AuthController extends BaseController {
 
   Future<void> loginWithGoogle() async {
     try {
-      setLoading(true);
+      loadingProvider.value = 'google';
       final result = await _socialAuthService.signInWithGoogle();
       if (result == null) {
         // null = cancelled by user OR idToken was null (see debug logs)
@@ -379,66 +388,65 @@ class AuthController extends BaseController {
       debugPrint('AUTH_CONTROLLER: Google sign-in success, calling backend...');
       await _sendSocialLoginToBackend(result);
     } catch (e) {
-      Get.snackbar('Error', 'Google Sign-In failed: ${e.toString()}');
+      SocialAuthErrorDialog.show('google');
     } finally {
-      setLoading(false);
+      loadingProvider.value = null;
     }
   }
 
   Future<void> loginWithFacebook() async {
     try {
-      setLoading(true);
+      loadingProvider.value = 'facebook';
       final result = await _socialAuthService.signInWithFacebook();
       if (result != null) await _sendSocialLoginToBackend(result);
     } catch (e) {
-      Get.snackbar('Error', 'Facebook Sign-In failed: ${e.toString()}');
+      SocialAuthErrorDialog.show('facebook');
     } finally {
-      setLoading(false);
+      loadingProvider.value = null;
     }
   }
 
   Future<void> loginWithApple() async {
     try {
-      setLoading(true);
+      loadingProvider.value = 'apple';
       final result = await _socialAuthService.signInWithApple();
       if (result != null) await _sendSocialLoginToBackend(result);
     } catch (e) {
-      Get.snackbar('Error', 'Apple Sign-In failed: ${e.toString()}');
+      SocialAuthErrorDialog.show('apple');
     } finally {
-      setLoading(false);
+      loadingProvider.value = null;
     }
   }
 
   /// Builds the correct per-provider payload and calls POST /auth/social-login.
-  /// Per the backend docs:
-  ///   Google  → { provider, idToken }
+  /// v2 API:
+  ///   Google  → { provider, email, fullName?, avatar? }
+  ///   Apple   → { provider, email, fullName?, avatar: null }
   ///   Facebook → { provider, accessToken }
-  ///   Apple   → { provider, identityToken, fullName? }
   Future<void> _sendSocialLoginToBackend(SocialAuthResult result) async {
     try {
-      // Build payload per provider
       final Map<String, dynamic> payload = {'provider': result.provider};
 
       switch (result.provider) {
         case 'google':
-          payload['idToken'] = result.idToken;
-          break;
-        case 'facebook':
-          payload['accessToken'] = result.accessToken;
-          break;
         case 'apple':
-          payload['identityToken'] = result.idToken;
+          // Trust-based: backend accepts user info directly, no token verification
+          if (result.email != null) payload['email'] = result.email;
           if (result.fullName != null && result.fullName!.isNotEmpty) {
             payload['fullName'] = result.fullName;
           }
+          if (result.avatar != null) payload['avatar'] = result.avatar;
+          break;
+        case 'facebook':
+          // Backend verifies this token against the Facebook Graph API
+          payload['accessToken'] = result.accessToken;
           break;
       }
 
-      // Optional profile hints (ignored by backend if not useful)
-      if (result.avatar != null) payload['avatar'] = result.avatar;
+      final fcmToken = await _notificationService.getFcmToken();
+      if (fcmToken != null) payload['fcmToken'] = fcmToken;
 
       debugPrint('SOCIAL_LOGIN: Sending payload to backend: ${payload.keys.toList()}');
-      debugPrint('SOCIAL_LOGIN: provider=${result.provider}, idToken=${result.idToken != null ? 'present' : 'null'}, accessToken=${result.accessToken != null ? 'present' : 'null'}');
 
       final response = await _apiService.post(AppUrls.socialLogin, payload);
       debugPrint('SOCIAL_LOGIN: Response status: ${response.statusCode}');
@@ -450,7 +458,6 @@ class AuthController extends BaseController {
         final accessToken = authData['accessToken'];
         final refreshToken = authData['refreshToken'];
 
-        // Persist tokens and user ID
         await SharedPrefsService.saveString('accessToken', accessToken);
         if (refreshToken != null) {
           await SharedPrefsService.saveString('refreshToken', refreshToken);
@@ -462,12 +469,10 @@ class AuthController extends BaseController {
         currentUser.value = UserModel.fromJson(authData['user']);
         userData.value = authData['user'];
 
-        // Boot socket with fresh token
         Get.find<SocketService>().initSocket(token: accessToken);
 
         Get.snackbar('Success', 'Logged in with ${result.provider.capitalizeFirst}');
 
-        // Navigate based on profile completion
         if (authData['isCompleteProfile'] == true) {
           Get.offAllNamed(AppRoutes.MAIN);
         } else {

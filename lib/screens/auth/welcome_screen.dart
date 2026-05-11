@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 
 import '../../core/constants/app_assets.dart';
+import '../../core/constants/social_auth_config.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/routes/app_routes.dart';
 import '../../widgets/app_button.dart';
@@ -73,12 +74,15 @@ class WelcomeScreen extends StatelessWidget {
                 label: "Continue with Apple",
                 onPressed: () => Get.find<AuthController>().loginWithApple(),
               ),
-              SizedBox(height: 16.h),
-              SocialAuthButton(
-                iconPath: AppAssets.facebookIcon,
-                label: "Continue with Facebook",
-                onPressed: () => Get.find<AuthController>().loginWithFacebook(),
-              ),
+              if (SocialAuthConfig.enableFacebook) ...[
+                SizedBox(height: 16.h),
+                SocialAuthButton(
+                  iconPath: AppAssets.facebookIcon,
+                  label: "Continue with Facebook",
+                  onPressed: () =>
+                      Get.find<AuthController>().loginWithFacebook(),
+                ),
+              ],
 
               const Spacer(flex: 2),
 

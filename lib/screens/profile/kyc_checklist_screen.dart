@@ -56,8 +56,8 @@ class KycChecklistScreen extends GetView<KycController> {
                       ? "One-time fee: ${controller.feeCurrency} ${controller.feeAmount.toStringAsFixed(2)}" 
                       : "One-time verification fee",
                   isCompleted: controller.isFeePaid,
-                  onTap: controller.isFeePaid ? null : () => controller.billingController.purchaseKycVerification(),
-                  isLoading: controller.billingController.isLoading.value,
+                  onTap: controller.isFeePaid ? null : () => controller.purchaseVerificationFee(),
+                  isLoading: controller.isFeeLoading.value,
                 ),
 
                 SizedBox(height: 16.h),
@@ -72,7 +72,7 @@ class KycChecklistScreen extends GetView<KycController> {
                       ? null 
                       : () => controller.startStripeConnect(),
                   isEnabled: controller.isFeePaid,
-                  isLoading: controller.isLoading.value || controller.isPollingStripe.value,
+                  isLoading: controller.isStripeLoading.value || controller.isPollingStripe.value,
                 ),
 
                 SizedBox(height: 48.h),

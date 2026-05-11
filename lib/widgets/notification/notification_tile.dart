@@ -76,7 +76,7 @@ class NotificationTile extends StatelessWidget {
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    notification.description,
+                    notification.body,
                     style: GoogleFonts.inter(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w400,

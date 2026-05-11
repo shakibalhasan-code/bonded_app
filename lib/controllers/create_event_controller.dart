@@ -11,6 +11,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import '../services/api_service.dart';
 import '../services/shared_prefs_service.dart';
+import '../models/user_model.dart';
 import 'base_controller.dart';
 
 class CreateEventController extends BaseController {
@@ -38,6 +39,40 @@ class CreateEventController extends BaseController {
   var showSocial = true.obs;
   var selectedCountryCode = '+880'.obs;
 
+  // Interests State
+  var allInterests = <Interest>[].obs;
+  var selectedInterests = <String>[].obs; // Stores slugs
+  var selectedInterestNames = <String>[].obs; // Stores names
+  var isLoadingInterests = false.obs;
+
+  // Interest Images related state
+  var categoryImages = <String>[].obs;
+  var isLoadingImages = false.obs;
+  var selectedCoverImageUrl = RxnString();
+
+  Map<String, List<Interest>> get interestsByCategory {
+    final Map<String, List<Interest>> grouped = {};
+    for (var interest in allInterests) {
+      final category = _capitalizeCategory(interest.category);
+      if (!grouped.containsKey(category)) {
+        grouped[category] = [];
+      }
+      grouped[category]!.add(interest);
+    }
+    return grouped;
+  }
+
+  String _capitalizeCategory(String category) {
+    return category.split('-').map((word) => word.capitalizeFirst).join(' ');
+  }
+
+  String? get selectedInterestCategory {
+    if (selectedInterests.isEmpty) return null;
+    final firstSlug = selectedInterests.first;
+    final interest = allInterests.firstWhereOrNull((i) => i.slug == firstSlug);
+    return interest?.category;
+  }
+
   // Location Data (Mocked or from Geolocator)
   var city = 'Dhaka'.obs;
   var country = 'Bangladesh'.obs;
@@ -58,16 +93,90 @@ class CreateEventController extends BaseController {
       }
       if (args['category'] != null) {
         selectedCategory.value = args['category'];
+        fetchEventInterestImages(args['category']);
       }
       if (args['circleId'] != null) {
         circleId.value = args['circleId'];
       }
     }
+    fetchInterests();
     fetchSuggestedVenues();
+  }
+
+  Future<void> fetchInterests() async {
+    try {
+      isLoadingInterests.value = true;
+      final response = await _apiService.get(AppUrls.getInterests);
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final List<dynamic> interestsJson = data['data'];
+        allInterests.value = interestsJson
+            .map((i) => Interest.fromJson(i))
+            .toList();
+      }
+    } catch (e) {
+      debugPrint("Error fetching interests: $e");
+    } finally {
+      isLoadingInterests.value = false;
+    }
+  }
+
+  Future<void> fetchEventInterestImages(String category) async {
+    try {
+      isLoadingImages.value = true;
+      final url = '${AppUrls.eventImages}?category=$category';
+      final response = await _apiService.get(url);
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final List<dynamic> images = data['data']['images'];
+        categoryImages.assignAll(
+          images.map((i) => i['url'] as String).toList(),
+        );
+      }
+    } catch (e) {
+      debugPrint("Error fetching event interest images: $e");
+    } finally {
+      isLoadingImages.value = false;
+    }
+  }
+
+  void toggleInterest(Interest interest) {
+    final slug = interest.slug;
+    final category = interest.category;
+
+    if (selectedInterests.contains(slug)) {
+      selectedInterests.remove(slug);
+    } else {
+      // Rule 1: Only single category allowed
+      final currentCategory = selectedInterestCategory;
+      if (currentCategory != null && currentCategory != category) {
+        Get.snackbar(
+          'Limit Reached',
+          'You can only select interests from one category.',
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      // Rule 2: Max 2 interests
+      if (selectedInterests.length >= 2) {
+        Get.snackbar(
+          'Limit Reached',
+          'You can only select up to 2 interests.',
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      selectedInterests.add(slug);
+    }
   }
 
   @override
   void onClose() {
+    // searchController.dispose(); // Removed to prevent 'used after disposed' error
     super.onClose();
   }
 
@@ -97,10 +206,10 @@ class CreateEventController extends BaseController {
       }
 
       isLocating.value = true;
-      
+
       // Try to get last known position first for speed
       Position? position = await Geolocator.getLastKnownPosition();
-      
+
       // If no last known position or it's old, get current position with a timeout
       if (position == null) {
         position = await Geolocator.getCurrentPosition(
@@ -108,7 +217,7 @@ class CreateEventController extends BaseController {
           timeLimit: const Duration(seconds: 5),
         );
       }
-      
+
       latitude.value = position.latitude;
       longitude.value = position.longitude;
 
@@ -232,36 +341,45 @@ class CreateEventController extends BaseController {
         eventTime = "$startH:$startM-$endH:$endM";
       }
 
+      final bool isCircleEvent = circleId.value != null;
+
       final Map<String, dynamic> body = {
         "title": nameController.text,
         "description": descriptionController.text,
         "category": selectedCategory.value ?? 'Celebrations',
-        "type": isVirtual.value ? "virtual" : "in_person",
+        "type": isVirtual.value ? "virtual" : "in-person",
         "eventDate": eventDate,
         "eventTime": eventTime,
         "totalSeats": int.tryParse(seatsController.text) ?? 100,
-        "isPaid": isPaid.value,
-        "currency": "USD",
-        "phoneCountryCode": selectedCountryCode.value,
-        "phoneNumber": phoneController.text,
-        "showPhoneToAttendees": showPhone.value,
-        "facebookLink": fbController.text,
-        "twitterLink": twitterController.text,
-        "showSocialLinksToAttendees": showSocial.value,
       };
 
-      if (!isVirtual.value) {
-        body["city"] = city.value;
-        body["country"] = country.value;
-        body["venueName"] = venueName.value;
-        body["address"] = locationController.text;
-        body["location"] = {
-          "type": "Point",
-          "coordinates": [longitude.value, latitude.value],
-        };
+      if (!isCircleEvent) {
+        body["isPaid"] = isPaid.value;
+        body["currency"] = "USD";
+        body["phoneCountryCode"] = selectedCountryCode.value;
+        body["phoneNumber"] = phoneController.text;
+        body["showPhoneToAttendees"] = showPhone.value;
+        body["facebookLink"] = fbController.text;
+        body["twitterLink"] = twitterController.text;
+        body["showSocialLinksToAttendees"] = showSocial.value;
+        body["interests"] = selectedInterests.toList();
       }
 
-      if (isPaid.value) {
+      if (!isVirtual.value) {
+        body["address"] = locationController.text;
+        body["location"] = {
+          "longitude": longitude.value,
+          "latitude": latitude.value,
+          "address": locationController.text,
+          "city": city.value,
+          "country": country.value,
+        };
+        if (!isCircleEvent && venueName.value.isNotEmpty) {
+          body["venueName"] = venueName.value;
+        }
+      }
+
+      if (!isCircleEvent && isPaid.value) {
         body["ticketPrice"] = double.tryParse(priceController.text) ?? 0;
       }
 
@@ -269,35 +387,38 @@ class CreateEventController extends BaseController {
         body["virtualLink"] = virtualLinkController.text;
       }
 
-      // Create multipart request
-      final url = circleId.value != null
-          ? '${AppUrls.baseUrl}${AppUrls.circleEvents(circleId.value!)}'
-          : '${AppUrls.baseUrl}${AppUrls.events}';
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse(url),
-      );
+      if (selectedCoverImageUrl.value != null) {
+        body["coverImage"] = selectedCoverImageUrl.value;
+      }
 
-      // Add headers
-      request.headers.addAll({'Authorization': 'Bearer $token'});
+      final path = circleId.value != null
+          ? AppUrls.circleEvents(circleId.value!)
+          : AppUrls.events;
+      final fullUrl = '${AppUrls.baseUrl}$path';
 
-      // Add JSON data field
-      final jsonBody = jsonEncode(body);
-      request.fields['data'] = jsonBody;
+      http.Response response;
 
-      // Debug prints
-      debugPrint("Creating Event...");
-      debugPrint("URL: $url");
-      debugPrint("Token: $token");
-      debugPrint("Payload: ${const JsonEncoder.withIndent('  ').convert(body)}");
+      if (coverImagePath.value.isEmpty) {
+        // Use JSON POST if no file is picked
+        response = await _apiService.post(path, body);
+      } else {
+        // Use Multipart if a file is picked
+        final request = http.MultipartRequest('POST', Uri.parse(fullUrl));
+        request.headers.addAll({'Authorization': 'Bearer $token'});
 
-      // Add image file
-      if (coverImagePath.value.isNotEmpty) {
+        // Add all fields from body to the request
+        body.forEach((key, value) {
+          if (value is Map || value is List) {
+            request.fields[key] = jsonEncode(value);
+          } else {
+            request.fields[key] = value.toString();
+          }
+        });
+
         final file = File(coverImagePath.value);
         if (await file.exists()) {
           final mimeType = lookupMimeType(file.path) ?? 'image/jpeg';
           final mimeParts = mimeType.split('/');
-
           request.files.add(
             await http.MultipartFile.fromPath(
               'image',
@@ -305,14 +426,12 @@ class CreateEventController extends BaseController {
               contentType: MediaType(mimeParts[0], mimeParts[1]),
             ),
           );
-        } else {
-          debugPrint("Cover image file does not exist: ${file.path}");
         }
+
+        final streamedResponse = await request.send();
+        response = await http.Response.fromStream(streamedResponse);
       }
 
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
-      
       debugPrint("Response Status: ${response.statusCode}");
       debugPrint("Response Body: ${response.body}");
 
@@ -364,7 +483,12 @@ class CreateEventController extends BaseController {
       Get.snackbar('Error', 'Date, Start Time and End Time are required');
       return false;
     }
-    if (coverImagePath.value.isEmpty) {
+    // Interests are now optional or removed based on user request
+    // if (selectedInterests.isEmpty) {
+    //   Get.snackbar('Error', 'Please select at least one interest');
+    //   return false;
+    // }
+    if (selectedCoverImageUrl.value == null && coverImagePath.value.isEmpty) {
       Get.snackbar('Error', 'Cover image is required');
       return false;
     }

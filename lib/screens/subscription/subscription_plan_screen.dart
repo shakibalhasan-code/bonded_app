@@ -5,8 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../controllers/subscription_controller.dart';
-import '../home/home_screen.dart';
-import 'payment_method_screen.dart';
 
 class SubscriptionPlanScreen extends StatelessWidget {
   const SubscriptionPlanScreen({Key? key}) : super(key: key);
@@ -18,7 +16,7 @@ class SubscriptionPlanScreen extends StatelessWidget {
     final List<Map<String, dynamic>> plans = [
       {
         'name': 'Free',
-        'price': '0.00',
+        'price': '\$0.00',
         'features': [
           'Join up to 2 circles',
           'Join 2 events per month',
@@ -33,7 +31,7 @@ class SubscriptionPlanScreen extends StatelessWidget {
       },
       {
         'name': 'Host Pro',
-        'price': '29.99',
+        'price': null, // loaded from App Store
         'features': [
           'Unlimited event creation',
           'Lower platform fee (e.g. 12%)',
@@ -81,19 +79,19 @@ class SubscriptionPlanScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
-            child: Text(
-              "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore",
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w400,
-                color: Colors.grey[600],
-                height: 1.5,
-              ),
-            ),
-          ),
+          // Padding(
+          //   padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 16.h),
+          //   child: Text(
+          //     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore",
+          //     textAlign: TextAlign.center,
+          //     style: GoogleFonts.inter(
+          //       fontSize: 14.sp,
+          //       fontWeight: FontWeight.w400,
+          //       color: Colors.grey[600],
+          //       height: 1.5,
+          //     ),
+          //   ),
+          // ),
           Expanded(
             child: ListView.separated(
               padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
@@ -104,9 +102,15 @@ class SubscriptionPlanScreen extends StatelessWidget {
                 return Obx(() {
                   final isSelected =
                       controller.selectedPlan.value == plan['name'];
+                  // Use real App Store price for the paid plan.
+                  final price =
+                      plan['price'] as String? ??
+                      (controller.displayPrice.isEmpty
+                          ? '...'
+                          : controller.displayPrice);
                   return _SubscriptionCard(
                     name: plan['name'],
-                    price: plan['price'],
+                    price: price,
                     features: List<String>.from(plan['features']),
                     isSelected: isSelected,
                     onTap: () => controller.selectPlan(plan['name']),
@@ -117,25 +121,38 @@ class SubscriptionPlanScreen extends StatelessWidget {
           ),
           Padding(
             padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 32.h),
-            child: GestureDetector(
-              onTap: () {
-                controller.completeSubscription(context);
-              },
-              child: Container(
-                height: 56.h,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(28.r),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  "Continue",
-                  style: GoogleFonts.inter(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+            child: Obx(
+              () => GestureDetector(
+                onTap: controller.isLoading.value
+                    ? null
+                    : () => controller.completeSubscription(context),
+                child: Container(
+                  height: 56.h,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: controller.isLoading.value
+                        ? AppColors.primary.withValues(alpha: 0.6)
+                        : AppColors.primary,
+                    borderRadius: BorderRadius.circular(28.r),
                   ),
+                  alignment: Alignment.center,
+                  child: controller.isLoading.value
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          "Continue",
+                          style: GoogleFonts.inter(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
             ),
@@ -176,7 +193,7 @@ class _SubscriptionCard extends StatelessWidget {
           boxShadow: [
             if (isSelected)
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.05),
+                color: AppColors.primary.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -214,7 +231,7 @@ class _SubscriptionCard extends StatelessWidget {
                     text: TextSpan(
                       children: [
                         TextSpan(
-                          text: "\$$price",
+                          text: price,
                           style: GoogleFonts.inter(
                             fontSize: 18.sp,
                             fontWeight: FontWeight.w700,

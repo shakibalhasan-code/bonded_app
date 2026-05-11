@@ -6,11 +6,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:video_player/video_player.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/home_models.dart';
 import '../../models/circle_model.dart';
 import '../../controllers/circle_controller.dart';
 import '../../core/utils/date_utils.dart';
+import '../messages/full_screen_video_player.dart';
+import '../events/media_viewers.dart';
 import 'circle_comment_item.dart';
 import 'reaction_selector.dart';
 
@@ -37,6 +41,14 @@ class _CirclePostItemState extends State<CirclePostItem> {
   File? _commentVideo;
   File? _commentFile;
   final ImagePicker _picker = ImagePicker();
+  final TextEditingController _commentController = TextEditingController();
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _commentController.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -73,11 +85,9 @@ class _CirclePostItemState extends State<CirclePostItem> {
 
   @override
   Widget build(BuildContext context) {
-    // Safely resolve CircleController — may not yet be registered on home screen
     final CircleController controller = Get.isRegistered<CircleController>()
         ? Get.find<CircleController>()
         : Get.put(CircleController());
-    final commentController = TextEditingController();
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -100,7 +110,8 @@ class _CirclePostItemState extends State<CirclePostItem> {
               ),
             ),
           SizedBox(height: 12.h),
-          if (widget.post.images.isNotEmpty) _buildImageCarousel(),
+          if (widget.post.media.isNotEmpty) _buildMediaCarousel(),
+          _buildFilesList(),
           SizedBox(height: 12.h),
           _buildStatsRow(),
           const Divider(height: 16),
@@ -127,7 +138,7 @@ class _CirclePostItemState extends State<CirclePostItem> {
           // Comment Input
           Obx(
             () => widget.post.isCommenting.value
-                ? _buildCommentInput(commentController, (
+                ? _buildCommentInput(_commentController, (
                     text,
                     image,
                     video,
@@ -141,7 +152,7 @@ class _CirclePostItemState extends State<CirclePostItem> {
                       videoFile: video,
                       anyFile: file,
                     );
-                    commentController.clear();
+                    _commentController.clear();
                     setState(() {
                       _commentImage = null;
                       _commentVideo = null;
@@ -191,7 +202,9 @@ class _CirclePostItemState extends State<CirclePostItem> {
                     if (widget.post.createdAt != null) ...[
                       SizedBox(width: 8.w),
                       Text(
-                        AppDateUtils.timeAgo(widget.post.createdAt!.toIso8601String()),
+                        AppDateUtils.timeAgo(
+                          widget.post.createdAt!.toIso8601String(),
+                        ),
                         style: GoogleFonts.inter(
                           fontSize: 11.sp,
                           color: Colors.grey[500],
@@ -217,7 +230,10 @@ class _CirclePostItemState extends State<CirclePostItem> {
                         }
                       },
                       child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 3.h,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(20.r),
@@ -263,28 +279,34 @@ class _CirclePostItemState extends State<CirclePostItem> {
     );
   }
 
-  Widget _buildImageCarousel() {
+  Widget _buildMediaCarousel() {
+    final mediaItems = widget.post.media;
+    if (mediaItems.isEmpty) return const SizedBox.shrink();
+
+    // Filter out files from carousel, handle them separately
+    final visualMedia = mediaItems
+        .where((m) => m.type == 'image' || m.type == 'video')
+        .toList();
+    if (visualMedia.isEmpty) return const SizedBox.shrink();
+
     return Column(
       children: [
         SizedBox(
           height: 300.h,
           child: PageView.builder(
             controller: _pageController,
-            itemCount: widget.post.images.length,
+            itemCount: visualMedia.length,
             onPageChanged: (index) {
               setState(() {
                 _currentImageIndex = index;
               });
             },
             itemBuilder: (context, index) {
-              final imagePath = widget.post.images[index];
+              final media = visualMedia[index];
               final isNetwork =
-                  imagePath.startsWith('http') ||
-                  imagePath.startsWith('/uploads');
-
-              final displayPath = imagePath.startsWith('/uploads')
-                  ? AppUrls.imageUrl(imagePath)
-                  : imagePath;
+                  media.url.startsWith('http') ||
+                  media.url.startsWith('/uploads');
+              final displayUrl = isNetwork ? media.fullUrl : media.url;
 
               return Container(
                 margin: EdgeInsets.symmetric(horizontal: 20.w),
@@ -292,32 +314,59 @@ class _CirclePostItemState extends State<CirclePostItem> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(24.r),
-                      child: isNetwork
-                          ? Image.network(
-                              displayPath,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-                              errorBuilder: (c, e, s) =>
-                                  Container(color: Colors.grey[200]),
+                      child: media.type == 'video'
+                          ? VideoPostPlayer(
+                              videoUrl: displayUrl,
+                              isLocal: !isNetwork,
+                            )
+                          : isNetwork
+                          ? GestureDetector(
+                              onTap: () => Get.to(
+                                () => FullScreenImageViewer(
+                                  imageUrl: media.fullUrl,
+                                ),
+                              ),
+                              child: CachedNetworkImage(
+                                imageUrl: displayUrl,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                                placeholder: (context, url) => Container(
+                                  color: Colors.grey[100],
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) => Container(
+                                  color: Colors.grey[100],
+                                  child: const Icon(
+                                    Icons.broken_image,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
                             )
                           : Image.file(
-                              File(imagePath),
+                              File(media.url),
                               fit: BoxFit.cover,
                               width: double.infinity,
                               height: double.infinity,
-                              errorBuilder: (c, e, s) =>
-                                  Container(color: Colors.grey[200]),
+                              errorBuilder: (c, e, s) => Container(
+                                color: Colors.grey[200],
+                                child: const Icon(Icons.broken_image),
+                              ),
                             ),
                     ),
-                    if (widget.post.isUploading)
+                    if (media.isUploading)
                       Positioned.fill(
                         child: Container(
                           decoration: BoxDecoration(
                             color: Colors.black.withOpacity(0.4),
                             borderRadius: BorderRadius.circular(24.r),
                           ),
-                          child: Center(
+                          child: const Center(
                             child: CircularProgressIndicator(
                               color: Colors.white,
                               strokeWidth: 3,
@@ -331,13 +380,13 @@ class _CirclePostItemState extends State<CirclePostItem> {
             },
           ),
         ),
-        if (widget.post.images.length > 1)
+        if (visualMedia.length > 1)
           Padding(
             padding: EdgeInsets.only(top: 12.h),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
-                widget.post.images.length,
+                visualMedia.length,
                 (index) => Container(
                   width: 8.w,
                   height: 8.w,
@@ -356,64 +405,126 @@ class _CirclePostItemState extends State<CirclePostItem> {
     );
   }
 
-  Widget _buildStatsRow() {
+  Widget _buildFilesList() {
+    final files = widget.post.media.where((m) => m.type == 'file').toList();
+    if (files.isEmpty) return const SizedBox.shrink();
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20.w),
-      child: Row(
-        children: [
-          Obx(() {
-            final reaction = widget.post.reactionType.value;
-            if (reaction == "none") return const SizedBox.shrink();
-
-            String emoji = "";
-            IconData? icon;
-            Color color = Colors.white;
-            Color bgColor = AppColors.primary;
-
-            switch (reaction) {
-              case "like":
-                icon = Icons.thumb_up;
-                bgColor = Colors.blue;
-                break;
-              case "love":
-                emoji = "❤️";
-                bgColor = Colors.red;
-                break;
-              case "care":
-                emoji = "🤗";
-                bgColor = Colors.orange;
-                break;
-              case "haha":
-                emoji = "😆";
-                bgColor = Colors.orange;
-                break;
-              case "wow":
-                emoji = "😮";
-                bgColor = Colors.orange;
-                break;
-              case "sad":
-                emoji = "😢";
-                bgColor = Colors.orange;
-                break;
-              case "angry":
-                emoji = "😡";
-                bgColor = Colors.redAccent;
-                break;
-            }
-
-            return Container(
-              padding: EdgeInsets.all(4.w),
-              decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
-              child: emoji.isNotEmpty
-                  ? Text(emoji, style: TextStyle(fontSize: 10.sp))
-                  : Icon(icon, size: 10.sp, color: color),
-            );
-          }),
-          const Spacer(),
-          // All counts (likes, comments, shares) have been removed per user request
-        ],
+      child: Column(
+        children: files.map((file) {
+          return Container(
+            margin: EdgeInsets.only(top: 8.h),
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8F9FA),
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: Colors.grey[200]!),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.insert_drive_file,
+                  color: AppColors.primary,
+                  size: 24.sp,
+                ),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Text(
+                    file.url.split('/').last,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textHeading,
+                    ),
+                  ),
+                ),
+                if (file.isUploading)
+                  SizedBox(
+                    width: 20.sp,
+                    height: 20.sp,
+                    child: const CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else
+                  Icon(
+                    Icons.download_rounded,
+                    color: Colors.grey[400],
+                    size: 20.sp,
+                  ),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
+  }
+
+  Widget _buildStatsRow() {
+    return Obx(() {
+      final reaction = widget.post.reactionType.value;
+      if (reaction == "none") return const SizedBox.shrink();
+
+      return Padding(
+        padding: EdgeInsets.only(left: 20.w, right: 20.w, bottom: 8.h),
+        child: Row(
+          children: [
+            Builder(
+              builder: (context) {
+                String emoji = "";
+                IconData? icon;
+                Color color = Colors.white;
+                Color bgColor = AppColors.primary;
+
+                switch (reaction) {
+                  case "like":
+                    emoji = "👍";
+                    bgColor = Colors.blue;
+                    break;
+                  case "love":
+                    emoji = "❤️";
+                    bgColor = Colors.red;
+                    break;
+                  case "care":
+                    emoji = "🤗";
+                    bgColor = Colors.orange;
+                    break;
+                  case "haha":
+                    emoji = "😆";
+                    bgColor = Colors.orange;
+                    break;
+                  case "wow":
+                    emoji = "😮";
+                    bgColor = Colors.orange;
+                    break;
+                  case "sad":
+                    emoji = "😢";
+                    bgColor = Colors.orange;
+                    break;
+                  case "angry":
+                    emoji = "😡";
+                    bgColor = Colors.redAccent;
+                    break;
+                }
+
+                return Container(
+                  padding: EdgeInsets.all(4.w),
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: emoji.isNotEmpty
+                      ? Text(emoji, style: TextStyle(fontSize: 10.sp))
+                      : Icon(icon, size: 10.sp, color: color),
+                );
+              },
+            ),
+            const Spacer(),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildInteractionRow(CircleController controller) {
@@ -424,19 +535,17 @@ class _CirclePostItemState extends State<CirclePostItem> {
         children: [
           Obx(() {
             final reaction = widget.post.reactionType.value;
-            IconData icon = widget.post.isLiked.value
-                ? Icons.thumb_up
-                : Icons.thumb_up_outlined;
+            IconData icon = Icons.add_reaction_outlined;
             Color color = widget.post.isLiked.value
                 ? AppColors.primary
                 : AppColors.textHeading;
             String label = "React";
-            String emoji = "";
+            String emoji = widget.post.isLiked.value ? "👍" : "";
 
             if (reaction != "none") {
               switch (reaction) {
                 case "like":
-                  icon = Icons.thumb_up;
+                  emoji = "👍";
                   color = Colors.blue;
                   label = "Liked";
                   break;
@@ -694,6 +803,7 @@ class _CirclePostItemState extends State<CirclePostItem> {
                 ),
                 icon: Icon(Icons.send, color: AppColors.primary, size: 22.sp),
               ),
+              SizedBox(width: 8.w),
             ],
           ),
         ),
@@ -775,6 +885,141 @@ class _CirclePostItemState extends State<CirclePostItem> {
               ),
             ),
             SizedBox(height: 10.h),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class VideoPostPlayer extends StatefulWidget {
+  final String videoUrl;
+  final bool isLocal;
+
+  const VideoPostPlayer({
+    Key? key,
+    required this.videoUrl,
+    required this.isLocal,
+  }) : super(key: key);
+
+  @override
+  State<VideoPostPlayer> createState() => _VideoPostPlayerState();
+}
+
+class _VideoPostPlayerState extends State<VideoPostPlayer>
+    with WidgetsBindingObserver {
+  late VideoPlayerController _controller;
+  bool _isInitialized = false;
+  bool _isPlaying = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _initializeController();
+  }
+
+  void _initializeController() {
+    if (widget.isLocal) {
+      _controller = VideoPlayerController.file(File(widget.videoUrl));
+    } else {
+      _controller = VideoPlayerController.networkUrl(
+        Uri.parse(widget.videoUrl),
+      );
+    }
+
+    _controller.initialize().then((_) {
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+          _isPlaying = true;
+        });
+        _controller.setLooping(true);
+        _controller.setVolume(0); // Mute by default in feed
+        _controller.play();
+      }
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (!_isInitialized) return;
+
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      _controller.pause();
+    } else if (state == AppLifecycleState.resumed) {
+      if (_isPlaying) {
+        _controller.play();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _togglePlay() {
+    setState(() {
+      if (_controller.value.isPlaying) {
+        _controller.pause();
+        _isPlaying = false;
+      } else {
+        _controller.play();
+        _isPlaying = true;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _togglePlay,
+      onDoubleTap: () {
+        Get.to(
+          () => FullScreenVideoPlayer(
+            videoUrl: widget.videoUrl,
+            isLocal: widget.isLocal,
+          ),
+        );
+      },
+      child: Container(
+        color: Colors.black,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            if (_isInitialized)
+              Center(
+                child: AspectRatio(
+                  aspectRatio: _controller.value.aspectRatio,
+                  child: VideoPlayer(_controller),
+                ),
+              )
+            else
+              const Center(
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              ),
+            // Play/Pause icon overlay
+            if (!_isPlaying)
+              Container(
+                padding: EdgeInsets.all(10.w),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.3),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.play_arrow_rounded,
+                  color: Colors.white,
+                  size: 40.sp,
+                ),
+              ),
           ],
         ),
       ),

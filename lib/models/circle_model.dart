@@ -158,9 +158,9 @@ class CircleModel {
       address: json['address'] ?? 'Not Specified',
       createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()).toLocal(),
       updatedAt: DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()).toLocal(),
-      image: AppUrls.imageUrl(json['image'] ?? 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&q=80'),
+      image: AppUrls.imageUrl(json['image'] ?? json['coverImage'] ?? 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&q=80'),
       isJoinedValue: json['isJoined'] ?? false,
-      isLocked: json['isLocked'] ?? false,
+      isLocked: json['isLocked'] ?? (json['joinStatus'] == 'lock'),
       memberAvatars: List<String>.from(json['memberAvatars'] ?? []),
       members: (json['members'] as List?)
               ?.map((m) => MemberModel.fromJson(m))

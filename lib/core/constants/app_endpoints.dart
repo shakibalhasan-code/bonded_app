@@ -23,8 +23,10 @@ class AppUrls {
   static const String updateProfile = '/user/me';
   static const String updateAvatar = '/user/me/avatar';
   static const String getInterests = '/interests';
+  static const String interestImages = '/interests/images';
   static const String circles = '/circles';
   static const String events = '/events';
+  static const String eventImages = '/events/images';
   static const String myEvents = '/events/me';
   static const String stripeStatus = '/stripe-connect/me/status';
   static const String stripeOnboard = '/stripe-connect/me';
@@ -42,7 +44,8 @@ class AppUrls {
   static const String storeProducts = '/store-products';
   static const String kycVerifyPurchase = '/kyc/me/verification/verify-purchase';
   static const String kycMe = '/kyc/me';
-  static const String iapVerify = '/iap/verify';
+  static const String iapVerify   = '/iap/verify';
+  static const String iapConfirm  = '/iap/confirm';
   static String circleJoinPaymentIntent(String circleId) => '/circles/$circleId/join/payment-intent';
   static String circleJoinConfirm(String circleId) => '/circles/$circleId/join/confirm';
   static const String storeProductsTiers = '/store-products/tiers';
@@ -72,6 +75,9 @@ class AppUrls {
   static String circleMembers(String circleId) => '/circles/$circleId/members';
   static String circleEvents(String circleId) => '/circles/$circleId/events';
   static String joinCircle(String circleId) => '/circles/$circleId/join';
+
+  // Notification Endpoints
+  static const String notifications = '/notifications';
 
   static String imageUrl(String? path) {
     if (path == null || path.isEmpty) return 'https://i.pravatar.cc/150';

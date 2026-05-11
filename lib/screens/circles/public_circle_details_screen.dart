@@ -29,7 +29,10 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final CircleModel circle = Get.arguments;
+    final dynamic args = Get.arguments;
+    final CircleModel circle = args is CircleModel 
+        ? args 
+        : CircleModel.fromJson(args as Map<String, dynamic>);
 
     return Obx(
       () => circle.isJoined.value
@@ -252,7 +255,7 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
 
             // Join Button
             ElevatedButton(
-              onPressed: () => circle.isJoined.value = true,
+              onPressed: () => Get.find<CircleController>().joinCircle(circle),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 minimumSize: Size(double.infinity, 56.h),
@@ -918,7 +921,7 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
                     AppRoutes.CREATE_EVENT,
                     arguments: {
                       'isVirtual': false,
-                      'category': 'Birthday Celebration',
+                      'category': 'Celebrations',
                     },
                   );
                 },
@@ -947,7 +950,7 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
                     AppRoutes.CREATE_EVENT,
                     arguments: {
                       'isVirtual': true,
-                      'category': 'Birthday Celebration',
+                      'category': 'Celebrations',
                     },
                   );
                 },

@@ -20,7 +20,10 @@ class EventDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final EventModel initialEvent = event ?? Get.arguments;
+    final dynamic args = Get.arguments;
+    final EventModel initialEvent = event ?? (args is EventModel 
+        ? args 
+        : EventModel.fromJson(args as Map<String, dynamic>));
 
     // Initialize controller with current event and fetch full details
     WidgetsBinding.instance.addPostFrameCallback((_) {

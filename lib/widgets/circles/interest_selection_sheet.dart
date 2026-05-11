@@ -42,18 +42,54 @@ class _InterestSelectionSheetState extends State<InterestSelectionSheet> {
     super.dispose();
   }
 
-  void _toggleInterest(String interest) {
+  String? get _selectedCategory {
+    if (_tempSelected.isEmpty) return null;
+    final firstSelectedName = _tempSelected.first;
+    final interest = profileController.allInterests.firstWhereOrNull(
+      (i) => i.name == firstSelectedName,
+    );
+    return interest?.category;
+  }
+
+  void _toggleInterest(Interest interest) {
     setState(() {
-      if (_tempSelected.contains(interest)) {
-        _tempSelected.remove(interest);
+      if (_tempSelected.contains(interest.name)) {
+        _tempSelected.remove(interest.name);
       } else {
-        _tempSelected.add(interest);
+        // Rule 1: Single category
+        final currentCategory = _selectedCategory;
+        if (currentCategory != null && currentCategory != interest.category) {
+          Get.snackbar(
+            'Limit Reached',
+            'You can only select interests from one category.',
+            backgroundColor: Colors.orange,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          return;
+        }
+
+        // Rule 2: Max 2
+        if (_tempSelected.length >= 2) {
+          Get.snackbar(
+            'Limit Reached',
+            'You can only select up to 2 interests.',
+            backgroundColor: Colors.orange,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          return;
+        }
+
+        _tempSelected.add(interest.name);
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final selectedCategorySlug = _selectedCategory;
+
     return Container(
       height: 0.85.sh,
       decoration: BoxDecoration(
@@ -176,6 +212,9 @@ class _InterestSelectionSheetState extends State<InterestSelectionSheet> {
               return ListView(
                 padding: EdgeInsets.symmetric(horizontal: 24.w),
                 children: categories.entries.map((category) {
+                  final isCategoryDisabled = selectedCategorySlug != null &&
+                      category.value.first.category != selectedCategorySlug;
+
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -186,7 +225,9 @@ class _InterestSelectionSheetState extends State<InterestSelectionSheet> {
                           style: GoogleFonts.inter(
                             fontSize: 16.sp,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1B0B3B).withOpacity(0.8),
+                            color: isCategoryDisabled
+                                ? Colors.grey[300]
+                                : const Color(0xFF1B0B3B).withOpacity(0.8),
                           ),
                         ),
                       ),
@@ -197,8 +238,12 @@ class _InterestSelectionSheetState extends State<InterestSelectionSheet> {
                           final isSelected = _tempSelected.contains(
                             interest.name,
                           );
+                          final isDisabled = isCategoryDisabled;
+
                           return GestureDetector(
-                            onTap: () => _toggleInterest(interest.name),
+                            onTap: isDisabled
+                                ? null
+                                : () => _toggleInterest(interest),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
                               padding: EdgeInsets.symmetric(
@@ -208,12 +253,16 @@ class _InterestSelectionSheetState extends State<InterestSelectionSheet> {
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? AppColors.primary
-                                    : Colors.white,
+                                    : (isDisabled
+                                        ? Colors.grey[50]
+                                        : Colors.white),
                                 borderRadius: BorderRadius.circular(30.r),
                                 border: Border.all(
                                   color: isSelected
                                       ? AppColors.primary
-                                      : Colors.grey[200]!,
+                                      : (isDisabled
+                                          ? Colors.grey[100]!
+                                          : Colors.grey[200]!),
                                   width: 1.5,
                                 ),
                                 boxShadow: isSelected
@@ -240,7 +289,9 @@ class _InterestSelectionSheetState extends State<InterestSelectionSheet> {
                                       : FontWeight.w500,
                                   color: isSelected
                                       ? Colors.white
-                                      : const Color(0xFF1B0B3B),
+                                      : (isDisabled
+                                          ? Colors.grey[300]
+                                          : const Color(0xFF1B0B3B)),
                                 ),
                               ),
                             ),
