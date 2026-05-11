@@ -32,6 +32,9 @@ class AppUrls {
   static const String stripeOnboard = '/stripe-connect/me';
   static const String myWallet = '/wallet/me';
   static String bookEvent(String id) => '/bookings/events/$id';
+  static const String bookedEvents = '/tickets/booked-events';
+  static const String myTickets = '/tickets/my';
+  static String singleTicket(String id) => '/tickets/$id';
   static String eventHighlights(String eventId) =>
       '/events/$eventId/highlights';
   static const String publicHighlights = '/events/public/highlights';

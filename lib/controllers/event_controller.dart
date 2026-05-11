@@ -19,6 +19,7 @@ class EventController extends GetxController {
 
   final RxList<EventModel> events = <EventModel>[].obs;
   final RxList<HighlightModel> publicHighlights = <HighlightModel>[].obs;
+  final RxList<BookedEventModel> bookedEvents = <BookedEventModel>[].obs;
   final RxList<TicketModel> tickets = <TicketModel>[].obs;
   final RxList<TransactionModel> transactions = <TransactionModel>[].obs;
   final RxBool isStripeConnected = false.obs;
@@ -293,11 +294,47 @@ class EventController extends GetxController {
     }
   }
 
+  Future<void> fetchBookedEvents({bool showLoader = true}) async {
+    try {
+      if (showLoader) isLoading.value = true;
+      final response = await _apiService.get(AppUrls.bookedEvents);
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final List<dynamic> list = data['data'] ?? [];
+        bookedEvents.value = list.map((e) => BookedEventModel.fromJson(e)).toList();
+      }
+    } catch (e) {
+      debugPrint("Error fetching booked events: $e");
+    } finally {
+      if (showLoader) isLoading.value = false;
+    }
+  }
+
+  Future<void> fetchTickets({bool showLoader = true}) async {
+    try {
+      if (showLoader) isLoading.value = true;
+      final response = await _apiService.get(AppUrls.myTickets);
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final List<dynamic> list = data['data'] ?? [];
+        tickets.value = list.map((e) => TicketModel.fromJson(e)).toList();
+      }
+    } catch (e) {
+      debugPrint("Error fetching tickets: $e");
+    } finally {
+      if (showLoader) isLoading.value = false;
+    }
+  }
+
   void changeMyEventTab(int tabIndex) {
     selectedMyEventTab.value = tabIndex;
     isOnboardingStripe.value = false;
-    if (tabIndex < 2) {
+    if (tabIndex == 0) {
       fetchMyEvents();
+    } else if (tabIndex == 1) {
+      fetchBookedEvents();
+    } else if (tabIndex == 2) {
+      fetchTickets();
     } else if (tabIndex == 3) {
       fetchWallet();
       checkStripeStatus();
@@ -330,32 +367,7 @@ class EventController extends GetxController {
   }
 
   void _loadMockTickets() {
-    tickets.addAll([
-      TicketModel(
-        id: 't1',
-        title: 'National Music Fest',
-        imageUrl:
-            'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3',
-        price: 50.00,
-        seats: 1,
-      ),
-      TicketModel(
-        id: 't2',
-        title: 'National Music Fest',
-        imageUrl:
-            'https://images.unsplash.com/photo-1514525253361-9f93ee74a89a',
-        price: 50.00,
-        seats: 1,
-      ),
-      TicketModel(
-        id: 't3',
-        title: 'National Music Fest',
-        imageUrl:
-            'https://images.unsplash.com/photo-1470225620780-dba8ba36b745',
-        price: 50.00,
-        seats: 1,
-      ),
-    ]);
+    // tickets.addAll([...]); // Removed as real API is used
   }
 
   void _loadMockTransactions() {
@@ -366,8 +378,12 @@ class EventController extends GetxController {
     if (selectedTab.value == 0) {
       await fetchEvents(showLoader: false);
     } else {
-      if (selectedMyEventTab.value < 2) {
+      if (selectedMyEventTab.value == 0) {
         await fetchMyEvents(showLoader: false);
+      } else if (selectedMyEventTab.value == 1) {
+        await fetchBookedEvents(showLoader: false);
+      } else if (selectedMyEventTab.value == 2) {
+        await fetchTickets(showLoader: false);
       } else if (selectedMyEventTab.value == 3) {
         await fetchWallet();
         await checkStripeStatus();

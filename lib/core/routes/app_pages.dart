@@ -10,6 +10,7 @@ import 'package:bonded_app/screens/profile/privacy_policy_screen.dart';
 import 'package:bonded_app/screens/profile/contact_us_screen.dart';
 import 'package:bonded_app/screens/profile/delete_account_screen.dart';
 import 'package:bonded_app/screens/profile/delete_account_otp_screen.dart';
+import 'package:bonded_app/screens/events/ticket_details_screen.dart';
 import 'package:get/get.dart';
 import '../../screens/splash/splash_screen.dart';
 import '../../screens/onboarding/onboarding_screen.dart';
@@ -232,6 +233,11 @@ class AppPages {
     GetPage(
       name: AppRoutes.DELETE_ACCOUNT_OTP,
       page: () => const DeleteAccountOtpScreen(),
+    ),
+    GetPage(
+      name: AppRoutes.TICKET_DETAILS,
+      page: () => const TicketDetailsScreen(),
+      binding: EventBinding(),
     ),
   ];
 }

@@ -362,7 +362,6 @@ class CreateEventController extends BaseController {
         body["facebookLink"] = fbController.text;
         body["twitterLink"] = twitterController.text;
         body["showSocialLinksToAttendees"] = showSocial.value;
-        body["interests"] = selectedInterests.toList();
       }
 
       if (!isVirtual.value) {

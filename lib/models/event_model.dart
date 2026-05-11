@@ -196,22 +196,109 @@ class EventModel {
 }
 
 
+class BookedEventModel {
+  final String eventId;
+  final String eventVisibility;
+  final String title;
+  final String eventDate;
+  final String eventTime;
+  final String? venueName;
+  final String? address;
+  final String? city;
+  final String? country;
+  final String coverImage;
+  final int ticketCount;
+  final int seatCount;
+  final String paymentStatus;
+
+  BookedEventModel({
+    required this.eventId,
+    required this.eventVisibility,
+    required this.title,
+    required this.eventDate,
+    required this.eventTime,
+    this.venueName,
+    this.address,
+    this.city,
+    this.country,
+    required this.coverImage,
+    required this.ticketCount,
+    required this.seatCount,
+    required this.paymentStatus,
+  });
+
+  bool get isFree => paymentStatus == 'free';
+
+  factory BookedEventModel.fromJson(Map<String, dynamic> json) {
+    return BookedEventModel(
+      eventId: json['eventId'] ?? '',
+      eventVisibility: json['eventVisibility'] ?? 'public',
+      title: json['title'] ?? '',
+      eventDate: json['eventDate'] ?? '',
+      eventTime: json['eventTime'] ?? '',
+      venueName: json['venueName'],
+      address: json['address'],
+      city: json['city'],
+      country: json['country'],
+      coverImage: AppUrls.imageUrl(json['coverImage']),
+      ticketCount: json['ticketCount'] ?? 0,
+      seatCount: json['seatCount'] ?? 0,
+      paymentStatus: json['paymentStatus'] ?? 'free',
+    );
+  }
+}
+
 class TicketModel {
   final String id;
+  final String ticketNumber;
+  final String qrCodeValue;
+  final String status;
+  final String paymentStatus;
+  final int seatCount;
   final String title;
+  final String eventDate;
+  final String eventTime;
+  final String? venueName;
+  final String? address;
   final String imageUrl;
   final double price;
-  final int seats;
   final bool isDownloaded;
 
   TicketModel({
     required this.id,
+    required this.ticketNumber,
+    required this.qrCodeValue,
+    required this.status,
+    required this.paymentStatus,
+    required this.seatCount,
     required this.title,
+    required this.eventDate,
+    required this.eventTime,
+    this.venueName,
+    this.address,
     required this.imageUrl,
     required this.price,
-    required this.seats,
     this.isDownloaded = false,
   });
+
+  factory TicketModel.fromJson(Map<String, dynamic> json) {
+    final event = json['eventSnapshot'] ?? {};
+    return TicketModel(
+      id: json['_id'] ?? json['id'] ?? '',
+      ticketNumber: json['ticketNumber'] ?? '',
+      qrCodeValue: json['qrCodeValue'] ?? json['qrPayload'] ?? '',
+      status: json['status'] ?? 'active',
+      paymentStatus: json['paymentStatus'] ?? 'free',
+      seatCount: json['seatCount'] ?? json['quantity'] ?? 1,
+      title: event['title'] ?? '',
+      eventDate: event['eventDate'] ?? '',
+      eventTime: event['eventTime'] ?? '',
+      venueName: event['venueName'],
+      address: event['address'],
+      imageUrl: AppUrls.imageUrl(event['coverImage']),
+      price: (json['total'] ?? 0).toDouble(),
+    );
+  }
 }
 
 class TransactionModel {

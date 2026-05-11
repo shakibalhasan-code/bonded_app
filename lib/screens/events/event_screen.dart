@@ -13,10 +13,10 @@ import '../../widgets/events/highlight_card.dart';
 import '../../core/routes/app_routes.dart';
 import '../../widgets/events/my_events_sub_nav.dart';
 import '../../widgets/events/e_ticket_card.dart';
+import '../../widgets/events/booked_event_card.dart';
 import '../../widgets/events/wallet_widgets.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../widgets/custom_search_field.dart';
-
 
 class EventScreen extends StatelessWidget {
   const EventScreen({Key? key}) : super(key: key);
@@ -98,7 +98,7 @@ class EventScreen extends StatelessWidget {
   }
 
   Widget _buildPublicEvents(EventController controller) {
-    return Column(
+    return Obx(() => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(height: 16.h),
@@ -129,8 +129,8 @@ class EventScreen extends StatelessWidget {
                             controller.selectedCategory.value == 1
                                 ? "Upcoming Events"
                                 : controller.selectedCategory.value == 2
-                                    ? "Event Highlights"
-                                    : "Explore Events Nearby",
+                                ? "Event Highlights"
+                                : "Explore Events Nearby",
                             style: GoogleFonts.inter(
                               fontSize: 18.sp,
                               fontWeight: FontWeight.w700,
@@ -145,7 +145,8 @@ class EventScreen extends StatelessWidget {
                               color: AppColors.primary,
                               size: 24.sp,
                             ),
-                            onPressed: () => Get.toNamed(AppRoutes.EVENT_FILTER),
+                            onPressed: () =>
+                                Get.toNamed(AppRoutes.EVENT_FILTER),
                           ),
                         ],
                       ),
@@ -154,30 +155,43 @@ class EventScreen extends StatelessWidget {
                     Expanded(
                       child: Obx(() {
                         if (controller.isLoading.value) {
-                          return const Center(child: CircularProgressIndicator());
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         }
                         return RefreshIndicator(
                           onRefresh: controller.refreshData,
                           color: AppColors.primary,
-                          child: (controller.selectedCategory.value == 2
+                          child:
+                              (controller.selectedCategory.value == 2
                                   ? controller.publicHighlights.isEmpty
                                   : controller.filteredEvents.isEmpty)
                               ? _buildEmptyEventsState()
                               : GridView.builder(
-                                  physics: const AlwaysScrollableScrollPhysics(),
-                                  padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
-                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 2,
-                                    childAspectRatio: 0.8,
-                                    crossAxisSpacing: 16.w,
-                                    mainAxisSpacing: 16.h,
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  padding: EdgeInsets.fromLTRB(
+                                    20.w,
+                                    0,
+                                    20.w,
+                                    100.h,
                                   ),
-                                  itemCount: controller.selectedCategory.value == 2
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 2,
+                                        childAspectRatio: 0.8,
+                                        crossAxisSpacing: 16.w,
+                                        mainAxisSpacing: 16.h,
+                                      ),
+                                  itemCount:
+                                      controller.selectedCategory.value == 2
                                       ? controller.filteredHighlights.length
                                       : controller.filteredEvents.length,
                                   itemBuilder: (context, index) {
-                                    if (controller.selectedCategory.value == 2) {
-                                      final highlight = controller.filteredHighlights[index];
+                                    if (controller.selectedCategory.value ==
+                                        2) {
+                                      final highlight =
+                                          controller.filteredHighlights[index];
                                       return HighlightCard(
                                         highlight: highlight,
                                         onTap: () => Get.toNamed(
@@ -186,12 +200,16 @@ class EventScreen extends StatelessWidget {
                                         ),
                                       );
                                     }
-                                    final event = controller.filteredEvents[index];
+                                    final event =
+                                        controller.filteredEvents[index];
                                     return EventCard(
                                       event: event,
                                       onTap: () {
                                         if (event.isExternal) {
-                                          _showExternalEventBottomSheet(context, event);
+                                          _showExternalEventBottomSheet(
+                                            context,
+                                            event,
+                                          );
                                         } else {
                                           Get.toNamed(
                                             AppRoutes.EVENT_DETAILS,
@@ -209,11 +227,11 @@ class EventScreen extends StatelessWidget {
                 ),
         ),
       ],
-    );
+    ));
   }
 
   Widget _buildMyEvents(EventController controller) {
-    return Column(
+    return Obx(() => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(height: 16.h),
@@ -226,49 +244,71 @@ class EventScreen extends StatelessWidget {
         SizedBox(height: 24.h),
         Expanded(child: _buildSubTabContent(controller)),
       ],
-    );
+    ));
   }
 
   Widget _buildSubTabContent(EventController controller) {
     final subTab = controller.selectedMyEventTab.value;
 
-    if (subTab == 0 || subTab == 1) {
+    if (subTab == 0) {
       final list = controller.filteredEvents;
       return Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
         return RefreshIndicator(
-        onRefresh: controller.refreshData,
-        color: AppColors.primary,
-        child: list.isEmpty
-            ? _buildEmptyEventsState()
-            : GridView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.8,
-                  crossAxisSpacing: 16.w,
-                  mainAxisSpacing: 16.h,
+          onRefresh: controller.refreshData,
+          color: AppColors.primary,
+          child: list.isEmpty
+              ? _buildEmptyEventsState()
+              : GridView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.8,
+                    crossAxisSpacing: 16.w,
+                    mainAxisSpacing: 16.h,
+                  ),
+                  itemCount: list.length,
+                  itemBuilder: (context, index) => EventCard(
+                    event: list[index],
+                    showOptions: true,
+                    onTap: () {
+                      if (list[index].isExternal) {
+                        _showExternalEventBottomSheet(context, list[index]);
+                      } else {
+                        Get.toNamed(
+                          AppRoutes.EVENT_DETAILS,
+                          arguments: list[index],
+                        );
+                      }
+                    },
+                  ),
                 ),
-                itemCount: list.length,
-                itemBuilder: (context, index) => EventCard(
-                  event: list[index],
-                  showOptions: subTab == 0,
-                  onTap: () {
-                    if (list[index].isExternal) {
-                      _showExternalEventBottomSheet(context, list[index]);
-                    } else {
-                      Get.toNamed(AppRoutes.EVENT_DETAILS, arguments: list[index]);
-                    }
-                  },
+        );
+      });
+    } else if (subTab == 1) {
+      return Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return RefreshIndicator(
+          onRefresh: controller.refreshData,
+          color: AppColors.primary,
+          child: controller.bookedEvents.isEmpty
+              ? _buildEmptyEventsState(message: "No booked events found")
+              : ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
+                  itemCount: controller.bookedEvents.length,
+                  itemBuilder: (context, index) =>
+                      BookedEventCard(event: controller.bookedEvents[index]),
                 ),
-              ),
-            );
-          });
+        );
+      });
     } else if (subTab == 2) {
-      return RefreshIndicator(
+      return Obx(() => RefreshIndicator(
         onRefresh: controller.refreshData,
         color: AppColors.primary,
         child: controller.filteredTickets.isEmpty
@@ -280,53 +320,53 @@ class EventScreen extends StatelessWidget {
                 itemBuilder: (context, index) =>
                     ETicketCard(ticket: controller.filteredTickets[index]),
               ),
-      );
+      ));
     } else {
       return Obx(() {
-      return RefreshIndicator(
-        onRefresh: controller.refreshData,
-        color: AppColors.primary,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              WalletDashboardCard(
-                wallet: controller.wallet.value,
-                isConnected: controller.isStripeConnected.value,
-                isOnboarding: controller.isOnboardingStripe.value,
-                isChecking: controller.isCheckingStripe.value,
-                onConnect: () => controller.connectStripe(),
-                onCheckStatus: () => controller.checkStripeStatus(),
-              ),
-              SizedBox(height: 32.h),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Transaction History",
-                    style: GoogleFonts.inter(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1B0B3B),
+        return RefreshIndicator(
+          onRefresh: controller.refreshData,
+          color: AppColors.primary,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                WalletDashboardCard(
+                  wallet: controller.wallet.value,
+                  isConnected: controller.isStripeConnected.value,
+                  isOnboarding: controller.isOnboardingStripe.value,
+                  isChecking: controller.isCheckingStripe.value,
+                  onConnect: () => controller.connectStripe(),
+                  onCheckStatus: () => controller.checkStripeStatus(),
+                ),
+                SizedBox(height: 32.h),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Transaction History",
+                      style: GoogleFonts.inter(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1B0B3B),
+                      ),
                     ),
-                  ),
-                  Icon(
-                    Icons.file_download_outlined,
-                    color: AppColors.primary,
-                    size: 24.sp,
-                  ),
-                ],
-              ),
-              SizedBox(height: 16.h),
-              ...controller.transactions
-                  .map((tr) => TransactionTile(transaction: tr))
-                  .toList(),
-            ],
+                    Icon(
+                      Icons.file_download_outlined,
+                      color: AppColors.primary,
+                      size: 24.sp,
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16.h),
+                ...controller.transactions
+                    .map((tr) => TransactionTile(transaction: tr))
+                    .toList(),
+              ],
+            ),
           ),
-        ),
-      );
+        );
       });
     }
   }
@@ -375,7 +415,10 @@ class EventScreen extends StatelessWidget {
                       width: 100.w,
                       height: 100.w,
                       color: Colors.grey[200],
-                      child: Icon(Icons.image_not_supported_outlined, color: Colors.grey[400]),
+                      child: Icon(
+                        Icons.image_not_supported_outlined,
+                        color: Colors.grey[400],
+                      ),
                     ),
                   ),
                 ),
@@ -385,7 +428,10 @@ class EventScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 4.h,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(6.r),
@@ -480,7 +526,10 @@ class EventScreen extends StatelessWidget {
                     if (event.externalLink != null) {
                       final uri = Uri.parse(event.externalLink!);
                       if (await canLaunchUrl(uri)) {
-                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        await launchUrl(
+                          uri,
+                          mode: LaunchMode.externalApplication,
+                        );
                       } else {
                         Get.snackbar("Error", "Could not launch external link");
                       }
@@ -489,7 +538,10 @@ class EventScreen extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 24.w,
+                      vertical: 12.h,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.r),
                     ),
@@ -498,7 +550,7 @@ class EventScreen extends StatelessWidget {
                   child: Row(
                     children: [
                       Text(
-                        "Visit ${event.providerName}",
+                        "Book Event",
                         style: GoogleFonts.inter(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w700,
@@ -573,10 +625,7 @@ class EventScreen extends StatelessWidget {
                   Get.back();
                   Get.toNamed(
                     AppRoutes.CREATE_EVENT,
-                    arguments: {
-                      'isVirtual': false,
-                      'category': 'Celebrations',
-                    },
+                    arguments: {'isVirtual': false, 'category': 'Celebrations'},
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -602,10 +651,7 @@ class EventScreen extends StatelessWidget {
                   Get.back();
                   Get.toNamed(
                     AppRoutes.CREATE_EVENT,
-                    arguments: {
-                      'isVirtual': true,
-                      'category': 'celebrations',
-                    },
+                    arguments: {'isVirtual': true, 'category': 'celebrations'},
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -710,8 +756,11 @@ class EventScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.event_available_outlined,
-                size: 64.sp, color: Colors.grey[300]),
+            Icon(
+              Icons.event_available_outlined,
+              size: 64.sp,
+              color: Colors.grey[300],
+            ),
             SizedBox(height: 16.h),
             Text(
               message,
@@ -763,7 +812,8 @@ class EventScreen extends StatelessWidget {
         hintText: "Search events, cities, or venues...",
         onChanged: (value) => controller.updateSearch(value),
         onClear: () => controller.clearSearch(),
-        onSearch: () => controller.fetchEvents(searchTerm: controller.searchQuery.value),
+        onSearch: () =>
+            controller.fetchEvents(searchTerm: controller.searchQuery.value),
       ),
     );
   }

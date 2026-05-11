@@ -50,6 +50,7 @@ abstract class AppRoutes {
   static const CONTACT_US = '/contact_us';
   static const DELETE_ACCOUNT = '/delete_account';
   static const DELETE_ACCOUNT_OTP = '/delete_account_otp';
+  static const TICKET_DETAILS = '/ticket_details';
 }
 
 
