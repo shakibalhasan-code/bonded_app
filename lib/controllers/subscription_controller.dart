@@ -25,7 +25,7 @@ class SubscriptionController extends GetxController {
   /// Formatted price string — real App Store price, debug mock, or empty
   /// while loading.
   String get displayPrice {
-    if (BillingConfig.isIosDebug) {
+    if (BillingConfig.useTestingMode) {
       return BillingConfig.debugPrice(BillingConfig.subscriptionId);
     }
     return product.value?.price ?? '';
@@ -41,7 +41,7 @@ class SubscriptionController extends GetxController {
 
   /// Fetches the subscription product directly from the App Store.
   Future<void> _fetchProduct() async {
-    if (kIsWeb || !Platform.isIOS || BillingConfig.isIosDebug) return;
+    if (kIsWeb || !Platform.isIOS || BillingConfig.useTestingMode) return;
 
     try {
       final p = await IosIapService.instance
@@ -120,7 +120,10 @@ class SubscriptionController extends GetxController {
         description:
             "Your subscription is active! Enjoy all the premium features "
             "and make the most of your experience.",
-        onPressed: () => Get.offAllNamed(AppRoutes.PROFILE_READY),
+        onPressed: () => Get.offAllNamed(AppRoutes.PROFILE_READY, arguments: {
+          'title': 'Subscribed Successfully!',
+          'message': 'Your Host Pro subscription is now active. Enjoy your premium features!'
+        }),
       ),
       barrierDismissible: false,
     );

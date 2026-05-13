@@ -39,11 +39,11 @@ class BillingConfig {
 
   static const bool isBillingEnabled = true;
 
-  /// When `true`, all IAP calls are intercepted and a mock iOS-style payment
+  /// When `true`, all IAP calls are intercepted and a mock payment
   /// sheet is shown instead of hitting the real App Store / Google Play.
   ///
   /// Set to `false` before submitting to App Review / production release.
-  static const bool isIosDebug = true;
+  static const bool useTestingMode = true;
 
   // ──────────────────────────────────────────────────────────────────────────
   // Debug helpers
@@ -82,10 +82,11 @@ class BillingConfig {
     return r'$19.99';
   }
 
-  /// Generates a mock Apple-style transaction ID.
+  /// Generates a unique mock transaction ID.
   static String mockTransactionId() {
-    final suffix = (DateTime.now().millisecondsSinceEpoch % 9000000) + 1000000;
-    return '2000000$suffix';
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final random = (1000 + (DateTime.now().microsecond % 9000));
+    return 'txn_${now}_$random';
   }
 
   // ──────────────────────────────────────────────────────────────────────────

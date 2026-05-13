@@ -61,13 +61,43 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
           ),
         ),
         actions: [
-          IconButton(
+          PopupMenuButton<String>(
             icon: Icon(
               Icons.info_outline,
               color: AppColors.primary,
               size: 24.sp,
             ),
-            onPressed: () {},
+            onSelected: (value) {
+              if (value == 'members') {
+                Get.toNamed(
+                  AppRoutes.CIRCLE_MEMBERS,
+                  arguments: circle.detailedMembers,
+                );
+              }
+            },
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'members',
+                child: Row(
+                  children: [
+                    Icon(Icons.people_outline,
+                        size: 20.sp, color: const Color(0xFF1B0B3B)),
+                    SizedBox(width: 12.w),
+                    Text(
+                      "Members",
+                      style: GoogleFonts.inter(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF1B0B3B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           SizedBox(width: 8.w),
         ],
@@ -209,7 +239,12 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
                   ),
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Get.toNamed(
+                      AppRoutes.CIRCLE_MEMBERS,
+                      arguments: circle.detailedMembers,
+                    );
+                  },
                   child: Text(
                     "See All",
                     style: GoogleFonts.inter(
@@ -264,7 +299,9 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
                 ),
               ),
               child: Text(
-                "Join Circle",
+                circle.isPaid
+                    ? "Join Circle (\$${circle.price.toStringAsFixed(2)})"
+                    : "Join Circle",
                 style: GoogleFonts.inter(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w700,

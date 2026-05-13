@@ -146,10 +146,27 @@ class CircleCard extends StatelessWidget {
                   if (circle.isLocked)
                     _buildUnlockAction()
                   else if (!circle.isJoined.value && !circle.isOwner)
-                    AppButton(
-                      text: "Join Circle",
-                      onPressed: () =>
-                          Get.find<CircleController>().joinCircle(circle),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: AppButton(
+                            text: "Join Circle",
+                            onPressed: () =>
+                                Get.find<CircleController>().joinCircle(circle),
+                          ),
+                        ),
+                        if (circle.isPaid) ...[
+                          SizedBox(width: 12.w),
+                          Text(
+                            "\$${circle.price.toStringAsFixed(2)}",
+                            style: GoogleFonts.inter(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                 ],
               ),

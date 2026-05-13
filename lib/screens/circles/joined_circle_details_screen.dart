@@ -10,6 +10,8 @@ import '../../widgets/circles/circle_member_tile.dart';
 import '../../widgets/home/upcoming_event_card.dart';
 import '../../core/routes/app_routes.dart';
 import '../../widgets/circles/create_post_sheet.dart';
+import '../../models/marketplace_model.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class JoinedCircleDetailsScreen extends StatefulWidget {
   const JoinedCircleDetailsScreen({Key? key}) : super(key: key);
@@ -21,7 +23,7 @@ class JoinedCircleDetailsScreen extends StatefulWidget {
 
 class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
   int _selectedTabIndex = 0; // 0: Feed, 1: Events, 2: Members
-  final List<String> _tabs = ["Circle Feed", "Circle Events", "Circle Members"];
+  final List<String> _tabs = ["Circle Feed", "Circle Events", "Circle Members", "Marketplace"];
   final TextEditingController _memberSearchController = TextEditingController();
 
   @override
@@ -176,6 +178,8 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                                 controller.fetchCircleEvents(circle);
                               if (index == 2)
                                 controller.fetchCircleMembers(circle);
+                              if (index == 3)
+                                controller.fetchCircleMarketplace(circle);
                             },
                             child: Container(
                               padding: EdgeInsets.symmetric(
@@ -272,6 +276,13 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
             child: _buildMembersView(circle),
           ),
         );
+      case 3: // Marketplace
+        return Obx(
+          () => RefreshIndicator(
+            onRefresh: () => controller.fetchCircleMarketplace(circle),
+            child: _buildMarketplaceView(circle),
+          ),
+        );
       default:
         return const SizedBox.shrink();
     }
@@ -296,6 +307,122 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
         return UpcomingEventCard(event: circle.events[index]);
       },
     );
+  }
+
+  Widget _buildMarketplaceView(CircleModel circle) {
+    if (circle.marketplaceProducts.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(height: 100.h),
+          _buildEmptyState("No products found in marketplace."),
+        ],
+      );
+    }
+
+    return GridView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 100.h),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.75,
+        crossAxisSpacing: 16.w,
+        mainAxisSpacing: 16.h,
+      ),
+      itemCount: circle.marketplaceProducts.length,
+      itemBuilder: (context, index) {
+        final product = circle.marketplaceProducts[index];
+        return _buildMarketplaceCard(product);
+      },
+    );
+  }
+
+  Widget _buildMarketplaceCard(MarketplaceProduct product) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16.r)),
+              child: Image.network(
+                product.imageUrl,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: Colors.grey[100],
+                  child: Icon(Icons.image, color: Colors.grey[400]),
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(12.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.interest,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1B0B3B),
+                  ),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  product.priceRange,
+                  style: GoogleFonts.inter(
+                    fontSize: 12.sp,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                SizedBox(height: 8.h),
+                ElevatedButton(
+                  onPressed: () => _launchURL(product.amazonUrl),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    minimumSize: Size(double.infinity, 32.h),
+                    padding: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                  ),
+                  child: Text(
+                    product.ctaLabel,
+                    style: GoogleFonts.inter(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      Get.snackbar("Error", "Could not launch $url");
+    }
   }
 
   Widget _buildMembersView(CircleModel circle) {

@@ -11,6 +11,11 @@ class ProfileReadyScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Map<String, dynamic> args = Get.arguments ?? {};
+    final String title = args['title'] ?? "You’re All Set!";
+    final String message = args['message'] ??
+        "Everything’s ready! Start exploring, connecting, and enjoying all the features waiting for you.";
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -19,7 +24,7 @@ class ProfileReadyScreen extends StatelessWidget {
           child: Column(
             children: [
               const Spacer(flex: 2),
-              
+
               // Success Illustration
               Center(
                 child: Container(
@@ -56,7 +61,8 @@ class ProfileReadyScreen extends StatelessWidget {
                               color: AppColors.primary,
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(Icons.person, color: Colors.white, size: 16.sp),
+                            child: Icon(Icons.person,
+                                color: Colors.white, size: 16.sp),
                           ),
                         ],
                       ),
@@ -64,11 +70,11 @@ class ProfileReadyScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               SizedBox(height: 40.h),
-              
+
               Text(
-                "You’re All Set!",
+                title,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                   fontSize: 24.sp,
@@ -76,11 +82,11 @@ class ProfileReadyScreen extends StatelessWidget {
                   color: AppColors.textHeading,
                 ),
               ),
-              
+
               SizedBox(height: 16.h),
-              
+
               Text(
-                "Everything’s ready! Start exploring, connecting, and enjoying all the features waiting for you.",
+                message,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                   fontSize: 16.sp,
@@ -89,21 +95,21 @@ class ProfileReadyScreen extends StatelessWidget {
                   height: 1.5,
                 ),
               ),
-              
+
               const Spacer(flex: 3),
-              
+
               // Divider
               Divider(color: Colors.grey[200]),
-              
+
               SizedBox(height: 16.h),
-              
+
               // Go to Homepage Button
               AppButton(
                 text: "Go to Homepage",
                 isPrimary: true,
                 onPressed: () => Get.offAllNamed(AppRoutes.MAIN),
               ),
-              
+
               SizedBox(height: 32.h),
             ],
           ),

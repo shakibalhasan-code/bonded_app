@@ -53,6 +53,7 @@ class AppUrls {
   static String circleJoinConfirm(String circleId) => '/circles/$circleId/join/confirm';
   static const String storeProductsTiers = '/store-products/tiers';
   static const String storeProductsResolve = '/store-products/resolve';
+  static const String settleStripe = '/payments/settle/stripe';
 
   // Bond Endpoints
   static const String nearbyBonds = '/bonds/nearby';
@@ -78,6 +79,8 @@ class AppUrls {
   static String circleMembers(String circleId) => '/circles/$circleId/members';
   static String circleEvents(String circleId) => '/circles/$circleId/events';
   static String joinCircle(String circleId) => '/circles/$circleId/join';
+  static String marketplaceProducts(String circleId) =>
+      '/marketplace/circles/$circleId/products';
 
   // Notification Endpoints
   static const String notifications = '/notifications';

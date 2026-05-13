@@ -85,7 +85,21 @@ class CreateEventScreen extends GetView<CreateEventController> {
     if (pickedTime != null) {
       if (isStart) {
         controller.selectedTime.value = pickedTime;
+        // Clear an end time that is now no longer after the new start.
+        final end = controller.selectedEndTime.value;
+        if (end != null &&
+            (end.hour * 60 + end.minute) <=
+                (pickedTime.hour * 60 + pickedTime.minute)) {
+          controller.selectedEndTime.value = null;
+        }
       } else {
+        final start = controller.selectedTime.value;
+        if (start != null &&
+            (pickedTime.hour * 60 + pickedTime.minute) <=
+                (start.hour * 60 + start.minute)) {
+          Get.snackbar('Error', 'End time must be after start time');
+          return;
+        }
         controller.selectedEndTime.value = pickedTime;
       }
     }

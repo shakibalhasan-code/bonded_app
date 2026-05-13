@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'user_model.dart';
 import 'home_models.dart';
 import 'event_model.dart';
+import 'marketplace_model.dart';
 import '../services/shared_prefs_service.dart';
 import '../core/constants/app_endpoints.dart';
 
@@ -86,6 +87,7 @@ class CircleModel {
   final RxList<MemberModel> detailedMembers;
   final RxList<PostModel> posts;
   final RxList<EventModel> events;
+  final RxList<MarketplaceProduct> marketplaceProducts;
 
   CircleModel({
     required this.id,
@@ -122,7 +124,8 @@ class CircleModel {
        isJoined = isJoinedValue.obs,
        detailedMembers = (members ?? <MemberModel>[]).obs,
        posts = (postsList ?? <PostModel>[]).obs,
-       events = (eventsList ?? <EventModel>[]).obs;
+       events = (eventsList ?? <EventModel>[]).obs,
+       marketplaceProducts = <MarketplaceProduct>[].obs;
 
   bool get isOwner {
     final currentUserId = SharedPrefsService.getString('userId');

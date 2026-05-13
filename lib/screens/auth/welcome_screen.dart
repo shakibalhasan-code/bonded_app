@@ -110,13 +110,41 @@ class WelcomeScreen extends StatelessWidget {
               const Spacer(flex: 2),
 
               // Footer
-              Text(
-                "Privacy Policy  .  Terms of Service",
-                style: GoogleFonts.inter(
-                  fontSize: 13.sp,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.grey[600],
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () => Get.toNamed(AppRoutes.PRIVACY_POLICY),
+                    behavior: HitTestBehavior.opaque,
+                    child: Text(
+                      "Privacy Policy",
+                      style: GoogleFonts.inter(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ),
+                  Text(
+                    "  .  ",
+                    style: GoogleFonts.inter(
+                      fontSize: 13.sp,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Get.toNamed(AppRoutes.TERMS_OF_SERVICE),
+                    behavior: HitTestBehavior.opaque,
+                    child: Text(
+                      "Terms of Service",
+                      style: GoogleFonts.inter(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ),
+                ],
               ),
               SizedBox(height: 20.h),
             ],

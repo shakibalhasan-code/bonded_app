@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:bonded_app/controllers/home_controller.dart';
 import 'package:bonded_app/core/theme/app_colors.dart';
 import 'package:bonded_app/models/event_model.dart';
+import 'package:bonded_app/models/marketplace_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -1160,6 +1161,23 @@ class CircleController extends BaseController {
         comment.replies.refresh();
         return;
       }
+    }
+  }
+  Future<void> fetchCircleMarketplace(CircleModel circle) async {
+    try {
+      setLoading(true);
+      final response = await _apiService.get(
+        '${AppUrls.marketplaceProducts(circle.id)}?expanded=true',
+      );
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        final marketplaceResponse = MarketplaceResponse.fromJson(data['data']);
+        circle.marketplaceProducts.assignAll(marketplaceResponse.products);
+      }
+    } catch (e) {
+      debugPrint("Error fetching marketplace: $e");
+    } finally {
+      setLoading(false);
     }
   }
 }

@@ -230,7 +230,10 @@ class KycController extends BaseController with WidgetsBindingObserver {
         title: "Verification Fee Paid!",
         description:
             "Your payment was successful. You can now proceed to set up your Stripe Connect account.",
-        onPressed: () => Get.back(),
+        onPressed: () => Get.offAllNamed(AppRoutes.PROFILE_READY, arguments: {
+          'title': 'Fee Paid Successfully!',
+          'message': 'Your verification fee has been processed. You can now complete your creator setup.'
+        }),
       ),
       barrierDismissible: false,
     );

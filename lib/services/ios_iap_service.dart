@@ -176,7 +176,7 @@ class IosIapService {
   /// Returns `null` when the product is not found, the platform is not iOS,
   /// or debug mode is active (price is supplied by [BillingConfig.debugPrice]).
   Future<ProductDetails?> fetchProduct(String productId) async {
-    if (BillingConfig.isIosDebug) return null;
+    if (BillingConfig.useTestingMode) return null;
     if (!_isIos) return null;
 
     final res = await _iap.queryProductDetails({productId});
@@ -222,8 +222,8 @@ class IosIapService {
     String productId, {
     bool isConsumable = false,
   }) async {
-    // Debug mode: show mock iOS sheet on any platform, no real store needed.
-    if (BillingConfig.isIosDebug) {
+    // Debug mode: show mock sheet on any platform, no real store needed.
+    if (BillingConfig.useTestingMode) {
       return _mockPurchase(productId, isConsumable: isConsumable);
     }
 
@@ -289,7 +289,7 @@ class IosIapService {
   ///
   /// Restored transactions are delivered via [onPurchaseSuccess].
   Future<void> restorePurchases() async {
-    if (BillingConfig.isIosDebug) return; // nothing to restore in debug mode
+    if (BillingConfig.useTestingMode) return; // nothing to restore in debug mode
     if (!_isIos) return;
     if (!_initialized) await initialize();
     await _iap.restorePurchases();
@@ -299,8 +299,8 @@ class IosIapService {
   // Debug mock purchase
   // ──────────────────────────────────────────────────────────────────────────
 
-  /// Shows an iOS-style mock payment sheet and resolves with a fake
-  /// [IapResult].  Used when [BillingConfig.isIosDebug] is `true`.
+  /// Shows a mock payment sheet and resolves with a fake
+  /// [IapResult].  Used when [BillingConfig.useTestingMode] is `true`.
   Future<IapResult> _mockPurchase(
     String productId, {
     bool isConsumable = false,

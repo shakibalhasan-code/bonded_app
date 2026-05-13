@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bonded_app/controllers/auth_controller.dart';
 import 'package:bonded_app/controllers/home_controller.dart';
 import 'package:bonded_app/core/constants/app_endpoints.dart';
 import 'package:bonded_app/core/constants/billing_config.dart';
+import 'package:bonded_app/core/routes/app_routes.dart';
 import 'package:bonded_app/services/api_service.dart';
 import 'package:bonded_app/services/billing_service.dart';
 import 'package:bonded_app/services/ios_iap_service.dart';
@@ -69,8 +71,7 @@ class BillingController extends BaseController {
         final List productsList = data['data'];
         final platform = !kIsWeb && Platform.isIOS ? 'apple' : 'google';
         final backendIds = productsList
-            .where((p) =>
-                p['platform'] == null || p['platform'] == platform)
+            .where((p) => p['platform'] == null || p['platform'] == platform)
             .map((p) => p['productId'].toString())
             .toSet();
         if (backendIds.isNotEmpty) {
@@ -87,8 +88,9 @@ class BillingController extends BaseController {
       products.assignAll(fetched);
     } catch (e) {
       debugPrint('Error loading products: $e');
-      final fetched =
-          await _billingService.getProducts(BillingConfig.allProductIds);
+      final fetched = await _billingService.getProducts(
+        BillingConfig.allProductIds,
+      );
       products.assignAll(fetched);
     } finally {
       setLoading(false);
@@ -133,7 +135,10 @@ class BillingController extends BaseController {
       if (data['success'] == true) {
         _showCircleJoinPurchaseSheet(data['data']);
       } else {
-        Get.snackbar('Error', data['message'] ?? 'Failed to initiate purchase.');
+        Get.snackbar(
+          'Error',
+          data['message'] ?? 'Failed to initiate purchase.',
+        );
       }
     } catch (e) {
       debugPrint('Error purchasing circle join: $e');
@@ -222,6 +227,19 @@ class BillingController extends BaseController {
       SharedPrefsService.saveString(e.key, e.value);
     }
 
+    // ── Testing mode (Intercept all platforms) ───────────────────────────────
+    if (BillingConfig.useTestingMode) {
+      debugPrint('[BillingController] Testing mode active – using mock flow.');
+      await _billingService.buyWithIosService(
+        productId: productId,
+        onSuccess: (IapResult r) {
+          debugPrint('[BillingController] Mock purchase success: $r');
+          _verifyIosWithBackend(r);
+        },
+      );
+      return;
+    }
+
     // ── iOS path ──────────────────────────────────────────────────────────
     if (!kIsWeb && Platform.isIOS) {
       final result = await _billingService.buyWithIosService(
@@ -265,7 +283,20 @@ class BillingController extends BaseController {
           await InAppPurchase.instance.completePurchase(pd);
         }
         _refreshHome();
-        Get.snackbar('Success', 'Purchase verified and completed!');
+
+        final type = SharedPrefsService.getString('pending_purchase_type');
+        if (type == 'subscription') {
+          Get.offAllNamed(
+            AppRoutes.PROFILE_READY,
+            arguments: {
+              'title': 'Subscribed Successfully!',
+              'message':
+                  'Your Host Pro subscription is now active. Enjoy your premium features!',
+            },
+          );
+        } else {
+          Get.snackbar('Success', 'Purchase verified and completed!');
+        }
       } else {
         Get.snackbar('Error', 'Purchase verification failed with server.');
       }
@@ -277,18 +308,20 @@ class BillingController extends BaseController {
     try {
       setLoading(true);
 
-      final String? type =
-          SharedPrefsService.getString('pending_purchase_type');
+      final String? type = SharedPrefsService.getString(
+        'pending_purchase_type',
+      );
       final String productId =
           SharedPrefsService.getString('pending_purchase_product_id') ??
-              result.productId ??
-              '';
+          result.productId ??
+          '';
 
       final body = _buildConfirmBody(
         platform: 'apple',
         type: type,
         productId: productId,
-        transactionId: result.transactionId ?? BillingConfig.mockTransactionId(),
+        transactionId:
+            result.transactionId ?? BillingConfig.mockTransactionId(),
       );
 
       if (body == null) return;
@@ -299,10 +332,23 @@ class BillingController extends BaseController {
       if (data['success'] == true) {
         _clearPendingPrefs();
         _refreshHome();
-        Get.snackbar('Success', 'Purchase verified!');
+        if (type == 'subscription') {
+          Get.offAllNamed(
+            AppRoutes.PROFILE_READY,
+            arguments: {
+              'title': 'Subscribed Successfully!',
+              'message':
+                  'Your Host Pro subscription is now active. Enjoy your premium features!',
+            },
+          );
+        } else {
+          Get.snackbar('Success', 'Purchase verified!');
+        }
       } else {
-        Get.snackbar('Error',
-            data['message'] ?? 'Purchase verification failed with server.');
+        Get.snackbar(
+          'Error',
+          data['message'] ?? 'Purchase verification failed with server.',
+        );
       }
     } catch (e) {
       debugPrint('iOS backend verification error: $e');
@@ -318,8 +364,9 @@ class BillingController extends BaseController {
       setLoading(true);
 
       String? type = SharedPrefsService.getString('pending_purchase_type');
-      final String? savedProductId =
-          SharedPrefsService.getString('pending_purchase_product_id');
+      final String? savedProductId = SharedPrefsService.getString(
+        'pending_purchase_product_id',
+      );
 
       // Auto-detect type from productId if not persisted.
       if (type == null || savedProductId != pd.productID) {
@@ -404,16 +451,18 @@ class BillingController extends BaseController {
 
     // Reference IDs for circle join and virtual event.
     if (purpose == 'circle-join') {
-      final circleId =
-          SharedPrefsService.getString('pending_purchase_circle_id');
+      final circleId = SharedPrefsService.getString(
+        'pending_purchase_circle_id',
+      );
       if (circleId == null || circleId.isEmpty) {
         Get.snackbar('Error', 'Circle ID missing for verification.');
         return null;
       }
       body['referenceId'] = circleId;
     } else if (purpose == 'virtual-event-ticket') {
-      final bookingId =
-          SharedPrefsService.getString('pending_purchase_booking_id');
+      final bookingId = SharedPrefsService.getString(
+        'pending_purchase_booking_id',
+      );
       if (bookingId == null || bookingId.isEmpty) {
         Get.snackbar('Error', 'Booking ID missing for verification.');
         return null;
@@ -434,10 +483,11 @@ class BillingController extends BaseController {
     String? findId(String purpose) {
       try {
         return productsList.firstWhere(
-          (p) =>
-              p['purpose'] == purpose &&
-              (p['platform'] == null || p['platform'] == platform),
-        )['productId'] as String?;
+              (p) =>
+                  p['purpose'] == purpose &&
+                  (p['platform'] == null || p['platform'] == platform),
+            )['productId']
+            as String?;
       } catch (_) {
         return null;
       }
@@ -445,10 +495,10 @@ class BillingController extends BaseController {
 
     final isIos = platform == 'apple';
     BillingConfig.configure(
-      iosKycVerificationId:     isIos  ? findId('creator-verification') : null,
+      iosKycVerificationId: isIos ? findId('creator-verification') : null,
       androidKycVerificationId: !isIos ? findId('creator-verification') : null,
-      iosSubscriptionId:        isIos  ? findId('host-pro-subscription') : null,
-      androidSubscriptionId:    !isIos ? findId('host-pro-subscription') : null,
+      iosSubscriptionId: isIos ? findId('host-pro-subscription') : null,
+      androidSubscriptionId: !isIos ? findId('host-pro-subscription') : null,
     );
   }
 
@@ -464,8 +514,12 @@ class BillingController extends BaseController {
       if (Get.isRegistered<HomeController>()) {
         Get.find<HomeController>().fetchHomeData();
       }
+      // Auto-fetch user profile to sync subscription/kyc status
+      if (Get.isRegistered<AuthController>()) {
+        Get.find<AuthController>().fetchUserProfile();
+      }
     } catch (e) {
-      debugPrint('Error refreshing home after purchase: $e');
+      debugPrint('Error refreshing home/profile after purchase: $e');
     }
   }
 
@@ -484,7 +538,7 @@ class BillingController extends BaseController {
   void _showCircleJoinPurchaseSheet(Map<String, dynamic> data) {
     final platform = !kIsWeb && Platform.isIOS ? 'apple' : 'google';
     final products = data['products'];
-    
+
     if (products == null || products[platform] == null) {
       Get.snackbar(
         'Error',
@@ -597,26 +651,29 @@ class BillingController extends BaseController {
               ),
             ),
             SizedBox(height: 32.h),
-            if (platform == 'apple')
-              Padding(
-                padding: EdgeInsets.only(bottom: 20.h),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, size: 16.sp, color: Colors.amber[800]),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: Text(
-                        "Apple is currently reviewing this purchase option. Use testing mode for immediate access.",
-                        style: GoogleFonts.inter(
-                          fontSize: 12.sp,
-                          color: Colors.amber[800],
-                          fontWeight: FontWeight.w500,
-                        ),
+            Padding(
+              padding: EdgeInsets.only(bottom: 20.h),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 16.sp,
+                    color: Colors.amber[800],
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      "This purchase option is currently under review by ${platform == 'apple' ? 'Apple' : 'Google Play Store'} to meet their privacy policy. Use testing mode for immediate access.",
+                      style: GoogleFonts.inter(
+                        fontSize: 12.sp,
+                        color: Colors.amber[800],
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+            ),
             ElevatedButton(
               onPressed: () {
                 Get.back();
@@ -648,22 +705,40 @@ class BillingController extends BaseController {
               ),
             ),
             SizedBox(height: 16.h),
-            TextButton(
-              onPressed: () => confirmPurchaseWithTesting(
-                circleId: circleId,
-                productId: productId,
-                purpose: 'circle-join',
-              ),
-              child: Text(
-                "Process with Testing",
-                style: GoogleFonts.inter(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
-                  decoration: TextDecoration.underline,
-                ),
-              ),
-            ),
+            Obx(() => TextButton(
+                  onPressed: isLoading.value
+                      ? null
+                      : () {
+                          if (circleId.isEmpty || productId.isEmpty) {
+                            Get.snackbar('Error', 'Missing circle or product information');
+                            return;
+                          }
+                          confirmPurchaseWithTesting(
+                            circleId: circleId,
+                            productId: productId,
+                            purpose: 'circle-join',
+                          );
+                        },
+                  child: isLoading.value
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(AppColors.primary),
+                          ),
+                        )
+                      : Text(
+                          "Process with Testing",
+                          style: GoogleFonts.inter(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                )),
             SizedBox(height: 12.h),
           ],
         ),
@@ -685,7 +760,7 @@ class BillingController extends BaseController {
         'platform': platform,
         'purpose': purpose,
         'productId': productId,
-        'transactionId': 'test_txn_${DateTime.now().millisecondsSinceEpoch}',
+        'transactionId': BillingConfig.mockTransactionId(),
         'referenceId': circleId,
       };
 

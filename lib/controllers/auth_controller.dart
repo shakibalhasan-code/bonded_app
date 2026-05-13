@@ -282,7 +282,7 @@ class AuthController extends BaseController {
   }
 
   // Change Password
-  Future<void> changePassword(String oldPassword, String newPassword) async {
+  Future<bool> changePassword(String oldPassword, String newPassword) async {
     try {
       setLoading(true);
       final token = SharedPrefsService.getString('accessToken');
@@ -300,12 +300,21 @@ class AuthController extends BaseController {
 
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
-        Get.snackbar('Success', data['message'] ?? 'Password changed successfully');
+        Get.snackbar('Success', data['message'] ?? 'Password changed successfully',
+            backgroundColor: Colors.green.withOpacity(0.9),
+            colorText: Colors.white);
+        return true;
       } else {
-        Get.snackbar('Error', data['message'] ?? 'Failed to change password');
+        Get.snackbar('Error', data['message'] ?? 'Failed to change password',
+            backgroundColor: Colors.red.withOpacity(0.9),
+            colorText: Colors.white);
+        return false;
       }
     } catch (e) {
-      Get.snackbar('Error', e.toString());
+      Get.snackbar('Error', e.toString(),
+          backgroundColor: Colors.red.withOpacity(0.9),
+          colorText: Colors.white);
+      return false;
     } finally {
       setLoading(false);
     }

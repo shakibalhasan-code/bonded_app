@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/event_model.dart';
 import '../models/highlight_model.dart';
@@ -35,6 +38,9 @@ class EventController extends GetxController {
   final Rxn<TimeOfDay> selectedTime = Rxn<TimeOfDay>();
   final RxList<String> activeFilterCategories = <String>[].obs;
   final RxString selectedLocation = '2464 Royal Ln. Mesa, New Jersey 45463'.obs;
+  final RxnDouble lat = RxnDouble();
+  final RxnDouble lng = RxnDouble();
+  final RxBool isLocationLoading = false.obs;
 
   // Search
   final RxString searchQuery = ''.obs;
@@ -78,7 +84,7 @@ class EventController extends GetxController {
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
         bool connected = data['data']['connected'] ?? false;
-        
+
         if (connected) {
           if (!isStripeConnected.value) {
             Get.snackbar(
@@ -152,24 +158,88 @@ class EventController extends GetxController {
     }
   }
 
-  Future<void> fetchEvents({bool showLoader = true, String? searchTerm}) async {
+  final RxBool isFilterApplied = false.obs;
+
+  void applyFilters() {
+    isFilterApplied.value = true;
+    fetchEvents();
+  }
+
+  Future<void> fetchEvents({
+    bool showLoader = true,
+    String? searchTerm,
+    int page = 1,
+    int limit = 20,
+  }) async {
     try {
       if (showLoader) isLoading.value = true;
-      
-      String url = AppUrls.events;
-      if (searchTerm != null && searchTerm.isNotEmpty) {
-        url = "$url?searchTerm=${Uri.encodeComponent(searchTerm)}";
+
+      final Map<String, dynamic> queryParams = {
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+
+      // Add Search Term
+      final actualSearch = searchTerm ?? searchController.text;
+      if (actualSearch.isNotEmpty) {
+        queryParams['searchTerm'] = actualSearch;
       }
-      
+
+      if (isFilterApplied.value) {
+        // Add Price Range
+        if (priceRange.value.start > 0 || priceRange.value.end < 100) {
+          queryParams['minPrice'] = priceRange.value.start.round().toString();
+          queryParams['maxPrice'] = priceRange.value.end.round().toString();
+        }
+
+        // Add Distance/Location
+        queryParams['radiusKm'] = distanceRange.value.end.round().toString();
+
+        // Use dynamic location if available
+        if (lat.value != null && lng.value != null) {
+          queryParams['lat'] = lat.value.toString();
+          queryParams['lng'] = lng.value.toString();
+        }
+
+        // Add Date Filters
+        if (selectedDate.value != null) {
+          final dateStr = DateFormat('dd/MM/yyyy').format(selectedDate.value!);
+          queryParams['startDate'] = dateStr;
+          queryParams['endDate'] = DateFormat('dd/MM/yyyy').format(selectedDate.value!.add(const Duration(days: 30)));
+        }
+
+        // Add Time Filters
+        if (selectedTime.value != null) {
+          final timeStr = "${selectedTime.value!.hour.toString().padLeft(2, '0')}:${selectedTime.value!.minute.toString().padLeft(2, '0')}";
+          queryParams['startTime'] = timeStr;
+          queryParams['endTime'] = "23:59"; // Default end time
+        }
+
+        // Add Category Filters
+        if (activeFilterCategories.isNotEmpty) {
+          queryParams['category'] = activeFilterCategories.join(',');
+        }
+      }
+
+      // Build Query String
+      final uri = Uri(queryParameters: queryParams);
+      final url =
+          "${AppUrls.events}${uri.query.isEmpty ? '' : '?${uri.query}'}";
+
+      debugPrint("Fetching events with URL: $url");
+
       final response = await _apiService.get(url);
       final data = jsonDecode(response.body);
 
       if (data['success'] == true) {
         final List<dynamic> eventList = data['data'];
-        final List<EventModel> fetchedEvents =
-            eventList.map((e) => EventModel.fromJson(e)).toList();
+        final List<EventModel> fetchedEvents = eventList
+            .map((e) => EventModel.fromJson(e))
+            .toList();
 
-        if (fetchedEvents.every((e) => e.category != EventCategory.highlights)) {
+        if (fetchedEvents.every(
+          (e) => e.category != EventCategory.highlights,
+        )) {
           _addMockHighlights(fetchedEvents);
         }
 
@@ -228,11 +298,17 @@ class EventController extends GetxController {
     List<EventModel> base;
     if (selectedTab.value == 0) {
       if (selectedCategory.value == 0) {
-        base = events.where((e) => e.category == EventCategory.inPerson).toList();
+        base = events
+            .where((e) => e.category == EventCategory.inPerson)
+            .toList();
       } else if (selectedCategory.value == 1) {
-        base = events.where((e) => e.category == EventCategory.virtual).toList();
+        base = events
+            .where((e) => e.category == EventCategory.virtual)
+            .toList();
       } else if (selectedCategory.value == 2) {
-        base = events.where((e) => e.category == EventCategory.highlights).toList();
+        base = events
+            .where((e) => e.category == EventCategory.highlights)
+            .toList();
       } else {
         base = events.toList();
       }
@@ -285,7 +361,9 @@ class EventController extends GetxController {
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
         final List<dynamic> list = data['data'];
-        publicHighlights.value = list.map((e) => HighlightModel.fromJson(e)).toList();
+        publicHighlights.value = list
+            .map((e) => HighlightModel.fromJson(e))
+            .toList();
       }
     } catch (e) {
       debugPrint("Error fetching public highlights: $e");
@@ -301,7 +379,9 @@ class EventController extends GetxController {
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
         final List<dynamic> list = data['data'] ?? [];
-        bookedEvents.value = list.map((e) => BookedEventModel.fromJson(e)).toList();
+        bookedEvents.value = list
+            .map((e) => BookedEventModel.fromJson(e))
+            .toList();
       }
     } catch (e) {
       debugPrint("Error fetching booked events: $e");
@@ -356,6 +436,7 @@ class EventController extends GetxController {
     selectedDate.value = null;
     selectedTime.value = null;
     activeFilterCategories.clear();
+    isFilterApplied.value = false;
   }
 
   void toggleFilterCategory(String category) {
@@ -388,6 +469,52 @@ class EventController extends GetxController {
         await fetchWallet();
         await checkStripeStatus();
       }
+    }
+  }
+
+  Future<void> getCurrentLocation() async {
+    try {
+      isLocationLoading.value = true;
+      bool serviceEnabled;
+      LocationPermission permission;
+
+      serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        Get.snackbar("Error", "Location services are disabled.");
+        return;
+      }
+
+      permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          Get.snackbar("Error", "Location permissions are denied.");
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        Get.snackbar("Error", "Location permissions are permanently denied.");
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition();
+      lat.value = position.latitude;
+      lng.value = position.longitude;
+
+      final placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+      if (placemarks.isNotEmpty) {
+        final pm = placemarks.first;
+        selectedLocation.value = "${pm.street}, ${pm.locality}, ${pm.country}";
+      }
+    } catch (e) {
+      debugPrint("Error getting location: $e");
+      Get.snackbar("Error", "Failed to get current location.");
+    } finally {
+      isLocationLoading.value = false;
     }
   }
 }

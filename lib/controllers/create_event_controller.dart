@@ -12,6 +12,7 @@ import 'package:geocoding/geocoding.dart';
 import '../services/api_service.dart';
 import '../services/shared_prefs_service.dart';
 import '../models/user_model.dart';
+import '../core/utils/app_messenger.dart';
 import 'base_controller.dart';
 
 class CreateEventController extends BaseController {
@@ -151,22 +152,18 @@ class CreateEventController extends BaseController {
       // Rule 1: Only single category allowed
       final currentCategory = selectedInterestCategory;
       if (currentCategory != null && currentCategory != category) {
-        Get.snackbar(
-          'Limit Reached',
+        AppMessenger.warning(
           'You can only select interests from one category.',
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
+          title: 'Limit Reached',
         );
         return;
       }
 
       // Rule 2: Max 2 interests
       if (selectedInterests.length >= 2) {
-        Get.snackbar(
-          'Limit Reached',
+        AppMessenger.warning(
           'You can only select up to 2 interests.',
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
+          title: 'Limit Reached',
         );
         return;
       }
@@ -185,7 +182,7 @@ class CreateEventController extends BaseController {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        Get.snackbar('Error', 'Location services are disabled.');
+        AppMessenger.error('Location services are disabled.');
         return;
       }
 
@@ -193,14 +190,13 @@ class CreateEventController extends BaseController {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          Get.snackbar('Error', 'Location permissions are denied');
+          AppMessenger.error('Location permissions are denied');
           return;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        Get.snackbar(
-          'Error',
+        AppMessenger.error(
           'Location permissions are permanently denied, we cannot request permissions.',
         );
         return;
@@ -251,7 +247,7 @@ class CreateEventController extends BaseController {
         longitude.value = position.longitude;
         // ... (can repeat reverse geocoding if needed, but let's keep it simple for now)
       } catch (_) {
-        Get.snackbar('Error', 'Failed to get current location');
+        AppMessenger.error('Failed to get current location');
       }
     } finally {
       isLocating.value = false;
@@ -438,77 +434,63 @@ class CreateEventController extends BaseController {
       final data = jsonDecode(response.body);
 
       if (data['success'] == true) {
-        Get.snackbar('Success', 'Event created successfully');
+        AppMessenger.success('Event created successfully');
         Get.offNamedUntil(AppRoutes.MAIN, (route) => false);
       } else {
-        Get.snackbar('Error', data['message'] ?? 'Failed to create event');
+        AppMessenger.error(data['message'] ?? 'Failed to create event');
       }
     } catch (e) {
       debugPrint("Error creating event: $e");
-      Get.snackbar('Error', 'An unexpected error occurred');
+      AppMessenger.showError(e);
     } finally {
       setLoading(false);
     }
   }
 
-  String _getFormattedStartsAt() {
-    if (selectedDate.value == null || selectedTime.value == null) {
-      return DateTime.now().toIso8601String();
-    }
-
-    final date = selectedDate.value!;
-    final time = selectedTime.value!;
-    final dateTime = DateTime(
-      date.year,
-      date.month,
-      date.day,
-      time.hour,
-      time.minute,
-    );
-    return dateTime.toUtc().toIso8601String();
-  }
-
   bool _validateForm() {
     if (nameController.text.isEmpty) {
-      Get.snackbar('Error', 'Event name is required');
+      AppMessenger.error('Event name is required');
       return false;
     }
     if (selectedCategory.value == null) {
-      Get.snackbar('Error', 'Category is required');
+      AppMessenger.error('Category is required');
       return false;
     }
     if (selectedDate.value == null ||
         selectedTime.value == null ||
         selectedEndTime.value == null) {
-      Get.snackbar('Error', 'Date, Start Time and End Time are required');
+      AppMessenger.error('Date, Start Time and End Time are required');
       return false;
     }
-    // Interests are now optional or removed based on user request
-    // if (selectedInterests.isEmpty) {
-    //   Get.snackbar('Error', 'Please select at least one interest');
-    //   return false;
-    // }
+    final startMinutes =
+        selectedTime.value!.hour * 60 + selectedTime.value!.minute;
+    final endMinutes =
+        selectedEndTime.value!.hour * 60 + selectedEndTime.value!.minute;
+    if (endMinutes <= startMinutes) {
+      AppMessenger.error('End time must be after start time');
+      return false;
+    }
     if (selectedCoverImageUrl.value == null && coverImagePath.value.isEmpty) {
-      Get.snackbar('Error', 'Cover image is required');
+      AppMessenger.error('Cover image is required');
       return false;
     }
 
     if (isVirtual.value) {
       if (virtualLinkController.text.isEmpty) {
-        Get.snackbar('Error', 'Virtual link is required for virtual events');
+        AppMessenger.error('Virtual link is required for virtual events');
         return false;
       }
     } else {
       if (seatsController.text.isEmpty) {
-        Get.snackbar('Error', 'Total seats quantity is required');
+        AppMessenger.error('Total seats quantity is required');
         return false;
       }
       if (locationController.text.isEmpty) {
-        Get.snackbar('Error', 'Address/Location is required');
+        AppMessenger.error('Address/Location is required');
         return false;
       }
       if (latitude.value == 0 || longitude.value == 0) {
-        Get.snackbar('Error', 'Please pin a location on the map');
+        AppMessenger.error('Please pin a location on the map');
         return false;
       }
     }

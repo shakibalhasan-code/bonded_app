@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../widgets/app_button.dart';
+import '../../controllers/auth_controller.dart';
 
 class SecurityScreen extends StatefulWidget {
   const SecurityScreen({Key? key}) : super(key: key);
@@ -13,6 +14,7 @@ class SecurityScreen extends StatefulWidget {
 }
 
 class _SecurityScreenState extends State<SecurityScreen> {
+  final _authController = Get.find<AuthController>();
   final _formKey = GlobalKey<FormState>();
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
@@ -85,22 +87,35 @@ class _SecurityScreenState extends State<SecurityScreen> {
                 label: "Confirm New Password",
                 controller: _confirmPasswordController,
                 obscure: _obscureConfirm,
-                onToggle: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                onToggle: () =>
+                    setState(() => _obscureConfirm = !_obscureConfirm),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return "Field required";
+                  }
+                  if (value != _newPasswordController.text) {
+                    return "Passwords do not match";
+                  }
+                  return null;
+                },
               ),
               SizedBox(height: 48.h),
-              AppButton(
-                text: "Change Password",
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    Get.back();
-                    Get.snackbar(
-                      "Success",
-                      "Password changed successfully",
-                      backgroundColor: Colors.green.withOpacity(0.1),
-                      colorText: Colors.green,
-                    );
-                  }
-                },
+              Obx(
+                () => AppButton(
+                  text: "Change Password",
+                  isLoading: _authController.isLoading.value,
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      final success = await _authController.changePassword(
+                        _currentPasswordController.text,
+                        _newPasswordController.text,
+                      );
+                      if (success) {
+                        Get.back();
+                      }
+                    }
+                  },
+                ),
               ),
             ],
           ),
@@ -114,6 +129,7 @@ class _SecurityScreenState extends State<SecurityScreen> {
     required TextEditingController controller,
     required bool obscure,
     required VoidCallback onToggle,
+    String? Function(String?)? validator,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,7 +151,9 @@ class _SecurityScreenState extends State<SecurityScreen> {
             hintStyle: GoogleFonts.inter(color: Colors.grey[400]),
             suffixIcon: IconButton(
               icon: Icon(
-                obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                obscure
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
                 color: Colors.grey[400],
                 size: 20.sp,
               ),
@@ -149,17 +167,27 @@ class _SecurityScreenState extends State<SecurityScreen> {
               borderRadius: BorderRadius.circular(12.r),
               borderSide: const BorderSide(color: AppColors.primary),
             ),
-            contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.r),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.r),
+              borderSide: const BorderSide(color: Colors.red),
+            ),
+            contentPadding:
+                EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
           ),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return "Field required";
-            }
-            if (value.length < 8) {
-              return "Min 8 characters required";
-            }
-            return null;
-          },
+          validator: validator ??
+              (value) {
+                if (value == null || value.isEmpty) {
+                  return "Field required";
+                }
+                if (value.length < 8) {
+                  return "Min 8 characters required";
+                }
+                return null;
+              },
         ),
       ],
     );

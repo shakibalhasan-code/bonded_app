@@ -15,17 +15,20 @@ class BookEventScreen extends StatefulWidget {
 
 class _BookEventScreenState extends State<BookEventScreen> {
   int _seats = 1;
-  final double _pricePerSeat = 0.00;
-  final double _taxPerSeat = 0.00;
+  final EventDetailsController _eventDetailsController =
+      Get.find<EventDetailsController>();
 
   @override
   Widget build(BuildContext context) {
     final EventModel? event = Get.arguments;
-    final double currentPrice = event?.price ?? _pricePerSeat;
+    final double unitPrice = event?.price ?? 0.0;
+    const double taxRate = 0.05; // 5% tax example, or 0 if not needed
 
-    double subtotal = _seats * currentPrice;
-    double tax = _seats * _taxPerSeat;
+    double subtotal = _seats * unitPrice;
+    double tax = subtotal * taxRate;
     double total = subtotal + tax;
+
+    final isFree = unitPrice == 0;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -59,19 +62,19 @@ class _BookEventScreenState extends State<BookEventScreen> {
           ],
         ),
         child: Obx(() {
-          final controller = Get.find<EventDetailsController>();
+          final busy = _eventDetailsController.isBooking.value;
           return ElevatedButton(
-            onPressed: controller.isBooking.value
+            onPressed: busy
                 ? null
                 : () {
-                    if (event != null) {
-                      controller.bookEvent(
-                        event.id,
-                        data: {"quantity": _seats},
-                      );
-                    } else {
+                    if (event == null) {
                       Get.snackbar("Error", "Event details not found");
+                      return;
                     }
+                    _eventDetailsController.bookEvent(
+                      event.id,
+                      data: {'quantity': _seats},
+                    );
                   },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
@@ -80,10 +83,10 @@ class _BookEventScreenState extends State<BookEventScreen> {
                 borderRadius: BorderRadius.circular(30.r),
               ),
             ),
-            child: controller.isBooking.value
+            child: busy
                 ? const CircularProgressIndicator(color: Colors.white)
                 : Text(
-                    "Book Now",
+                    isFree ? "Confirm Booking" : "Pay & Confirm",
                     style: GoogleFonts.inter(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w700,
@@ -149,30 +152,31 @@ class _BookEventScreenState extends State<BookEventScreen> {
             Container(
               padding: EdgeInsets.all(24.w),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                color: const Color(0xFFF8F7FF),
+                borderRadius: BorderRadius.circular(24.r),
+                border: Border.all(color: AppColors.primary.withOpacity(0.1)),
               ),
               child: Column(
                 children: [
                   _buildPriceRow(
-                    "$_seats Seats",
-                    "\$${subtotal.toStringAsFixed(2)}",
+                    "Price per seat",
+                    isFree ? "FREE" : "\$${unitPrice.toStringAsFixed(2)}",
                   ),
                   SizedBox(height: 16.h),
-                  _buildPriceRow("Tax", "\$${tax.toStringAsFixed(2)}"),
+                  _buildPriceRow(
+                    "$_seats Seats",
+                    isFree ? "FREE" : "\$${subtotal.toStringAsFixed(2)}",
+                  ),
+                  if (!isFree) ...[
+                    SizedBox(height: 16.h),
+                    _buildPriceRow("Tax (5%)", "\$${tax.toStringAsFixed(2)}"),
+                  ],
                   SizedBox(height: 16.h),
                   const Divider(),
                   SizedBox(height: 16.h),
                   _buildPriceRow(
-                    "Total",
-                    "\$${total.toStringAsFixed(2)}",
+                    "Total Amount",
+                    isFree ? "FREE" : "\$${total.toStringAsFixed(2)}",
                     isTotal: true,
                   ),
                 ],
