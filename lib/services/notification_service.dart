@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import '../core/routes/app_routes.dart';
 
 class NotificationService extends GetxService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
@@ -60,7 +61,35 @@ class NotificationService extends GetxService {
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       debugPrint('A new onMessageOpenedApp event was published!');
-      // Handle navigation here if needed
+      _handleNotificationRouting(message);
     });
+  }
+
+  void _handleNotificationRouting(RemoteMessage message) {
+    final data = message.data;
+    final String? type = data['type'];
+    final String? id = data['id'];
+
+    if (type == null) return;
+
+    switch (type) {
+      case 'chat':
+        if (id != null) {
+          Get.toNamed(AppRoutes.CHAT, arguments: {'conversationId': id});
+        }
+        break;
+      case 'event':
+        if (id != null) {
+          Get.toNamed(AppRoutes.EVENT_DETAILS, arguments: id);
+        }
+        break;
+      case 'circle':
+        if (id != null) {
+          Get.toNamed(AppRoutes.JOINED_CIRCLE_DETAILS, arguments: id);
+        }
+        break;
+      default:
+        debugPrint('Unknown notification type: $type');
+    }
   }
 }

@@ -1,3 +1,4 @@
+import 'package:bonded_app/core/routes/app_routes.dart';
 import 'package:bonded_app/screens/profile/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -47,7 +48,10 @@ class MessagesScreen extends StatelessWidget {
             child: _buildAppBarAction(Icons.person),
           ),
           SizedBox(width: 12.w),
-          _buildAppBarAction(Icons.notifications),
+          InkWell(
+            onTap: () => Get.toNamed(AppRoutes.NOTIFICATION),
+            child: _buildAppBarAction(Icons.notifications),
+          ),
           SizedBox(width: 20.w),
         ],
       ),
@@ -86,7 +90,8 @@ class MessagesScreen extends StatelessWidget {
                           : ListView.separated(
                               physics: const AlwaysScrollableScrollPhysics(),
                               padding: EdgeInsets.only(top: 8.h, bottom: 100.h),
-                              itemCount: controller.filteredConversations.length,
+                              itemCount:
+                                  controller.filteredConversations.length,
                               separatorBuilder: (context, index) =>
                                   const Divider(height: 1),
                               itemBuilder: (context, index) {

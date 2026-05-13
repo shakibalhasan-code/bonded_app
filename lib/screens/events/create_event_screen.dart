@@ -9,6 +9,7 @@ import '../../core/routes/app_routes.dart';
 import '../../controllers/create_event_controller.dart';
 import '../../widgets/circles/interest_selection_sheet.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:country_picker/country_picker.dart';
 
 class CreateEventScreen extends GetView<CreateEventController> {
   const CreateEventScreen({Key? key}) : super(key: key);
@@ -313,23 +314,35 @@ class CreateEventScreen extends GetView<CreateEventController> {
               _buildLabel("Phone Number"),
               Row(
                 children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12.w,
-                      vertical: 12.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFAF7FF),
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          "🇧🇩 +880",
-                          style: GoogleFonts.inter(fontSize: 14.sp),
-                        ),
-                        const Icon(Icons.keyboard_arrow_down),
-                      ],
+                  GestureDetector(
+                    onTap: () {
+                      showCountryPicker(
+                        context: context,
+                        showPhoneCode: true,
+                        onSelect: (Country country) {
+                          controller.countryCode.value = country.phoneCode;
+                          controller.countryFlag.value = country.flagEmoji;
+                        },
+                      );
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 12.h,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFAF7FF),
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Row(
+                        children: [
+                          Obx(() => Text(
+                                "${controller.countryFlag.value} +${controller.countryCode.value}",
+                                style: GoogleFonts.inter(fontSize: 14.sp),
+                              )),
+                          const Icon(Icons.keyboard_arrow_down),
+                        ],
+                      ),
                     ),
                   ),
                   SizedBox(width: 12.w),

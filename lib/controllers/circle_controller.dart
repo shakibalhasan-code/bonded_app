@@ -644,12 +644,17 @@ class CircleController extends BaseController {
 
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
+        // Extract real comment data
+        final realCommentJson = data['data'];
+        final realComment = CommentModel.fromJson(realCommentJson);
+
+        // Update temp comment with real data
+        _updateTempCommentWithReal(post, tempId, realComment);
+
         if (circle != null) {
           fetchCircleFeed(circle);
         } else {
-          // If no circle model provided (e.g. from Home), we might need to manually update
-          // but usually the server response or a manual fetch is needed.
-          // For now, just show success.
+          // Home screen or other context
           Get.snackbar("Success", "Comment added successfully");
         }
       } else {
@@ -1132,5 +1137,29 @@ class CircleController extends BaseController {
         ),
       ),
     );
+  }
+
+  void _updateTempCommentWithReal(
+    PostModel post,
+    String tempId,
+    CommentModel realComment,
+  ) {
+    // Check top-level comments
+    final int commentIndex = post.comments.indexWhere((c) => c.id == tempId);
+    if (commentIndex != -1) {
+      post.comments[commentIndex] = realComment;
+      post.comments.refresh();
+      return;
+    }
+
+    // Check nested replies
+    for (var comment in post.comments) {
+      final int replyIndex = comment.replies.indexWhere((r) => r.id == tempId);
+      if (replyIndex != -1) {
+        comment.replies[replyIndex] = realComment;
+        comment.replies.refresh();
+        return;
+      }
+    }
   }
 }

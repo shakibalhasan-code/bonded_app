@@ -90,7 +90,7 @@ class EventCard extends StatelessWidget {
               padding: EdgeInsets.all(12.w),
               child: Stack(
                 children: [
-                  if (event.isExternal)
+                  if (event.isExternal && event.sourceType != 'viator')
                     Positioned(
                       top: 0,
                       left: 0,

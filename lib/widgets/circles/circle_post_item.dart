@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:bonded_app/core/constants/app_endpoints.dart';
+import 'package:bonded_app/core/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:video_player/video_player.dart';
+import 'package:chewie/chewie.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/home_models.dart';
@@ -17,6 +19,7 @@ import '../messages/full_screen_video_player.dart';
 import '../events/media_viewers.dart';
 import 'circle_comment_item.dart';
 import 'reaction_selector.dart';
+import 'full_screen_audio_player.dart';
 
 class CirclePostItem extends StatefulWidget {
   final PostModel post;
@@ -135,6 +138,39 @@ class _CirclePostItemState extends State<CirclePostItem> {
             ),
           ),
 
+          // View all comments link
+          Obx(() {
+            final total = widget.post.commentsCount.value;
+            final shown = widget.post.comments.length;
+            if (total > shown) {
+              return Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+                child: GestureDetector(
+                  onTap: () {
+                    // Navigate to circle to see all comments
+                    if (widget.circle != null) {
+                      Get.toNamed(
+                        widget.circle!.isJoined.value
+                            ? AppRoutes.JOINED_CIRCLE_DETAILS
+                            : AppRoutes.PUBLIC_CIRCLE_DETAILS,
+                        arguments: widget.circle,
+                      );
+                    }
+                  },
+                  child: Text(
+                    "View all $total comments",
+                    style: GoogleFonts.inter(
+                      fontSize: 13.sp,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
+
           // Comment Input
           Obx(
             () => widget.post.isCommenting.value
@@ -223,10 +259,31 @@ class _CirclePostItemState extends State<CirclePostItem> {
                         if (widget.circle != null) {
                           Get.toNamed(
                             widget.circle!.isJoined.value
-                                ? '/joined-circle-details'
-                                : '/public-circle-details',
+                                ? AppRoutes.JOINED_CIRCLE_DETAILS
+                                : AppRoutes.PUBLIC_CIRCLE_DETAILS,
                             arguments: widget.circle,
                           );
+                        } else if (widget.post.circleId != null) {
+                          // Try to navigate with minimal info or fetch
+                          // For now, we can try to find if this circle exists in CircleController's lists
+                          final circleController = Get.find<CircleController>();
+                          CircleModel? found = circleController.joinedCircles
+                              .firstWhereOrNull(
+                                (c) => c.id == widget.post.circleId,
+                              );
+                          found ??= circleController.publicCircles
+                              .firstWhereOrNull(
+                                (c) => c.id == widget.post.circleId,
+                              );
+
+                          if (found != null) {
+                            Get.toNamed(
+                              found.isJoined.value
+                                  ? AppRoutes.JOINED_CIRCLE_DETAILS
+                                  : AppRoutes.PUBLIC_CIRCLE_DETAILS,
+                              arguments: found,
+                            );
+                          }
                         }
                       },
                       child: Container(
@@ -285,7 +342,9 @@ class _CirclePostItemState extends State<CirclePostItem> {
 
     // Filter out files from carousel, handle them separately
     final visualMedia = mediaItems
-        .where((m) => m.type == 'image' || m.type == 'video')
+        .where(
+          (m) => m.type == 'image' || m.type == 'video' || m.type == 'audio',
+        )
         .toList();
     if (visualMedia.isEmpty) return const SizedBox.shrink();
 
@@ -317,6 +376,11 @@ class _CirclePostItemState extends State<CirclePostItem> {
                       child: media.type == 'video'
                           ? VideoPostPlayer(
                               videoUrl: displayUrl,
+                              isLocal: !isNetwork,
+                            )
+                          : media.type == 'audio'
+                          ? AudioPostPlayer(
+                              audioUrl: displayUrl,
                               isLocal: !isNetwork,
                             )
                           : isNetwork
@@ -463,64 +527,111 @@ class _CirclePostItemState extends State<CirclePostItem> {
 
   Widget _buildStatsRow() {
     return Obx(() {
+      final likes = widget.post.likesCount.value;
+      final comments = widget.post.commentsCount.value;
+      final shares = widget.post.sharesCount.value;
       final reaction = widget.post.reactionType.value;
-      if (reaction == "none") return const SizedBox.shrink();
+
+      if (likes == 0 && comments == 0 && shares == 0) {
+        return const SizedBox.shrink();
+      }
 
       return Padding(
         padding: EdgeInsets.only(left: 20.w, right: 20.w, bottom: 8.h),
         child: Row(
           children: [
-            Builder(
-              builder: (context) {
-                String emoji = "";
-                IconData? icon;
-                Color color = Colors.white;
-                Color bgColor = AppColors.primary;
+            if (likes > 0) ...[
+              Builder(
+                builder: (context) {
+                  String emoji = "👍";
+                  Color bgColor = Colors.blue;
 
-                switch (reaction) {
-                  case "like":
-                    emoji = "👍";
-                    bgColor = Colors.blue;
-                    break;
-                  case "love":
-                    emoji = "❤️";
-                    bgColor = Colors.red;
-                    break;
-                  case "care":
-                    emoji = "🤗";
-                    bgColor = Colors.orange;
-                    break;
-                  case "haha":
-                    emoji = "😆";
-                    bgColor = Colors.orange;
-                    break;
-                  case "wow":
-                    emoji = "😮";
-                    bgColor = Colors.orange;
-                    break;
-                  case "sad":
-                    emoji = "😢";
-                    bgColor = Colors.orange;
-                    break;
-                  case "angry":
-                    emoji = "😡";
-                    bgColor = Colors.redAccent;
-                    break;
-                }
+                  if (reaction != "none") {
+                    switch (reaction) {
+                      case "like":
+                        emoji = "👍";
+                        bgColor = Colors.blue;
+                        break;
+                      case "love":
+                        emoji = "❤️";
+                        bgColor = Colors.red;
+                        break;
+                      case "care":
+                        emoji = "🤗";
+                        bgColor = Colors.orange;
+                        break;
+                      case "haha":
+                        emoji = "😆";
+                        bgColor = Colors.orange;
+                        break;
+                      case "wow":
+                        emoji = "😮";
+                        bgColor = Colors.orange;
+                        break;
+                      case "sad":
+                        emoji = "😢";
+                        bgColor = Colors.orange;
+                        break;
+                      case "angry":
+                        emoji = "😡";
+                        bgColor = Colors.redAccent;
+                        break;
+                    }
+                  }
 
-                return Container(
-                  padding: EdgeInsets.all(4.w),
-                  decoration: BoxDecoration(
-                    color: bgColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: emoji.isNotEmpty
-                      ? Text(emoji, style: TextStyle(fontSize: 10.sp))
-                      : Icon(icon, size: 10.sp, color: color),
-                );
-              },
-            ),
+                  return Container(
+                    padding: EdgeInsets.all(4.w),
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(emoji, style: TextStyle(fontSize: 8.sp)),
+                  );
+                },
+              ),
+              SizedBox(width: 6.w),
+              Text(
+                "$likes",
+                style: GoogleFonts.inter(
+                  fontSize: 12.sp,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
             const Spacer(),
+            if (comments > 0) ...[
+              Text(
+                "$comments ${comments == 1 ? 'comment' : 'comments'}",
+                style: GoogleFonts.inter(
+                  fontSize: 12.sp,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+            if (comments > 0 && shares > 0) ...[
+              SizedBox(width: 8.w),
+              Container(
+                width: 3.w,
+                height: 3.w,
+                decoration: BoxDecoration(
+                  color: Colors.grey[400],
+                  shape: BoxShape.circle,
+                ),
+              ),
+              SizedBox(width: 8.w),
+            ],
+            if (shares > 0) ...[
+              Text(
+                "$shares ${shares == 1 ? 'share' : 'shares'}",
+                style: GoogleFonts.inter(
+                  fontSize: 12.sp,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ],
         ),
       );
@@ -908,9 +1019,9 @@ class VideoPostPlayer extends StatefulWidget {
 
 class _VideoPostPlayerState extends State<VideoPostPlayer>
     with WidgetsBindingObserver {
-  late VideoPlayerController _controller;
+  late VideoPlayerController _videoPlayerController;
+  ChewieController? _chewieController;
   bool _isInitialized = false;
-  bool _isPlaying = false;
 
   @override
   void initState() {
@@ -919,26 +1030,40 @@ class _VideoPostPlayerState extends State<VideoPostPlayer>
     _initializeController();
   }
 
-  void _initializeController() {
+  void _initializeController() async {
     if (widget.isLocal) {
-      _controller = VideoPlayerController.file(File(widget.videoUrl));
+      _videoPlayerController = VideoPlayerController.file(
+        File(widget.videoUrl),
+      );
     } else {
-      _controller = VideoPlayerController.networkUrl(
+      _videoPlayerController = VideoPlayerController.networkUrl(
         Uri.parse(widget.videoUrl),
       );
     }
 
-    _controller.initialize().then((_) {
-      if (mounted) {
-        setState(() {
-          _isInitialized = true;
-          _isPlaying = true;
-        });
-        _controller.setLooping(true);
-        _controller.setVolume(0); // Mute by default in feed
-        _controller.play();
-      }
-    });
+    await _videoPlayerController.initialize();
+
+    _chewieController = ChewieController(
+      videoPlayerController: _videoPlayerController,
+      autoPlay: true,
+      looping: true,
+      showControls: true, // Show controls as requested
+      aspectRatio: _videoPlayerController.value.aspectRatio,
+      autoInitialize: true,
+      placeholder: Container(color: Colors.black),
+      materialProgressColors: ChewieProgressColors(
+        playedColor: AppColors.primary,
+        handleColor: AppColors.primary,
+        backgroundColor: Colors.white24,
+        bufferedColor: Colors.white54,
+      ),
+    );
+
+    if (mounted) {
+      setState(() {
+        _isInitialized = true;
+      });
+    }
   }
 
   @override
@@ -948,81 +1073,214 @@ class _VideoPostPlayerState extends State<VideoPostPlayer>
 
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.paused) {
-      _controller.pause();
-    } else if (state == AppLifecycleState.resumed) {
-      if (_isPlaying) {
-        _controller.play();
-      }
+      _videoPlayerController.pause();
     }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _controller.dispose();
+    _videoPlayerController.dispose();
+    _chewieController?.dispose();
     super.dispose();
-  }
-
-  void _togglePlay() {
-    setState(() {
-      if (_controller.value.isPlaying) {
-        _controller.pause();
-        _isPlaying = false;
-      } else {
-        _controller.play();
-        _isPlaying = true;
-      }
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _togglePlay,
-      onDoubleTap: () {
-        Get.to(
-          () => FullScreenVideoPlayer(
-            videoUrl: widget.videoUrl,
-            isLocal: widget.isLocal,
-          ),
-        );
-      },
-      child: Container(
-        color: Colors.black,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            if (_isInitialized)
-              Center(
-                child: AspectRatio(
-                  aspectRatio: _controller.value.aspectRatio,
-                  child: VideoPlayer(_controller),
+    return Container(
+      color: Colors.black,
+      child: _isInitialized && _chewieController != null
+          ? Stack(
+              children: [
+                Center(
+                  child: AspectRatio(
+                    aspectRatio: _videoPlayerController.value.aspectRatio,
+                    child: Chewie(controller: _chewieController!),
+                  ),
                 ),
-              )
-            else
-              const Center(
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: GestureDetector(
+                    onTap: () {
+                      _videoPlayerController.pause();
+                      Get.to(
+                        () => FullScreenVideoPlayer(
+                          videoUrl: widget.videoUrl,
+                          isLocal: widget.isLocal,
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.fullscreen,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
                 ),
+              ],
+            )
+          : const Center(
+              child: CircularProgressIndicator(
+                color: Colors.white,
+                strokeWidth: 2,
               ),
-            // Play/Pause icon overlay
-            if (!_isPlaying)
-              Container(
-                padding: EdgeInsets.all(10.w),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
-                  shape: BoxShape.circle,
+            ),
+    );
+  }
+}
+
+class AudioPostPlayer extends StatefulWidget {
+  final String audioUrl;
+  final bool isLocal;
+
+  const AudioPostPlayer({
+    Key? key,
+    required this.audioUrl,
+    required this.isLocal,
+  }) : super(key: key);
+
+  @override
+  State<AudioPostPlayer> createState() => _AudioPostPlayerState();
+}
+
+class _AudioPostPlayerState extends State<AudioPostPlayer> {
+  late VideoPlayerController _controller;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeController();
+  }
+
+  void _initializeController() async {
+    if (widget.isLocal) {
+      _controller = VideoPlayerController.file(File(widget.audioUrl));
+    } else {
+      _controller = VideoPlayerController.networkUrl(
+        Uri.parse(widget.audioUrl),
+      );
+    }
+
+    await _controller.initialize();
+    if (mounted) {
+      setState(() {
+        _isInitialized = true;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(24.r),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.audiotrack, size: 60.sp, color: AppColors.primary),
+          SizedBox(height: 16.h),
+          if (_isInitialized) ...[
+            ValueListenableBuilder(
+              valueListenable: _controller,
+              builder: (context, VideoPlayerValue value, child) {
+                final duration = value.duration.inMilliseconds;
+                final position = value.position.inMilliseconds;
+                return Column(
+                  children: [
+                    Slider(
+                      value: position.toDouble().clamp(
+                        0.0,
+                        duration.toDouble(),
+                      ),
+                      min: 0.0,
+                      max: duration.toDouble() > 0 ? duration.toDouble() : 1.0,
+                      activeColor: AppColors.primary,
+                      onChanged: (val) {
+                        _controller.seekTo(Duration(milliseconds: val.toInt()));
+                      },
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            _formatDuration(value.position),
+                            style: TextStyle(fontSize: 12.sp),
+                          ),
+                          Text(
+                            _formatDuration(value.duration),
+                            style: TextStyle(fontSize: 12.sp),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    _controller.value.isPlaying
+                        ? Icons.pause_circle_filled
+                        : Icons.play_circle_filled,
+                    size: 50.sp,
+                    color: AppColors.primary,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _controller.value.isPlaying
+                          ? _controller.pause()
+                          : _controller.play();
+                    });
+                  },
                 ),
-                child: Icon(
-                  Icons.play_arrow_rounded,
-                  color: Colors.white,
-                  size: 40.sp,
+                IconButton(
+                  icon: const Icon(Icons.fullscreen),
+                  onPressed: () {
+                    _controller.pause();
+                    Get.to(
+                      () => FullScreenAudioPlayer(
+                        audioUrl: widget.audioUrl,
+                        isLocal: widget.isLocal,
+                      ),
+                    );
+                  },
                 ),
-              ),
-          ],
-        ),
+              ],
+            ),
+          ] else
+            const CircularProgressIndicator(),
+        ],
       ),
     );
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+    String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$twoDigitMinutes:$twoDigitSeconds";
   }
 }

@@ -92,20 +92,74 @@ class _AddEventHighlightScreenState extends State<AddEventHighlightScreen> {
     }
   }
 
-  void _addVideoSlot() {
+  Future<void> _addVideoSlot() async {
     if (_videoSlots.length >= _maxVideos) {
       Get.snackbar('Limit Reached', 'Maximum $_maxVideos videos allowed');
       return;
     }
-    setState(() => _videoSlots.add(null));
+    final XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
+    if (video != null && mounted) {
+      setState(() {
+        // If there's an empty slot, fill it. Otherwise add new.
+        final emptyIndex = _videoSlots.indexOf(null);
+        if (emptyIndex != -1) {
+          _videoSlots[emptyIndex] = video;
+        } else {
+          _videoSlots.add(video);
+        }
+      });
+    }
   }
 
-  void _addImageSlot() {
+  Future<void> _addImageSlot() async {
     if (_imageSlots.length >= _maxImages) {
       Get.snackbar('Limit Reached', 'Maximum $_maxImages images allowed');
       return;
     }
-    setState(() => _imageSlots.add(null));
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null && mounted) {
+      setState(() {
+        final emptyIndex = _imageSlots.indexOf(null);
+        if (emptyIndex != -1) {
+          _imageSlots[emptyIndex] = image;
+        } else {
+          _imageSlots.add(image);
+        }
+      });
+    }
+  }
+
+  void _showAddHighlightOptions() {
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.symmetric(vertical: 20.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.videocam, color: AppColors.primary),
+              title: Text('Upload Video'),
+              onTap: () {
+                Get.back();
+                _addVideoSlot();
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.image, color: AppColors.primary),
+              title: Text('Upload Image'),
+              onTap: () {
+                Get.back();
+                _addImageSlot();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   bool get _hasMedia =>

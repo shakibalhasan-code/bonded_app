@@ -38,6 +38,8 @@ class _EventHighlightDetailsScreenState extends State<EventHighlightDetailsScree
     }
   }
 
+  int _currentIndex = 0;
+
   @override
   Widget build(BuildContext context) {
     final HighlightModel highlight = Get.arguments;
@@ -50,10 +52,14 @@ class _EventHighlightDetailsScreenState extends State<EventHighlightDetailsScree
             PageView.builder(
               scrollDirection: Axis.vertical,
               itemCount: _mediaItems.length,
+              onPageChanged: (index) => setState(() => _currentIndex = index),
               itemBuilder: (context, index) {
                 final item = _mediaItems[index];
                 if (item.isVideo) {
-                  return _ReelVideoPlayer(videoUrl: item.url);
+                  return _ReelVideoPlayer(
+                    videoUrl: item.url,
+                    isActive: _currentIndex == index,
+                  );
                 } else {
                   return _ReelImageViewer(imageUrl: item.url);
                 }
@@ -366,8 +372,13 @@ class _HighlightMediaItem {
 
 class _ReelVideoPlayer extends StatefulWidget {
   final String videoUrl;
+  final bool isActive;
 
-  const _ReelVideoPlayer({Key? key, required this.videoUrl}) : super(key: key);
+  const _ReelVideoPlayer({
+    Key? key,
+    required this.videoUrl,
+    this.isActive = false,
+  }) : super(key: key);
 
   @override
   State<_ReelVideoPlayer> createState() => _ReelVideoPlayerState();
@@ -383,19 +394,38 @@ class _ReelVideoPlayerState extends State<_ReelVideoPlayer> {
     _initializePlayer();
   }
 
+  @override
+  void didUpdateWidget(_ReelVideoPlayer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive != oldWidget.isActive) {
+      if (widget.isActive) {
+        _videoPlayerController.play();
+      } else {
+        _videoPlayerController.pause();
+      }
+    }
+  }
+
   Future<void> _initializePlayer() async {
-    _videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+    _videoPlayerController =
+        VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
     await _videoPlayerController.initialize();
-    
+
     _chewieController = ChewieController(
       videoPlayerController: _videoPlayerController,
-      autoPlay: true,
+      autoPlay: widget.isActive,
       looping: true,
-      showControls: false,
+      showControls: true, // Enabled controls
       aspectRatio: _videoPlayerController.value.aspectRatio,
       placeholder: Container(color: Colors.black),
+      materialProgressColors: ChewieProgressColors(
+        playedColor: AppColors.primary,
+        handleColor: AppColors.primary,
+        backgroundColor: Colors.white24,
+        bufferedColor: Colors.white54,
+      ),
     );
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   @override
@@ -407,7 +437,8 @@ class _ReelVideoPlayerState extends State<_ReelVideoPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    if (_chewieController != null && _chewieController!.videoPlayerController.value.isInitialized) {
+    if (_chewieController != null &&
+        _chewieController!.videoPlayerController.value.isInitialized) {
       return Center(
         child: AspectRatio(
           aspectRatio: _videoPlayerController.value.aspectRatio,
@@ -415,7 +446,9 @@ class _ReelVideoPlayerState extends State<_ReelVideoPlayer> {
         ),
       );
     } else {
-      return const Center(child: CircularProgressIndicator(color: Colors.white));
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.white),
+      );
     }
   }
 }

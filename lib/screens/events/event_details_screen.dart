@@ -10,6 +10,7 @@ import '../../core/routes/app_routes.dart';
 import '../../controllers/event_details_controller.dart';
 import '../../controllers/auth_controller.dart';
 import '../../widgets/events/media_viewers.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class EventDetailsScreen extends StatelessWidget {
   final EventModel? event;
@@ -356,7 +357,23 @@ class EventDetailsScreen extends StatelessWidget {
                 _buildSectionTitle("Meeting Link"),
                 SizedBox(height: 8.h),
                 InkWell(
-                  onTap: () {}, // Handle URL launch
+                  onTap: () async {
+                    final link =
+                        currentEvent.meetingLink ?? currentEvent.virtualLink;
+                    if (link != null && link.isNotEmpty) {
+                      final uri = Uri.parse(
+                        link.startsWith('http') ? link : 'https://$link',
+                      );
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(
+                          uri,
+                          mode: LaunchMode.externalApplication,
+                        );
+                      } else {
+                        Get.snackbar("Error", "Could not launch meeting link");
+                      }
+                    }
+                  },
                   child: Text(
                     currentEvent.meetingLink ?? currentEvent.virtualLink ?? '',
                     style: GoogleFonts.inter(

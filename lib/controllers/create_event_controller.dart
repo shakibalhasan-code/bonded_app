@@ -37,7 +37,8 @@ class CreateEventController extends BaseController {
   var isPaid = false.obs;
   var showPhone = true.obs;
   var showSocial = true.obs;
-  var selectedCountryCode = '+880'.obs;
+  var countryCode = '880'.obs;
+  var countryFlag = '🇧🇩'.obs;
 
   // Interests State
   var allInterests = <Interest>[].obs;
@@ -356,7 +357,7 @@ class CreateEventController extends BaseController {
       if (!isCircleEvent) {
         body["isPaid"] = isPaid.value;
         body["currency"] = "USD";
-        body["phoneCountryCode"] = selectedCountryCode.value;
+        body["phoneCountryCode"] = "+${countryCode.value}";
         body["phoneNumber"] = phoneController.text;
         body["showPhoneToAttendees"] = showPhone.value;
         body["facebookLink"] = fbController.text;

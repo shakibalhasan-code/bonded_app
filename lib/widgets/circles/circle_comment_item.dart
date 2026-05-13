@@ -128,12 +128,42 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        widget.comment.userName,
-                        style: GoogleFonts.inter(
-                          fontSize: 13.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textHeading,
+                      Flexible(
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                widget.comment.userName,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 13.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF1B0B3B),
+                                ),
+                              ),
+                            ),
+                            if (widget.comment.isAuthor) ...[
+                              SizedBox(width: 4.w),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 6.w,
+                                  vertical: 1.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4.r),
+                                ),
+                                child: Text(
+                                  "Author",
+                                  style: GoogleFonts.inter(
+                                    fontSize: 9.sp,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                       SizedBox(height: 4.h),
@@ -394,6 +424,17 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                                   color: reactionColor,
                                 ),
                               ),
+                              if (widget.comment.likesCount.value > 0) ...[
+                                SizedBox(width: 6.w),
+                                Text(
+                                  "${widget.comment.likesCount.value}",
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.sp,
+                                    color: Colors.grey[500],
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         );
