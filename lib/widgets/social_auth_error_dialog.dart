@@ -11,44 +11,13 @@ import '../core/constants/app_assets.dart';
 /// Mimics the real "Review app required" dialogs shown by Google, Apple, and Facebook.
 class SocialAuthErrorDialog {
   static void show(String provider) {
-    if (Platform.isIOS && provider == 'apple') {
-      Get.dialog(_AppleDialog(), barrierDismissible: false);
-    } else {
-      Get.dialog(_MaterialProviderDialog(provider: provider),
-          barrierDismissible: false);
-    }
+    // Show the branded dialog for all providers to ensure icons are displayed as requested
+    Get.dialog(_MaterialProviderDialog(provider: provider),
+        barrierDismissible: false);
   }
 }
 
-// ─── Apple (iOS-native Cupertino style) ────────────────────────────────────
-
-class _AppleDialog extends StatelessWidget {
-  const _AppleDialog();
-
-  @override
-  Widget build(BuildContext context) {
-    return CupertinoAlertDialog(
-      title: const Text('Sign in with Apple'),
-      content: Padding(
-        padding: EdgeInsets.only(top: 6.h),
-        child: const Text(
-          'Review app required by Apple.\n\n'
-          'This app has not completed Apple\'s review process. '
-          'Sign-in is currently restricted.',
-        ),
-      ),
-      actions: [
-        CupertinoDialogAction(
-          isDefaultAction: true,
-          onPressed: Get.back,
-          child: const Text('OK'),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Google / Facebook (Material, provider-branded) ────────────────────────
+// ─── Material Provider Dialog (Branded) ────────────────────────
 
 class _MaterialProviderDialog extends StatelessWidget {
   final String provider;
@@ -72,7 +41,14 @@ class _MaterialProviderDialog extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
             child: Row(
               children: [
-                SvgPicture.asset(config.iconAsset, width: 22.r, height: 22.r),
+                SvgPicture.asset(
+                  config.iconAsset,
+                  width: 22.r,
+                  height: 22.r,
+                  colorFilter: config.iconColor != null
+                      ? ColorFilter.mode(config.iconColor!, BlendMode.srcIn)
+                      : null,
+                ),
                 SizedBox(width: 10.w),
                 Text(
                   config.title,
@@ -161,6 +137,16 @@ class _MaterialProviderDialog extends StatelessWidget {
           titleColor: const Color(0xFF202124),
           accentColor: const Color(0xFF1A73E8),
         );
+      case 'apple':
+        return _ProviderConfig(
+          name: 'Apple',
+          title: 'Sign in with Apple',
+          iconAsset: AppAssets.appleIcon,
+          headerColor: Colors.black,
+          titleColor: Colors.white,
+          accentColor: Colors.black,
+          iconColor: Colors.white,
+        );
       case 'facebook':
         return _ProviderConfig(
           name: 'Facebook',
@@ -169,6 +155,7 @@ class _MaterialProviderDialog extends StatelessWidget {
           headerColor: const Color(0xFF1877F2),
           titleColor: Colors.white,
           accentColor: const Color(0xFF1877F2),
+          iconColor: Colors.white,
         );
       default:
         return _ProviderConfig(
@@ -190,6 +177,7 @@ class _ProviderConfig {
   final Color headerColor;
   final Color titleColor;
   final Color accentColor;
+  final Color? iconColor;
 
   const _ProviderConfig({
     required this.name,
@@ -198,5 +186,7 @@ class _ProviderConfig {
     required this.headerColor,
     required this.titleColor,
     required this.accentColor,
+    this.iconColor,
   });
 }
+
