@@ -54,7 +54,10 @@ class _CreatePostSheetState extends State<CreatePostSheet> {
   }
 
   Future<void> _pickFile() async {
-    FilePickerResult? result = await FilePicker.pickFiles();
+    FilePickerResult? result = await FilePicker.pickFiles(
+      type: FileType.any,
+      allowMultiple: false,
+    );
     if (result != null && result.files.single.path != null) {
       setState(() {
         _selectedFile = File(result.files.single.path!);

@@ -144,16 +144,20 @@ class BondController extends GetxController {
     }
   }
 
-  Future<void> sendBondRequest(String userId) async {
+  Future<bool> sendBondRequest(String userId) async {
     try {
       final response = await _apiService.post('${AppUrls.bondRequests}/$userId', {});
       final data = jsonDecode(response.body);
-      if (data['success']) {
+      if (data['success'] == true) {
         Get.snackbar('Success', 'Bond request sent');
         fetchNearbyPeople();
+        return true;
       }
+      Get.snackbar('Error', data['message']?.toString() ?? 'Failed to send bond request');
+      return false;
     } catch (e) {
       Get.snackbar('Error', 'Failed to send bond request: $e');
+      return false;
     }
   }
 

@@ -14,7 +14,7 @@ class MemberModel {
   final String role;
   final bool isOwner;
   final bool isBonded;
-  final String bondStatus; // none, accepted, pending_sent, pending_received
+  final RxString bondStatus; // none, accepted, pending_sent, pending_received
 
   MemberModel({
     required this.id,
@@ -24,8 +24,8 @@ class MemberModel {
     this.role = 'Member',
     required this.isOwner,
     this.isBonded = false,
-    this.bondStatus = 'none',
-  });
+    String bondStatus = 'none',
+  }) : bondStatus = bondStatus.obs;
 
   factory MemberModel.fromJson(Map<String, dynamic> json) {
     final user = json['user'];

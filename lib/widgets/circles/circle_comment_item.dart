@@ -19,7 +19,7 @@ import '../events/media_viewers.dart';
 class CircleCommentItem extends StatefulWidget {
   final CommentModel comment;
   final PostModel post;
-  final bool isReply;
+  final int depth;
 
   final CircleModel? circle;
 
@@ -28,8 +28,10 @@ class CircleCommentItem extends StatefulWidget {
     required this.comment,
     this.circle,
     required this.post,
-    this.isReply = false,
+    this.depth = 0,
   }) : super(key: key);
+
+  bool get isReply => depth > 0;
 
   @override
   State<CircleCommentItem> createState() => _CircleCommentItemState();
@@ -65,7 +67,10 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
   }
 
   Future<void> _pickFile() async {
-    FilePickerResult? result = await FilePicker.pickFiles();
+    FilePickerResult? result = await FilePicker.pickFiles(
+      type: FileType.any,
+      allowMultiple: false,
+    );
 
     if (result != null && result.files.single.path != null) {
       setState(() {
@@ -86,8 +91,9 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
   Widget build(BuildContext context) {
     final controller = Get.find<CircleController>();
 
+    final double leftIndent = widget.depth == 0 ? 0 : (widget.depth == 1 ? 38.w : 0);
     return Padding(
-      padding: EdgeInsets.only(bottom: 8.h, left: widget.isReply ? 38.w : 0),
+      padding: EdgeInsets.only(bottom: 8.h, left: leftIndent),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -127,44 +133,43 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Flexible(
-                        child: Row(
-                          children: [
-                            Flexible(
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              widget.comment.userName,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(
+                                fontSize: 13.sp,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF1B0B3B),
+                              ),
+                            ),
+                          ),
+                          if (widget.comment.isAuthor) ...[
+                            SizedBox(width: 4.w),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 6.w,
+                                vertical: 1.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(4.r),
+                              ),
                               child: Text(
-                                widget.comment.userName,
-                                overflow: TextOverflow.ellipsis,
+                                "Author",
                                 style: GoogleFonts.inter(
-                                  fontSize: 13.sp,
+                                  fontSize: 9.sp,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF1B0B3B),
+                                  color: AppColors.primary,
                                 ),
                               ),
                             ),
-                            if (widget.comment.isAuthor) ...[
-                              SizedBox(width: 4.w),
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 6.w,
-                                  vertical: 1.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(4.r),
-                                ),
-                                child: Text(
-                                  "Author",
-                                  style: GoogleFonts.inter(
-                                    fontSize: 9.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ),
-                            ],
                           ],
-                        ),
+                        ],
                       ),
                       SizedBox(height: 4.h),
                       Text(
@@ -179,38 +184,80 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                         SizedBox(height: 8.h),
                         ...widget.comment.media.map((m) {
                           if (m.type == 'image') {
+                            final isNetwork = m.url.startsWith('http') ||
+                                m.url.startsWith('/uploads');
                             return GestureDetector(
-                              onTap: () => Get.to(
-                                () =>
-                                    FullScreenImageViewer(imageUrl: m.fullUrl),
-                              ),
+                              onTap: () {
+                                if (m.isUploading) return;
+                                Get.to(
+                                  () => FullScreenImageViewer(
+                                    imageUrl: m.fullUrl,
+                                  ),
+                                );
+                              },
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(8.r),
-                                child: CachedNetworkImage(
-                                  imageUrl: m.fullUrl,
-                                  height: 150.h,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                  placeholder: (context, url) => Container(
-                                    height: 150.h,
-                                    width: double.infinity,
-                                    color: Colors.grey[100],
-                                    child: const Center(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                  ),
-                                  errorWidget: (context, url, error) =>
-                                      Container(
-                                        height: 150.h,
-                                        width: double.infinity,
-                                        color: Colors.grey[100],
-                                        child: const Icon(
-                                          Icons.broken_image,
-                                          color: Colors.grey,
+                                child: Stack(
+                                  children: [
+                                    isNetwork
+                                        ? CachedNetworkImage(
+                                            imageUrl: m.fullUrl,
+                                            height: 150.h,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                            placeholder: (context, url) =>
+                                                Container(
+                                              height: 150.h,
+                                              width: double.infinity,
+                                              color: Colors.grey[100],
+                                              child: const Center(
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                ),
+                                              ),
+                                            ),
+                                            errorWidget:
+                                                (context, url, error) =>
+                                                    Container(
+                                              height: 150.h,
+                                              width: double.infinity,
+                                              color: Colors.grey[100],
+                                              child: const Icon(
+                                                Icons.broken_image,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          )
+                                        : Image.file(
+                                            File(m.localFilePath ?? m.url),
+                                            height: 150.h,
+                                            width: double.infinity,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (c, e, s) =>
+                                                Container(
+                                              height: 150.h,
+                                              width: double.infinity,
+                                              color: Colors.grey[100],
+                                              child: const Icon(
+                                                Icons.broken_image,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ),
+                                    if (m.isUploading)
+                                      Positioned.fill(
+                                        child: Container(
+                                          color: Colors.black.withOpacity(0.4),
+                                          child: const Center(
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2,
+                                            ),
+                                          ),
                                         ),
                                       ),
+                                  ],
                                 ),
                               ),
                             );
@@ -342,7 +389,10 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                 // Action Buttons
                 Padding(
                   padding: EdgeInsets.only(left: 4.w),
-                  child: Row(
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 16.w,
+                    runSpacing: 4.h,
                     children: [
                       Text(
                         _formatTimestamp(widget.comment.timestamp),
@@ -352,8 +402,10 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      SizedBox(width: 16.w),
-                      Obx(() {
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Obx(() {
                         final isLiked = widget.comment.isLiked.value;
                         final type = widget.comment.reactionType.value;
                         String label = "React";
@@ -438,12 +490,14 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                             ],
                           ),
                         );
-                      }),
-                      SizedBox(width: 16.w),
-                      _buildActionButton(
-                        "Reply",
-                        onTap: () =>
-                            controller.toggleReplyInput(widget.comment),
+                          }),
+                          SizedBox(width: 16.w),
+                          _buildActionButton(
+                            "Reply",
+                            onTap: () =>
+                                controller.toggleReplyInput(widget.comment),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -515,43 +569,12 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                                 ),
                               Row(
                                 children: [
-                                  IconButton(
-                                    onPressed: _pickImage,
-                                    icon: Icon(
-                                      Icons.image_outlined,
-                                      color: Colors.grey[600],
-                                      size: 20.sp,
-                                    ),
-                                    padding: EdgeInsets.zero,
-                                    constraints: BoxConstraints(),
-                                  ),
-                                  SizedBox(width: 4.w),
-                                  IconButton(
-                                    onPressed: _pickVideo,
-                                    icon: Icon(
-                                      Icons.videocam_outlined,
-                                      color: Colors.grey[600],
-                                      size: 20.sp,
-                                    ),
-                                    padding: EdgeInsets.zero,
-                                    constraints: BoxConstraints(),
-                                  ),
-                                  SizedBox(width: 4.w),
-                                  IconButton(
-                                    onPressed: _pickFile,
-                                    icon: Icon(
-                                      Icons.attach_file,
-                                      color: Colors.grey[600],
-                                      size: 20.sp,
-                                    ),
-                                    padding: EdgeInsets.zero,
-                                    constraints: BoxConstraints(),
-                                  ),
-                                  SizedBox(width: 8.w),
                                   Expanded(
                                     child: TextField(
                                       controller: _replyController,
                                       style: GoogleFonts.inter(fontSize: 12.sp),
+                                      minLines: 1,
+                                      maxLines: 4,
                                       decoration: InputDecoration(
                                         hintText: "Write a reply...",
                                         isDense: true,
@@ -570,6 +593,7 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                                       ),
                                     ),
                                   ),
+                                  SizedBox(width: 4.w),
                                   IconButton(
                                     onPressed: () {
                                       controller.addCommentToPost(
@@ -591,10 +615,48 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                                     icon: Icon(
                                       Icons.send,
                                       color: AppColors.primary,
+                                      size: 20.sp,
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    constraints: BoxConstraints(),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 6.h),
+                              Row(
+                                children: [
+                                  IconButton(
+                                    onPressed: _pickImage,
+                                    icon: Icon(
+                                      Icons.image_outlined,
+                                      color: Colors.grey[600],
                                       size: 18.sp,
                                     ),
+                                    padding: EdgeInsets.zero,
+                                    constraints: BoxConstraints(),
                                   ),
-                                  SizedBox(width: 8.w),
+                                  SizedBox(width: 12.w),
+                                  IconButton(
+                                    onPressed: _pickVideo,
+                                    icon: Icon(
+                                      Icons.videocam_outlined,
+                                      color: Colors.grey[600],
+                                      size: 18.sp,
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    constraints: BoxConstraints(),
+                                  ),
+                                  SizedBox(width: 12.w),
+                                  IconButton(
+                                    onPressed: _pickFile,
+                                    icon: Icon(
+                                      Icons.attach_file,
+                                      color: Colors.grey[600],
+                                      size: 18.sp,
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    constraints: BoxConstraints(),
+                                  ),
                                 ],
                               ),
                             ],
@@ -615,7 +677,7 @@ class _CircleCommentItemState extends State<CircleCommentItem> {
                                     comment: reply,
                                     circle: widget.circle,
                                     post: widget.post,
-                                    isReply: true,
+                                    depth: widget.depth + 1,
                                   ),
                                 )
                                 .toList(),

@@ -54,7 +54,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         decoration: BoxDecoration(
           color: const Color(0xFFFAF7FF), // Subtle background
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.grey[100]!),
+          border: Border.all(color: Colors.grey.shade100),
         ),
         child: Icon(icon, color: AppColors.primary, size: 20.sp),
       ),

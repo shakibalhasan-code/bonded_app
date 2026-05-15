@@ -32,6 +32,7 @@ class UserModel {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final String? subscriptionStatus;
+  final double? distanceMeters;
 
   bool get isPro => subscriptionTier.toLowerCase() == 'pro' || subscriptionStatus == 'active';
 
@@ -67,6 +68,7 @@ class UserModel {
     this.createdAt,
     this.updatedAt,
     this.subscriptionStatus,
+    this.distanceMeters,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -109,6 +111,7 @@ class UserModel {
       visibility: json['visibility'],
       stripeConnectAccountId: json['stripeConnectAccountId'],
       subscriptionStatus: json['subscriptionStatus'],
+      distanceMeters: (json['distanceMeters'] ?? json['distance'])?.toDouble(),
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt']).toLocal()
           : null,
@@ -150,6 +153,7 @@ class UserModel {
       'stripeConnectAccountId': stripeConnectAccountId,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
+      'distanceMeters': distanceMeters,
     };
   }
 }

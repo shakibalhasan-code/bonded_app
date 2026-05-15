@@ -11,12 +11,42 @@ import '../../widgets/circles/circle_tab_bar.dart';
 import '../../widgets/circles/circle_card.dart';
 import '../../widgets/circles/circle_selection_dialog.dart';
 
-class CirclesScreen extends StatelessWidget {
+class CirclesScreen extends StatefulWidget {
   const CirclesScreen({Key? key}) : super(key: key);
 
   @override
+  State<CirclesScreen> createState() => _CirclesScreenState();
+}
+
+class _CirclesScreenState extends State<CirclesScreen>
+    with WidgetsBindingObserver {
+  late final CircleController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<CircleController>();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.refreshActiveTab();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      controller.refreshActiveTab();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller = Get.find<CircleController>();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -63,9 +93,7 @@ class CirclesScreen extends StatelessWidget {
                     : controller.filteredPrivateCircles;
 
                 return RefreshIndicator(
-                  onRefresh: () => controller.fetchCircles(
-                    visibility: controller.selectedTab.value == 0 ? 'public' : 'private'
-                  ),
+                  onRefresh: () => controller.refreshActiveTab(),
                   child: _buildCircleList(circles, controller),
                 );
               }),
@@ -77,11 +105,12 @@ class CirclesScreen extends StatelessWidget {
         padding: EdgeInsets.only(bottom: 80.h),
         child: FloatingActionButton(
           heroTag: null,
-          onPressed: () {
-            Get.toNamed(
+          onPressed: () async {
+            await Get.toNamed(
               AppRoutes.CREATE_CIRCLE,
               arguments: {'isPublic': false},
             );
+            controller.refreshActiveTab();
           },
           backgroundColor: AppColors.primary,
           shape: const CircleBorder(),
@@ -117,19 +146,23 @@ class CirclesScreen extends StatelessWidget {
                     final circle = circles[index];
                     return CircleCard(
                       circle: circle,
-                      onTap: () {
-                        if (controller.selectedTab.value == 0 ||
-                            controller.selectedTab.value == 1) {
-                          Get.toNamed(
-                            AppRoutes.PUBLIC_CIRCLE_DETAILS,
-                            arguments: circle,
+                      onTap: () async {
+                        if (circle.isLocked.value && !circle.isOwner) {
+                          Get.snackbar(
+                            "Circle Locked",
+                            "This circle is currently locked by the creator.",
+                            backgroundColor: Colors.redAccent,
+                            colorText: Colors.white,
+                            snackPosition: SnackPosition.TOP,
                           );
-                        } else {
-                          Get.toNamed(
-                            AppRoutes.JOINED_CIRCLE_DETAILS,
-                            arguments: circle,
-                          );
+                          return;
                         }
+                        final route = (controller.selectedTab.value == 0 ||
+                                controller.selectedTab.value == 1)
+                            ? AppRoutes.PUBLIC_CIRCLE_DETAILS
+                            : AppRoutes.JOINED_CIRCLE_DETAILS;
+                        await Get.toNamed(route, arguments: circle);
+                        controller.refreshActiveTab();
                       },
                     );
                   },
@@ -145,9 +178,7 @@ class CirclesScreen extends StatelessWidget {
         : controller.filteredMyJoinedCircles;
 
     return RefreshIndicator(
-      onRefresh: () => controller.fetchCircles(
-        scope: controller.myCircleSubTab.value == 0 ? 'created' : 'joined'
-      ),
+      onRefresh: () => controller.refreshActiveTab(),
       child: Column(
         children: [
           CircleSubTabBar(
@@ -176,11 +207,22 @@ class CirclesScreen extends StatelessWidget {
                       final circle = circles[index];
                       return CircleCard(
                         circle: circle,
-                        onTap: () {
-                          Get.toNamed(
+                        onTap: () async {
+                          if (circle.isLocked.value && !circle.isOwner) {
+                            Get.snackbar(
+                              "Circle Locked",
+                              "This circle is currently locked by the creator.",
+                              backgroundColor: Colors.redAccent,
+                              colorText: Colors.white,
+                              snackPosition: SnackPosition.TOP,
+                            );
+                            return;
+                          }
+                          await Get.toNamed(
                             AppRoutes.JOINED_CIRCLE_DETAILS,
                             arguments: circle,
                           );
+                          controller.refreshActiveTab();
                         },
                       );
                     },

@@ -62,6 +62,7 @@ class CircleController extends BaseController {
     isSearchVisible.value = false;
     searchQuery.value = '';
     searchController.clear();
+    refreshActiveTab();
   }
 
   void changeMyCircleSubTab(int index) {
@@ -69,6 +70,23 @@ class CircleController extends BaseController {
     isSearchVisible.value = false;
     searchQuery.value = '';
     searchController.clear();
+    refreshActiveTab();
+  }
+
+  Future<void> refreshActiveTab() async {
+    switch (selectedTab.value) {
+      case 0:
+        await fetchCircles(visibility: 'public');
+        break;
+      case 1:
+        await fetchCircles(visibility: 'private');
+        break;
+      case 2:
+        await fetchCircles(
+          scope: myCircleSubTab.value == 0 ? 'created' : 'joined',
+        );
+        break;
+    }
   }
 
   void toggleSearch() {

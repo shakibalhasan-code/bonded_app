@@ -32,13 +32,17 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final dynamic args = Get.arguments;
-      final CircleModel? circle = args is CircleModel 
-          ? args 
+      final CircleModel? circle = args is CircleModel
+          ? args
           : (args is Map<String, dynamic> ? CircleModel.fromJson(args) : null);
-      
+
       if (circle != null) {
         final controller = Get.find<CircleController>();
         controller.fetchCircleMembers(circle);
+        if (circle.isJoined.value) {
+          controller.fetchCircleFeed(circle);
+          controller.fetchCircleEvents(circle);
+        }
       }
     });
   }
@@ -66,63 +70,81 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
   Widget _buildLandingView(BuildContext context, CircleModel circle) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1B0B3B)),
-          onPressed: () => Get.back(),
-        ),
-        title: Text(
-          circle.name,
-          style: GoogleFonts.inter(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF1B0B3B),
-          ),
-        ),
-        actions: [
-          PopupMenuButton<String>(
-            icon: Icon(
-              Icons.info_outline,
-              color: AppColors.primary,
-              size: 24.sp,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(kToolbarHeight),
+        child: Obx(() {
+          final isLocked = circle.isLocked.value;
+          return AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            centerTitle: true,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Color(0xFF1B0B3B)),
+              onPressed: () => Get.back(),
             ),
-            onSelected: (value) {
-              if (value == 'members') {
-                Get.toNamed(
-                  AppRoutes.CIRCLE_MEMBERS,
-                  arguments: circle.detailedMembers,
-                );
-              }
-            },
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'members',
-                child: Row(
-                  children: [
-                    Icon(Icons.people_outline,
-                        size: 20.sp, color: const Color(0xFF1B0B3B)),
-                    SizedBox(width: 12.w),
-                    Text(
-                      "Members",
-                      style: GoogleFonts.inter(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF1B0B3B),
-                      ),
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    circle.name,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1B0B3B),
                     ),
-                  ],
+                  ),
                 ),
+                if (isLocked) ...[
+                  SizedBox(width: 4.w),
+                  Icon(Icons.lock, size: 16.sp, color: Colors.amber[700]),
+                ],
+              ],
+            ),
+            actions: [
+              PopupMenuButton<String>(
+                icon: Icon(
+                  Icons.info_outline,
+                  color: AppColors.primary,
+                  size: 24.sp,
+                ),
+                onSelected: (value) {
+                  if (value == 'members') {
+                    Get.toNamed(
+                      AppRoutes.CIRCLE_MEMBERS,
+                      arguments: circle.detailedMembers,
+                    );
+                  }
+                },
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'members',
+                    child: Row(
+                      children: [
+                        Icon(Icons.people_outline,
+                            size: 20.sp, color: const Color(0xFF1B0B3B)),
+                        SizedBox(width: 12.w),
+                        Text(
+                          "Members",
+                          style: GoogleFonts.inter(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF1B0B3B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
+              SizedBox(width: 8.w),
             ],
-          ),
-          SizedBox(width: 8.w),
-        ],
+          );
+        }),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -319,7 +341,10 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: filtered.take(3).length,
                 itemBuilder: (context, index) {
-                  return CircleMemberTile(member: filtered[index]);
+                  return CircleMemberTile(
+                    member: filtered[index],
+                    circle: circle,
+                  );
                 },
               );
             }),
@@ -387,92 +412,110 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white, size: 32),
       ),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1B0B3B)),
-          onPressed: () => Get.back(),
-        ),
-        title: Text(
-          circle.name,
-          style: GoogleFonts.inter(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF1B0B3B),
-          ),
-        ),
-        actions: [
-          Obx(() => PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert, color: AppColors.primary, size: 24.sp),
-            onSelected: (value) {
-              final controller = Get.find<CircleController>();
-              switch (value) {
-                case 'edit':
-                  controller.editCircle(circle);
-                  break;
-                case 'delete':
-                  controller.deleteCircle(circle);
-                  break;
-                case 'lock':
-                  controller.lockCircle(circle);
-                  break;
-                case 'add_member':
-                  Get.toNamed(AppRoutes.ADD_MEMBERS, arguments: circle);
-                  break;
-                case 'group_info':
-                  _showGroupInfoBottomSheet(context, circle);
-                  break;
-                case 'group_members':
-                  Get.toNamed(
-                    AppRoutes.CIRCLE_MEMBERS,
-                    arguments: circle.detailedMembers,
-                  );
-                  break;
-              }
-            },
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.r),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(kToolbarHeight),
+        child: Obx(() {
+          final isLocked = circle.isLocked.value;
+          return AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            centerTitle: true,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Color(0xFF1B0B3B)),
+              onPressed: () => Get.back(),
             ),
-            itemBuilder: (context) {
-              if (circle.isOwner) {
-                return [
-                  _buildPopupItem('edit', Icons.edit_outlined, "Edit Circle"),
-                  _buildPopupItem(
-                    'delete',
-                    Icons.delete_outline,
-                    "Delete Circle",
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    circle.name,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1B0B3B),
+                    ),
                   ),
-                  _buildPopupItem(
-                    'lock', 
-                    circle.isLocked.value ? Icons.lock_open_outlined : Icons.lock_outline, 
-                    circle.isLocked.value ? "Unlock Circle" : "Lock Circle"
-                  ),
-                  _buildPopupItem(
-                    'add_member',
-                    Icons.person_add_outlined,
-                    "Add Member",
-                  ),
-                ];
-              } else {
-                return [
-                  _buildPopupItem(
-                    'group_info',
-                    Icons.info_outline,
-                    "Group Info",
-                  ),
-                  _buildPopupItem(
-                    'group_members',
-                    Icons.people_outline,
-                    "Group Members",
-                  ),
-                ];
-              }
-            },
-          )),
-          SizedBox(width: 8.w),
-        ],
+                ),
+                if (isLocked) ...[
+                  SizedBox(width: 4.w),
+                  Icon(Icons.lock, size: 16.sp, color: Colors.amber[700]),
+                ],
+              ],
+            ),
+            actions: [
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert, color: AppColors.primary, size: 24.sp),
+                onSelected: (value) {
+                  final controller = Get.find<CircleController>();
+                  switch (value) {
+                    case 'edit':
+                      controller.editCircle(circle);
+                      break;
+                    case 'delete':
+                      controller.deleteCircle(circle);
+                      break;
+                    case 'lock':
+                      controller.lockCircle(circle);
+                      break;
+                    case 'add_member':
+                      Get.toNamed(AppRoutes.ADD_MEMBERS, arguments: circle);
+                      break;
+                    case 'group_info':
+                      _showGroupInfoBottomSheet(context, circle);
+                      break;
+                    case 'group_members':
+                      Get.toNamed(
+                        AppRoutes.CIRCLE_MEMBERS,
+                        arguments: circle.detailedMembers,
+                      );
+                      break;
+                  }
+                },
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                itemBuilder: (context) {
+                  if (circle.isOwner) {
+                    return [
+                      _buildPopupItem('edit', Icons.edit_outlined, "Edit Circle"),
+                      _buildPopupItem(
+                        'delete',
+                        Icons.delete_outline,
+                        "Delete Circle",
+                      ),
+                      _buildPopupItem(
+                        'lock',
+                        isLocked ? Icons.lock_open_outlined : Icons.lock_outline,
+                        isLocked ? "Unlock Circle" : "Lock Circle",
+                      ),
+                      _buildPopupItem(
+                        'add_member',
+                        Icons.person_add_outlined,
+                        "Add Member",
+                      ),
+                    ];
+                  } else {
+                    return [
+                      _buildPopupItem(
+                        'group_info',
+                        Icons.info_outline,
+                        "Group Info",
+                      ),
+                      _buildPopupItem(
+                        'group_members',
+                        Icons.people_outline,
+                        "Group Members",
+                      ),
+                    ];
+                  }
+                },
+              ),
+              SizedBox(width: 8.w),
+            ],
+          );
+        }),
       ),
       body: Obx(() {
         final controller = Get.find<CircleController>();
@@ -554,10 +597,14 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
                       _buildEmptyState("No posts yet."),
                     ],
                   )
-                : ListView.builder(
+                : ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: EdgeInsets.only(bottom: 20.h),
                     itemCount: circle.posts.length,
+                    separatorBuilder: (_, __) => Container(
+                      height: 8.h,
+                      color: const Color(0xFFF5F5F5),
+                    ),
                     itemBuilder: (context, index) {
                       return CirclePostItem(
                         post: circle.posts[index],
@@ -621,8 +668,10 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.symmetric(horizontal: 24.w),
       itemCount: circle.detailedMembers.length,
-      itemBuilder: (context, index) =>
-          CircleMemberTile(member: circle.detailedMembers[index]),
+      itemBuilder: (context, index) => CircleMemberTile(
+        member: circle.detailedMembers[index],
+        circle: circle,
+      ),
     );
   }
 

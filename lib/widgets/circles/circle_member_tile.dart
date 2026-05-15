@@ -7,11 +7,14 @@ import '../../services/shared_prefs_service.dart';
 import 'package:get/get.dart';
 import '../../controllers/bond_controller.dart';
 import '../../controllers/auth_controller.dart';
+import '../../controllers/circle_controller.dart';
 
 class CircleMemberTile extends StatelessWidget {
   final MemberModel member;
+  final CircleModel? circle;
 
-  const CircleMemberTile({Key? key, required this.member}) : super(key: key);
+  const CircleMemberTile({Key? key, required this.member, this.circle})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +113,11 @@ class CircleMemberTile extends StatelessWidget {
               ],
             ),
           ),
-          if (!isMe) SizedBox(height: 32.h, child: _buildBondButton(context)),
+          if (!isMe)
+            SizedBox(
+              height: 32.h,
+              child: Obx(() => _buildBondButton(context)),
+            ),
         ],
       ),
     );
@@ -121,7 +128,7 @@ class CircleMemberTile extends StatelessWidget {
     bool isPrimary = false;
     VoidCallback? onPressed;
 
-    switch (member.bondStatus) {
+    switch (member.bondStatus.value) {
       case 'accepted':
         buttonText = "Bonded";
         isPrimary = true;
@@ -146,8 +153,18 @@ class CircleMemberTile extends StatelessWidget {
       default:
         buttonText = "Bond";
         isPrimary = false;
-        onPressed = () =>
-            Get.find<BondController>().sendBondRequest(member.userId);
+        onPressed = () async {
+          final previous = member.bondStatus.value;
+          member.bondStatus.value = 'pending_sent';
+          final ok = await Get.find<BondController>().sendBondRequest(member.userId);
+          if (!ok) {
+            member.bondStatus.value = previous;
+            return;
+          }
+          if (circle != null && Get.isRegistered<CircleController>()) {
+            Get.find<CircleController>().fetchCircleMembers(circle!);
+          }
+        };
         break;
     }
 

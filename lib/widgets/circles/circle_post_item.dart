@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:bonded_app/core/constants/app_endpoints.dart';
 import 'package:bonded_app/core/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -10,6 +9,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/home_models.dart';
@@ -77,7 +77,10 @@ class _CirclePostItemState extends State<CirclePostItem> {
   }
 
   Future<void> _pickFile() async {
-    FilePickerResult? result = await FilePicker.pickFiles();
+    FilePickerResult? result = await FilePicker.pickFiles(
+      type: FileType.any,
+      allowMultiple: false,
+    );
     if (result != null && result.files.single.path != null) {
       setState(() {
         _commentFile = File(result.files.single.path!);
@@ -247,16 +250,16 @@ class _CirclePostItemState extends State<CirclePostItem> {
                     child: GestureDetector(
                       onTap: () {
                         // Navigate to the circle if possible
-                        if (widget.circle != null) {
+                        final circleToUse = widget.circle ?? widget.post.circle;
+                        if (circleToUse != null) {
                           Get.toNamed(
-                            widget.circle!.isJoined.value
+                            circleToUse.isJoined.value
                                 ? AppRoutes.JOINED_CIRCLE_DETAILS
                                 : AppRoutes.PUBLIC_CIRCLE_DETAILS,
-                            arguments: widget.circle,
+                            arguments: circleToUse,
                           );
                         } else if (widget.post.circleId != null) {
-                          // Try to navigate with minimal info or fetch
-                          // For now, we can try to find if this circle exists in CircleController's lists
+                          // Try to find if this circle exists in CircleController's lists
                           final circleController = Get.find<CircleController>();
                           CircleModel? found = circleController.joinedCircles
                               .firstWhereOrNull(
@@ -731,7 +734,7 @@ class _CirclePostItemState extends State<CirclePostItem> {
           _buildActionButton(
             Icons.share_outlined,
             "Share",
-            onTap: () => _showShareBottomSheet(context, controller),
+            onTap: () => _shareToOS(controller),
           ),
         ],
       ),
@@ -928,16 +931,16 @@ class _CirclePostItemState extends State<CirclePostItem> {
   }
 
   void _showAllCommentsSheet(CircleController controller) {
-    final TextEditingController sheetCommentController = TextEditingController();
+    final TextEditingController sheetCommentController =
+        TextEditingController();
     File? sheetImage;
     File? sheetVideo;
     File? sheetFile;
     final RxBool isLoading = true.obs;
 
-    controller.fetchPostComments(
-      widget.post,
-      circleId: widget.circle?.id,
-    ).whenComplete(() => isLoading.value = false);
+    controller
+        .fetchPostComments(widget.post, circleId: widget.circle?.id)
+        .whenComplete(() => isLoading.value = false);
 
     Get.bottomSheet(
       isScrollControlled: true,
@@ -976,7 +979,10 @@ class _CirclePostItemState extends State<CirclePostItem> {
             }
 
             Future<void> pickSheetFile() async {
-              final result = await FilePicker.pickFiles();
+              final result = await FilePicker.pickFiles(
+                type: FileType.any,
+                allowMultiple: false,
+              );
               if (result != null && result.files.single.path != null) {
                 setSheetState(() {
                   sheetFile = File(result.files.single.path!);
@@ -1030,9 +1036,7 @@ class _CirclePostItemState extends State<CirclePostItem> {
                 Expanded(
                   child: Obx(() {
                     if (isLoading.value && widget.post.comments.isEmpty) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
+                      return const Center(child: CircularProgressIndicator());
                     }
                     if (widget.post.comments.isEmpty) {
                       return Center(
@@ -1210,84 +1214,23 @@ class _CirclePostItemState extends State<CirclePostItem> {
     );
   }
 
-  void _showShareBottomSheet(
-    BuildContext context,
-    CircleController controller,
-  ) {
-    Get.bottomSheet(
-      Container(
-        padding: EdgeInsets.all(24.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30.r)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40.w,
-              height: 4.h,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2.r),
-              ),
-            ),
-            SizedBox(height: 24.h),
-            Text(
-              "Share Post",
-              style: GoogleFonts.inter(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF1B0B3B),
-              ),
-            ),
-            SizedBox(height: 16.h),
-            Text(
-              "Shared a post from ${widget.post.userName}. Download Bonded to view more.",
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 14.sp,
-                color: Colors.grey[600],
-              ),
-            ),
-            SizedBox(height: 32.h),
-            ElevatedButton(
-              onPressed: () {
-                Get.back();
-                controller.sharePost(widget.circle, widget.post);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                minimumSize: Size(double.infinity, 56.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30.r),
-                ),
-              ),
-              child: Text(
-                "Share Now",
-                style: GoogleFonts.inter(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            SizedBox(height: 12.h),
-            TextButton(
-              onPressed: () => Get.back(),
-              child: Text(
-                "Cancel",
-                style: GoogleFonts.inter(
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            SizedBox(height: 10.h),
-          ],
-        ),
-      ),
+  Future<void> _shareToOS(CircleController controller) async {
+    final author = widget.post.userName;
+    final snippet = widget.post.postText.trim().isNotEmpty
+        ? '\n\n"${widget.post.postText.trim()}"'
+        : '';
+    final message =
+        "I've posted something on Bonded — check it out from $author!$snippet\n\n"
+        "Download the app to view more: https://bonded.app";
+
+    final result = await Share.share(
+      message,
+      subject: "Bonded post by $author",
     );
+
+    if (result.status == ShareResultStatus.success) {
+      controller.sharePost(widget.circle, widget.post);
+    }
   }
 }
 

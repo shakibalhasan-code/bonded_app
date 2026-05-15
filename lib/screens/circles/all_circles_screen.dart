@@ -69,6 +69,16 @@ class AllCirclesScreen extends StatelessWidget {
                     return CircleCard(
                       circle: circle,
                       onTap: () {
+                        if (circle.isLocked.value && !circle.isOwner) {
+                          Get.snackbar(
+                            "Circle Locked",
+                            "This circle is currently locked by the creator.",
+                            backgroundColor: Colors.redAccent,
+                            colorText: Colors.white,
+                            snackPosition: SnackPosition.TOP,
+                          );
+                          return;
+                        }
                         if (title.contains("Joined") || title.contains("Created")) {
                           Get.toNamed(AppRoutes.JOINED_CIRCLE_DETAILS, arguments: circle);
                         } else {

@@ -166,7 +166,7 @@ class AuthController extends BaseController {
         final authData = data['data'];
         final accessToken = authData['accessToken'];
         final refreshToken = authData['refreshToken'];
-        
+
         // Save tokens and user ID
         await SharedPrefsService.saveString('accessToken', accessToken);
         if (refreshToken != null) {
@@ -175,12 +175,18 @@ class AuthController extends BaseController {
         if (authData['user'] != null && authData['user']['_id'] != null) {
           await SharedPrefsService.saveString('userId', authData['user']['_id']);
         }
-        
+
         // Update user state
         currentUser.value = UserModel.fromJson(authData['user']);
-        
-        Get.snackbar('Success', data['message'] ?? 'Account verified successfully');
-        
+
+        Get.snackbar(
+          'Success',
+          data['message'] ?? 'Account verified successfully',
+          backgroundColor: Colors.green.withOpacity(0.9),
+          colorText: Colors.white,
+          snackPosition: SnackPosition.TOP,
+        );
+
         // Initialize Socket
         Get.find<SocketService>().initSocket(token: accessToken);
 
@@ -191,13 +197,27 @@ class AuthController extends BaseController {
           Get.offAllNamed(AppRoutes.PROFILE_BUILDING);
         }
       } else {
-        Get.snackbar('Error', data['message'] ?? 'Verification failed');
+        _showVerifyError(data['message'] ?? 'Verification failed');
       }
+    } on ApiException catch (e) {
+      _showVerifyError(e.message);
     } catch (e) {
-      Get.snackbar('Error', e.toString());
+      _showVerifyError(e.toString());
     } finally {
       setLoading(false);
     }
+  }
+
+  void _showVerifyError(String message) {
+    Get.snackbar(
+      'Verification failed',
+      message,
+      backgroundColor: Colors.red.withOpacity(0.9),
+      colorText: Colors.white,
+      snackPosition: SnackPosition.TOP,
+      icon: const Icon(Icons.error_outline, color: Colors.white),
+      duration: const Duration(seconds: 4),
+    );
   }
 
   // Forgot Password

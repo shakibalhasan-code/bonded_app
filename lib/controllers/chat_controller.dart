@@ -55,7 +55,10 @@ class ChatMessage {
     );
   }
 
-  factory ChatMessage.fromJson(Map<String, dynamic> json, String currentUserId) {
+  factory ChatMessage.fromJson(
+    Map<String, dynamic> json,
+    String currentUserId,
+  ) {
     final senderData = json['sender'];
 
     // Extract sender ID — supports both REST format (flat senderId string)
@@ -81,14 +84,17 @@ class ChatMessage {
       isOwn = json['isOwnMessage'] == true;
     }
 
-    debugPrint('CHAT_DEBUG: isMe=$isOwn | senderId=$senderId | myId=$currentUserId');
+    debugPrint(
+      'CHAT_DEBUG: isMe=$isOwn | senderId=$senderId | myId=$currentUserId',
+    );
 
     // Resolve sender display info
     String senderName = 'Unknown';
     String senderImage = '';
 
     if (senderData is Map) {
-      senderName = senderData['fullName'] ?? senderData['username'] ?? 'Unknown';
+      senderName =
+          senderData['fullName'] ?? senderData['username'] ?? 'Unknown';
       final avatar = senderData['avatar'];
       senderImage = (avatar != null && avatar.toString().isNotEmpty)
           ? AppUrls.imageUrl(avatar)
@@ -108,8 +114,8 @@ class ChatMessage {
         final first = mediaList.first;
         if (first is Map) {
           mediaUrl = first['url']?.toString();
-          fileName ??= first['fileName']?.toString() ??
-              first['name']?.toString();
+          fileName ??=
+              first['fileName']?.toString() ?? first['name']?.toString();
           resolvedType ??= first['type']?.toString();
         }
       }
@@ -139,13 +145,13 @@ class ChatController extends GetxController {
   final ApiService _apiService = ApiService();
   final SocketService _socketService = Get.find<SocketService>();
   final ImagePicker _picker = ImagePicker();
-  
+
   final messages = <ChatMessage>[].obs;
   final messageController = TextEditingController();
   final scrollController = ScrollController();
   final RxBool isLoading = false.obs;
   final RxBool isOtherUserTyping = false.obs;
-  
+
   String? conversationId;
   String? currentUserId;
 
@@ -154,8 +160,10 @@ class ChatController extends GetxController {
     super.onInit();
     // Synchronously load user ID from storage
     currentUserId = SharedPrefsService.getString('userId');
-    debugPrint('SOCKET_DEBUG: ChatController initialized with MyId: $currentUserId');
-    
+    debugPrint(
+      'SOCKET_DEBUG: ChatController initialized with MyId: $currentUserId',
+    );
+
     // Fallback: Ensure we have the user profile
     final authController = Get.find<AuthController>();
     if (authController.currentUser.value == null) {
@@ -174,7 +182,10 @@ class ChatController extends GetxController {
 
     try {
       // Step 1: Get or create the direct conversation
-      final response = await _apiService.post('${AppUrls.directChat}/${user.id}', {});
+      final response = await _apiService.post(
+        '${AppUrls.directChat}/${user.id}',
+        {},
+      );
       final data = jsonDecode(response.body);
 
       if (data['success'] == true) {
@@ -222,13 +233,14 @@ class ChatController extends GetxController {
   /// Notify the server we've joined this conversation room.
   void _joinConversationSocket() {
     if (conversationId == null) return;
-    _socketService.emit('conversation:join', {
-      'conversationId': conversationId,
-      'limit': 50
-    }, ack: (response) {
-      debugPrint('SOCKET_DEBUG: conversation:join ACK response:');
-      debugPrint(const JsonEncoder.withIndent('  ').convert(response));
-    });
+    _socketService.emit(
+      'conversation:join',
+      {'conversationId': conversationId, 'limit': 50},
+      ack: (response) {
+        debugPrint('SOCKET_DEBUG: conversation:join ACK response:');
+        debugPrint(const JsonEncoder.withIndent('  ').convert(response));
+      },
+    );
     debugPrint('SOCKET_DEBUG: Joined conversation room: $conversationId');
   }
 
@@ -245,7 +257,9 @@ class ChatController extends GetxController {
       debugPrint(const JsonEncoder.withIndent('  ').convert(data));
 
       // Payload: { conversation: {...}, message: { _id, chat, content, type, createdAt, sender: {...} } }
-      final messageJson = data is Map ? (data['message'] as Map<String, dynamic>?) : null;
+      final messageJson = data is Map
+          ? (data['message'] as Map<String, dynamic>?)
+          : null;
       if (messageJson == null) return;
 
       // Only process if this message belongs to our current conversation
@@ -259,9 +273,7 @@ class ChatController extends GetxController {
       final existingIndex = messages.indexWhere(
         (m) =>
             m.id == newMessage.id ||
-            (m.id.startsWith('temp_') &&
-                m.text == newMessage.text &&
-                m.isMe),
+            (m.id.startsWith('temp_') && m.text == newMessage.text && m.isMe),
       );
 
       if (existingIndex == -1) {
@@ -279,7 +291,8 @@ class ChatController extends GetxController {
 
     // Typing indicators
     _typingHandler = (data) {
-      final senderUserId = data['userId']?.toString() ?? data['senderId']?.toString();
+      final senderUserId =
+          data['userId']?.toString() ?? data['senderId']?.toString();
       if (data['conversationId'] == conversationId &&
           senderUserId != _getCurrentUserId()) {
         isOtherUserTyping.value = data['isTyping'] ?? false;
@@ -293,13 +306,15 @@ class ChatController extends GetxController {
     if (currentUserId != null && currentUserId!.isNotEmpty) {
       return currentUserId!;
     }
-    
+
     // 2. Try AuthController (Source of Truth)
     try {
       if (Get.isRegistered<AuthController>()) {
         final authController = Get.find<AuthController>();
-        final id = authController.currentUser.value?.id ?? 
-                   authController.userData['_id']?.toString() ?? '';
+        final id =
+            authController.currentUser.value?.id ??
+            authController.userData['_id']?.toString() ??
+            '';
         if (id.isNotEmpty) {
           currentUserId = id;
           return id;
@@ -325,7 +340,7 @@ class ChatController extends GetxController {
 
     final String messageText = text.trim();
     final currentUserId = _getCurrentUserId();
-    
+
     // Optimistic Update: Add message to list immediately
     final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
     final optimisticMessage = ChatMessage(
@@ -337,7 +352,7 @@ class ChatController extends GetxController {
       isMe: true,
       type: 'text',
     );
-    
+
     messages.add(optimisticMessage);
     _scrollToBottom();
     messageController.clear();
@@ -346,46 +361,58 @@ class ChatController extends GetxController {
     final payload = {
       'conversationId': conversationId,
       'content': messageText,
-      'type': 'text'
+      'type': 'text',
     };
 
-    _socketService.emit('message:send', payload, ack: (response) {
-      debugPrint('SOCKET_DEBUG: message:send ACK response:');
-      debugPrint(const JsonEncoder.withIndent('  ').convert(response));
+    _socketService.emit(
+      'message:send',
+      payload,
+      ack: (response) {
+        debugPrint('SOCKET_DEBUG: message:send ACK response:');
+        debugPrint(const JsonEncoder.withIndent('  ').convert(response));
 
-      if (response != null && response['success'] == true) {
-        final msgData = response['data']?['message'] ?? response['data'];
-        if (msgData != null) {
-          final sentMessage = ChatMessage.fromJson(
-            Map<String, dynamic>.from(msgData),
-            currentUserId,
-          );
-          final index = messages.indexWhere((m) => m.id == tempId);
-          if (index != -1) {
-            messages[index] = sentMessage;
-            messages.refresh();
-          } else if (!messages.any((m) => m.id == sentMessage.id)) {
-            messages.add(sentMessage);
-            _scrollToBottom();
+        if (response != null && response['success'] == true) {
+          final msgData = response['data']?['message'] ?? response['data'];
+          if (msgData != null) {
+            final sentMessage = ChatMessage.fromJson(
+              Map<String, dynamic>.from(msgData),
+              currentUserId,
+            );
+            final index = messages.indexWhere((m) => m.id == tempId);
+            if (index != -1) {
+              messages[index] = sentMessage;
+              messages.refresh();
+            } else if (!messages.any((m) => m.id == sentMessage.id)) {
+              messages.add(sentMessage);
+              _scrollToBottom();
+            }
           }
+          // If the server will also broadcast a receive-message event,
+          // the deduplication in _setupSocketListeners handles it.
+        } else {
+          // ACK failure — remove the optimistic message
+          messages.removeWhere((m) => m.id == tempId);
+          Get.snackbar(
+            'Error',
+            response?['message'] ?? 'Failed to send message',
+          );
         }
-        // If the server will also broadcast a receive-message event,
-        // the deduplication in _setupSocketListeners handles it.
-      } else {
-        // ACK failure — remove the optimistic message
-        messages.removeWhere((m) => m.id == tempId);
-        Get.snackbar('Error', response?['message'] ?? 'Failed to send message');
-      }
-    });
+      },
+    );
   }
 
   void sendTypingStatus(bool isTyping) {
     if (conversationId == null) return;
-    final event = isTyping ? 'conversation:typing:start' : 'conversation:typing:stop';
+    final event = isTyping
+        ? 'conversation:typing:start'
+        : 'conversation:typing:stop';
     _socketService.emit(event, {'conversationId': conversationId});
   }
 
-  Future<void> pickAndSendMedia(ImageSource source, {bool isVideo = false}) async {
+  Future<void> pickAndSendMedia(
+    ImageSource source, {
+    bool isVideo = false,
+  }) async {
     if (conversationId == null) return;
 
     final XFile? picked = isVideo
@@ -402,7 +429,10 @@ class ChatController extends GetxController {
   Future<void> pickAndSendFile() async {
     if (conversationId == null) return;
 
-    final FilePickerResult? result = await FilePicker.pickFiles();
+    final FilePickerResult? result = await FilePicker.pickFiles(
+      type: FileType.any,
+      allowMultiple: false,
+    );
     if (result == null || result.files.single.path == null) return;
 
     await _uploadAttachment(
@@ -453,9 +483,15 @@ class ChatController extends GetxController {
       final fallbackMime = type == 'video'
           ? 'video/mp4'
           : type == 'file'
-              ? 'application/octet-stream'
-              : 'image/jpeg';
-      final mimeType = lookupMimeType(filePath) ?? fallbackMime;
+          ? 'application/octet-stream'
+          : 'image/jpeg';
+      String mimeType = lookupMimeType(filePath) ?? fallbackMime;
+
+      // Ensure .md files are handled correctly
+      if (filePath.toLowerCase().endsWith('.md')) {
+        mimeType = 'text/markdown';
+      }
+
       final mimeParts = mimeType.split('/');
 
       final multipartFile = await http.MultipartFile.fromPath(
@@ -470,10 +506,7 @@ class ChatController extends GetxController {
         AppUrls.conversationMessages(conversationId!),
         files: [multipartFile],
         fields: {
-          'data': jsonEncode({
-            'content': placeholder,
-            'type': type,
-          }),
+          'data': jsonEncode({'content': placeholder, 'type': type}),
         },
       );
 
@@ -481,10 +514,11 @@ class ChatController extends GetxController {
       if (data['success'] == true) {
         final msgJson = data['data']?['message'] ?? data['data'];
         if (msgJson is Map) {
-          final newMessage = ChatMessage.fromJson(
-            Map<String, dynamic>.from(msgJson),
-            currentUserId,
-          )
+          final newMessage =
+              ChatMessage.fromJson(
+                Map<String, dynamic>.from(msgJson),
+                currentUserId,
+              )
               // Keep the local preview so the bubble stays rendered even if
               // the backend hasn't populated mediaUrl on this response yet.
               .copyWith(localFilePath: filePath, fileName: fileName);
@@ -524,7 +558,9 @@ class ChatController extends GetxController {
   @override
   void onClose() {
     if (conversationId != null) {
-      _socketService.emit('conversation:leave', {'conversationId': conversationId});
+      _socketService.emit('conversation:leave', {
+        'conversationId': conversationId,
+      });
     }
     if (_receiveMessageHandler != null) {
       _socketService.off('conversation:message:new', _receiveMessageHandler!);

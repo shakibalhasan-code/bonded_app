@@ -1,5 +1,20 @@
+import 'package:bonded_app/models/circle_model.dart' show CircleModel;
 import 'package:get/get.dart';
+import '../controllers/auth_controller.dart';
 import '../core/constants/app_endpoints.dart';
+
+({String name, String image}) _resolveAuthorById(String authorId) {
+  if (Get.isRegistered<AuthController>()) {
+    final user = Get.find<AuthController>().currentUser.value;
+    if (user != null && user.id == authorId) {
+      return (
+        name: user.fullName ?? user.username ?? "Me",
+        image: AppUrls.imageUrl(user.avatar),
+      );
+    }
+  }
+  return (name: "Unknown User", image: "");
+}
 
 class MediaModel {
   final String url;
@@ -79,22 +94,24 @@ class CommentModel {
     this.isAuthor = false,
     this.media = const [],
     this.isUploading = false,
-  })  : reactionType = reactionType.obs,
-        isLiked = isLiked.obs,
-        likesCount = likesCount.obs,
-        replies = (replies ?? <CommentModel>[]).obs,
-        showReplyInput = showReplyInput.obs;
+  }) : reactionType = reactionType.obs,
+       isLiked = isLiked.obs,
+       likesCount = likesCount.obs,
+       replies = (replies ?? <CommentModel>[]).obs,
+       showReplyInput = showReplyInput.obs;
 
   factory CommentModel.fromJson(Map<String, dynamic> json) {
     final author = json['author'];
     String userName = "Unknown";
     String userImage = "";
-    
+
     if (author is Map) {
       userName = author['fullName'] ?? "Unknown";
       userImage = AppUrls.imageUrl(author['avatar']);
     } else if (author is String) {
-      userName = "User $author";
+      final resolved = _resolveAuthorById(author);
+      userName = resolved.name;
+      userImage = resolved.image;
     }
 
     return CommentModel(
@@ -108,16 +125,19 @@ class CommentModel {
       reactionType: json['myReaction'] is String
           ? json['myReaction']
           : (json['myReaction'] is Map
-              ? (json['myReaction']['reactionType'] ?? "none")
-              : "none"),
+                ? (json['myReaction']['reactionType'] ?? "none")
+                : "none"),
       parentPost: json['parentPost'],
       depth: json['depth'] ?? 0,
       isAuthor: json['isAuthor'] ?? false,
-      media: (json['media'] as List?)
+      media:
+          (json['media'] as List?)
               ?.map((m) => MediaModel.fromJson(m))
               .toList() ??
           [],
-      replies: ((json['previewComments'] ?? json['replies'] ?? json['comments']) as List?)
+      replies:
+          ((json['previewComments'] ?? json['replies'] ?? json['comments'])
+                  as List?)
               ?.map((c) => CommentModel.fromJson(c))
               .toList() ??
           [],
@@ -137,13 +157,15 @@ class PostModel {
   final RxInt commentsCount;
   final RxInt sharesCount;
   final RxBool isLiked;
-  final RxString reactionType; // "none", "like", "love", "haha", "wow", "sad", "angry"
+  final RxString
+  reactionType; // "none", "like", "love", "haha", "wow", "sad", "angry"
   final RxBool isCountPrivate;
   final RxBool isCommenting;
   final RxList<CommentModel> comments;
   final String? circleId;
-  final String? circleName;   // name of the circle (for home feed badge)
-  final String? circleSlug;   // slug for navigation
+  final String? circleName; // name of the circle (for home feed badge)
+  final String? circleSlug; // slug for navigation
+  final CircleModel? circle; // full circle object if available
   final DateTime? createdAt;
   final bool isUploading;
 
@@ -166,16 +188,17 @@ class PostModel {
     this.circleId,
     this.circleName,
     this.circleSlug,
+    this.circle,
     this.createdAt,
     this.isUploading = false,
-  })  : likesCount = likesCount.obs,
-        commentsCount = commentsCount.obs,
-        sharesCount = sharesCount.obs,
-        isLiked = isLiked.obs,
-        reactionType = reactionType.obs,
-        isCountPrivate = isCountPrivate.obs,
-        isCommenting = isCommenting.obs,
-        comments = (comments ?? <CommentModel>[]).obs;
+  }) : likesCount = likesCount.obs,
+       commentsCount = commentsCount.obs,
+       sharesCount = sharesCount.obs,
+       isLiked = isLiked.obs,
+       reactionType = reactionType.obs,
+       isCountPrivate = isCountPrivate.obs,
+       isCommenting = isCommenting.obs,
+       comments = (comments ?? <CommentModel>[]).obs;
 
   factory PostModel.fromJson(Map<String, dynamic> json) {
     final author = json['author'];
@@ -186,7 +209,9 @@ class PostModel {
       userName = author['fullName'] ?? "Unknown";
       userImage = AppUrls.imageUrl(author['avatar']);
     } else if (author is String) {
-      userName = "User $author";
+      final resolved = _resolveAuthorById(author);
+      userName = resolved.name;
+      userImage = resolved.image;
     }
 
     // circle can be a full object (home feed) or a plain ID string (circle feed)
@@ -194,17 +219,20 @@ class PostModel {
     String? circleId;
     String? circleName;
     String? circleSlug;
+    CircleModel? circle;
     if (circleRaw is Map) {
       circleId = circleRaw['_id'] as String?;
       circleName = circleRaw['name'] as String?;
       circleSlug = circleRaw['slug'] as String?;
+      try {
+        circle = CircleModel.fromJson(circleRaw as Map<String, dynamic>);
+      } catch (_) {}
     } else if (circleRaw is String) {
       circleId = circleRaw;
     }
 
-    final mediaList = (json['media'] as List?)
-            ?.map((m) => MediaModel.fromJson(m))
-            .toList() ??
+    final mediaList =
+        (json['media'] as List?)?.map((m) => MediaModel.fromJson(m)).toList() ??
         [];
 
     return PostModel(
@@ -224,15 +252,17 @@ class PostModel {
       reactionType: json['myReaction'] is String
           ? json['myReaction']
           : (json['myReaction'] is Map
-              ? (json['myReaction']['reactionType'] ?? "none")
-              : "none"),
+                ? (json['myReaction']['reactionType'] ?? "none")
+                : "none"),
       circleId: circleId,
       circleName: circleName,
       circleSlug: circleSlug,
+      circle: circle,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt']).toLocal()
           : null,
-      comments: ((json['previewComments'] ?? json['comments']) as List?)
+      comments:
+          ((json['previewComments'] ?? json['comments']) as List?)
               ?.map((c) => CommentModel.fromJson(c))
               .toList() ??
           [],

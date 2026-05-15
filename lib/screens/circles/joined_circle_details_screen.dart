@@ -31,10 +31,14 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final dynamic args = Get.arguments;
-      final CircleModel circle = args is CircleModel 
-          ? args 
+      final CircleModel circle = args is CircleModel
+          ? args
           : CircleModel.fromJson(args as Map<String, dynamic>);
-      Get.find<CircleController>().fetchCircleFeed(circle);
+      final controller = Get.find<CircleController>();
+      controller.fetchCircleFeed(circle);
+      controller.fetchCircleEvents(circle);
+      controller.fetchCircleMembers(circle);
+      controller.fetchCircleMarketplace(circle);
     });
   }
 
@@ -59,98 +63,111 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white, size: 32),
       ),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1B0B3B)),
-          onPressed: () => Get.back(),
-        ),
-        title: Text(
-          circle.name,
-          style: GoogleFonts.inter(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF1B0B3B),
-          ),
-        ),
-        actions: [
-          PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert, color: AppColors.primary, size: 24.sp),
-            onSelected: (value) {
-              final controller = Get.find<CircleController>();
-              switch (value) {
-                case 'edit':
-                  controller.editCircle(circle);
-                  break;
-                case 'delete':
-                  controller.deleteCircle(circle);
-                  break;
-                case 'lock':
-                  controller.lockCircle(circle);
-                  break;
-                case 'add_member':
-                  Get.toNamed(AppRoutes.ADD_MEMBERS, arguments: circle);
-                  break;
-                case 'group_info':
-                  _showGroupInfoBottomSheet(context, circle);
-                  break;
-                case 'group_members':
-                  Get.toNamed(
-                    AppRoutes.CIRCLE_MEMBERS,
-                    arguments: circle.detailedMembers,
-                  );
-                  break;
-                case 'leave':
-                  controller.leaveCircle(circle);
-                  break;
-              }
-            },
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.r),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(kToolbarHeight),
+        child: Obx(() {
+          // Access reactive variables to ensure Obx registers dependencies
+          final isLocked = circle.isLocked.value;
+          
+          return AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0,
+            centerTitle: true,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Color(0xFF1B0B3B)),
+              onPressed: () => Get.back(),
             ),
-            itemBuilder: (context) {
-              if (circle.isOwner) {
-                return [
-                  _buildPopupItem('edit', Icons.edit_outlined, "Edit Circle"),
-                  // _buildPopupItem(
-                  //   'delete',
-                  //   Icons.delete_outline,
-                  //   "Delete Circle",
-                  // ),
-                  _buildPopupItem(
-                    'lock',
-                    circle.isLocked.value
-                        ? Icons.lock_open_outlined
-                        : Icons.lock_outline,
-                    circle.isLocked.value ? "Unlock Circle" : "Lock Circle",
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    circle.name,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1B0B3B),
+                    ),
                   ),
-                  _buildPopupItem(
-                    'add_member',
-                    Icons.person_add_outlined,
-                    "Add Member",
-                  ),
-                ];
-              } else {
-                return [
-                  _buildPopupItem(
-                    'group_info',
-                    Icons.info_outline,
-                    "Group Info",
-                  ),
-                  _buildPopupItem(
-                    'group_members',
-                    Icons.people_outline,
-                    "Group Members",
-                  ),
-                  _buildPopupItem('leave', Icons.exit_to_app, "Leave Circle"),
-                ];
-              }
-            },
-          ),
-          SizedBox(width: 8.w),
-        ],
+                ),
+                if (isLocked) ...[
+                  SizedBox(width: 4.w),
+                  Icon(Icons.lock, size: 16.sp, color: Colors.amber[700]),
+                ],
+              ],
+            ),
+            actions: [
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert, color: AppColors.primary, size: 24.sp),
+                onSelected: (value) {
+                  final controller = Get.find<CircleController>();
+                  switch (value) {
+                    case 'edit':
+                      controller.editCircle(circle);
+                      break;
+                    case 'delete':
+                      controller.deleteCircle(circle);
+                      break;
+                    case 'lock':
+                      controller.lockCircle(circle);
+                      break;
+                    case 'add_member':
+                      Get.toNamed(AppRoutes.ADD_MEMBERS, arguments: circle);
+                      break;
+                    case 'group_info':
+                      _showGroupInfoBottomSheet(context, circle);
+                      break;
+                    case 'group_members':
+                      Get.toNamed(
+                        AppRoutes.CIRCLE_MEMBERS,
+                        arguments: circle.detailedMembers,
+                      );
+                      break;
+                    case 'leave':
+                      controller.leaveCircle(circle);
+                      break;
+                  }
+                },
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.r),
+                ),
+                itemBuilder: (context) {
+                  if (circle.isOwner) {
+                    return [
+                      _buildPopupItem('edit', Icons.edit_outlined, "Edit Circle"),
+                      _buildPopupItem(
+                        'lock',
+                        isLocked ? Icons.lock_open_outlined : Icons.lock_outline,
+                        isLocked ? "Unlock Circle" : "Lock Circle",
+                      ),
+                      _buildPopupItem(
+                        'add_member',
+                        Icons.person_add_outlined,
+                        "Add Member",
+                      ),
+                    ];
+                  } else {
+                    return [
+                      _buildPopupItem(
+                        'group_info',
+                        Icons.info_outline,
+                        "Group Info",
+                      ),
+                      _buildPopupItem(
+                        'group_members',
+                        Icons.people_outline,
+                        "Group Members",
+                      ),
+                      _buildPopupItem('leave', Icons.exit_to_app, "Leave Circle"),
+                    ];
+                  }
+                },
+              ),
+              SizedBox(width: 8.w),
+            ],
+          );
+        }),
       ),
       body: Obx(() {
         final controller = Get.find<CircleController>();
@@ -249,10 +266,14 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                       _buildEmptyState("No posts yet."),
                     ],
                   )
-                : ListView.builder(
+                : ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: EdgeInsets.only(bottom: 100.h),
                     itemCount: circle.posts.length,
+                    separatorBuilder: (_, __) => Container(
+                      height: 8.h,
+                      color: const Color(0xFFF5F5F5),
+                    ),
                     itemBuilder: (context, index) {
                       return CirclePostItem(
                         post: circle.posts[index],
@@ -270,11 +291,9 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
           ),
         );
       case 2: // Members
-        return Obx(
-          () => RefreshIndicator(
-            onRefresh: () => controller.fetchCircleMembers(circle),
-            child: _buildMembersView(circle),
-          ),
+        return RefreshIndicator(
+          onRefresh: () => controller.fetchCircleMembers(circle),
+          child: _buildMembersView(circle),
         );
       case 3: // Marketplace
         return Obx(
@@ -490,7 +509,10 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
               padding: EdgeInsets.only(left: 24.w, right: 24.w, bottom: 100.h),
               itemCount: filteredMembers.length,
               itemBuilder: (context, index) {
-                return CircleMemberTile(member: filteredMembers[index]);
+                return CircleMemberTile(
+                  member: filteredMembers[index],
+                  circle: circle,
+                );
               },
             );
           }),

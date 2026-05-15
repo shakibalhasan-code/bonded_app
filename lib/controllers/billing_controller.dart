@@ -282,7 +282,7 @@ class BillingController extends BaseController {
         if (pd.pendingCompletePurchase) {
           await InAppPurchase.instance.completePurchase(pd);
         }
-        _refreshHome();
+        await _refreshHome();
 
         final type = SharedPrefsService.getString('pending_purchase_type');
         if (type == 'subscription') {
@@ -331,7 +331,7 @@ class BillingController extends BaseController {
 
       if (data['success'] == true) {
         _clearPendingPrefs();
-        _refreshHome();
+        await _refreshHome();
         if (type == 'subscription') {
           Get.offAllNamed(
             AppRoutes.PROFILE_READY,
@@ -509,14 +509,17 @@ class BillingController extends BaseController {
     SharedPrefsService.delete('pending_purchase_product_id');
   }
 
-  void _refreshHome() {
+  Future<void> _refreshHome() async {
     try {
       if (Get.isRegistered<HomeController>()) {
+        // ignore: unawaited_futures
         Get.find<HomeController>().fetchHomeData();
       }
-      // Auto-fetch user profile to sync subscription/kyc status
+      // Auto-fetch user profile to sync subscription/kyc status.
+      // Awaited so callers can navigate to screens that depend on
+      // an up-to-date `currentUser` (subscription, KYC flags, etc.).
       if (Get.isRegistered<AuthController>()) {
-        Get.find<AuthController>().fetchUserProfile();
+        await Get.find<AuthController>().fetchUserProfile();
       }
     } catch (e) {
       debugPrint('Error refreshing home/profile after purchase: $e');
@@ -769,7 +772,7 @@ class BillingController extends BaseController {
 
       if (responseData['success'] == true) {
         if (Get.isOverlaysOpen) Get.back(); // Close bottom sheet
-        _refreshHome();
+        await _refreshHome();
 
         // Refresh Circle Data
         if (Get.isRegistered<CircleController>()) {

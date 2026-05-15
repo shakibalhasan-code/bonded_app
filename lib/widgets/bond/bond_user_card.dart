@@ -67,20 +67,45 @@ class BondUserCard extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: 4.h),
-                      Text(
-                        user.interests?.map((i) => i.name).take(3).join(', ') ??
-                            "No interests",
-                        style: GoogleFonts.inter(
-                          fontSize: 12.sp,
-                          color: Colors.grey[600],
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              user.interests?.map((i) => i.name).take(3).join(', ') ??
+                                  "No interests",
+                              style: GoogleFonts.inter(
+                                fontSize: 12.sp,
+                                color: Colors.grey[600],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (user.distanceMeters != null) ...[
+                            SizedBox(width: 8.w),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.location_on_outlined, size: 12.sp, color: AppColors.primary),
+                                SizedBox(width: 2.w),
+                                Text(
+                                  "${(user.distanceMeters! / 1000).toStringAsFixed(1)}km",
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),
                 ),
-                if (status == BondStatus.bonded) _buildMessageIcon(user),
+                if (status == BondStatus.bonded && _isAcceptedBond)
+                  _buildMessageIcon(user),
               ],
             ),
             if (status != BondStatus.bonded) ...[
@@ -91,6 +116,14 @@ class BondUserCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// True only when the bond is fully accepted — guards the chat icon so
+  /// it never appears while a request is still pending.
+  bool get _isAcceptedBond {
+    if (connection.bondedAt != null) return true;
+    final s = connection.status?.toLowerCase();
+    return s == 'accepted' || s == 'bonded' || s == 'active';
   }
 
   Widget _buildPlaceholder(String? name) {
