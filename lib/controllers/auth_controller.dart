@@ -9,7 +9,7 @@ import '../models/user_model.dart';
 import '../services/socket_service.dart';
 import '../services/social_auth_service.dart';
 import '../services/notification_service.dart';
-import '../widgets/social_auth_error_dialog.dart';
+
 import 'base_controller.dart';
 
 class AuthController extends BaseController {
@@ -417,7 +417,7 @@ class AuthController extends BaseController {
       debugPrint('AUTH_CONTROLLER: Google sign-in success, calling backend...');
       await _sendSocialLoginToBackend(result);
     } catch (e) {
-      SocialAuthErrorDialog.show('google');
+      Get.snackbar('Error', 'Google Sign-In failed');
     } finally {
       loadingProvider.value = null;
     }
@@ -429,7 +429,7 @@ class AuthController extends BaseController {
       final result = await _socialAuthService.signInWithFacebook();
       if (result != null) await _sendSocialLoginToBackend(result);
     } catch (e) {
-      SocialAuthErrorDialog.show('facebook');
+      Get.snackbar('Error', 'Facebook Sign-In failed');
     } finally {
       loadingProvider.value = null;
     }
@@ -441,7 +441,7 @@ class AuthController extends BaseController {
       final result = await _socialAuthService.signInWithApple();
       if (result != null) await _sendSocialLoginToBackend(result);
     } catch (e) {
-      SocialAuthErrorDialog.show('apple');
+      Get.snackbar('Error', 'Apple Sign-In failed');
     } finally {
       loadingProvider.value = null;
     }

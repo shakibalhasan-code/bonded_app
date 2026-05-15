@@ -654,29 +654,6 @@ class BillingController extends BaseController {
               ),
             ),
             SizedBox(height: 32.h),
-            Padding(
-              padding: EdgeInsets.only(bottom: 20.h),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    size: 16.sp,
-                    color: Colors.amber[800],
-                  ),
-                  SizedBox(width: 8.w),
-                  Expanded(
-                    child: Text(
-                      "This purchase option is currently under review by ${platform == 'apple' ? 'Apple' : 'Google Play Store'} to meet their privacy policy. Use testing mode for immediate access.",
-                      style: GoogleFonts.inter(
-                        fontSize: 12.sp,
-                        color: Colors.amber[800],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
             ElevatedButton(
               onPressed: () {
                 Get.back();
@@ -707,41 +684,6 @@ class BillingController extends BaseController {
                 ),
               ),
             ),
-            SizedBox(height: 16.h),
-            Obx(() => TextButton(
-                  onPressed: isLoading.value
-                      ? null
-                      : () {
-                          if (circleId.isEmpty || productId.isEmpty) {
-                            Get.snackbar('Error', 'Missing circle or product information');
-                            return;
-                          }
-                          confirmPurchaseWithTesting(
-                            circleId: circleId,
-                            productId: productId,
-                            purpose: 'circle-join',
-                          );
-                        },
-                  child: isLoading.value
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(AppColors.primary),
-                          ),
-                        )
-                      : Text(
-                          "Process with Testing",
-                          style: GoogleFonts.inter(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                )),
             SizedBox(height: 12.h),
           ],
         ),
