@@ -82,6 +82,11 @@ class AppUrls {
   static String marketplaceProducts(String circleId) =>
       '/marketplace/circles/$circleId/products';
 
+  // Review Endpoints
+  static String createReview(String eventId) => '/reviews/events/$eventId';
+  static String eventReviews(String eventId, {int page = 1, int limit = 20}) =>
+      '/reviews/events/$eventId?page=$page&limit=$limit';
+
   // Notification Endpoints
   static const String notifications = '/notifications';
 

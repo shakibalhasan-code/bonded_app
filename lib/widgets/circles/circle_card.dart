@@ -312,7 +312,7 @@ class CircleCard extends StatelessWidget {
   }
 
   Widget _buildCircleMenu(BuildContext context) {
-    return Obx(() => PopupMenuButton<String>(
+    return PopupMenuButton<String>(
       offset: const Offset(0, 40),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       icon: Container(
@@ -374,7 +374,7 @@ class CircleCard extends StatelessWidget {
           ];
         }
       },
-    ));
+    );
   }
 
   PopupMenuItem<String> _buildMenuItem(

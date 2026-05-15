@@ -291,7 +291,10 @@ class EventDetailsScreen extends StatelessWidget {
                 _buildSectionTitle("Reviews:"),
                 SizedBox(height: 12.h),
                 InkWell(
-                  onTap: () => Get.toNamed(AppRoutes.REVIEWS),
+                  onTap: () => Get.toNamed(
+                    AppRoutes.REVIEWS,
+                    arguments: currentEvent.id,
+                  ),
                   child: Row(
                     children: [
                       Icon(Icons.star, color: Colors.orange, size: 20.sp),

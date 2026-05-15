@@ -54,6 +54,65 @@ class ReviewModel {
     required this.date,
     required this.comment,
   });
+
+  factory ReviewModel.fromJson(Map<String, dynamic> json) {
+    final reviewer = json['reviewer'];
+    String name = '';
+    String email = '';
+    String avatar = '';
+    if (reviewer is Map) {
+      name = reviewer['fullName'] ?? reviewer['username'] ?? '';
+      email = reviewer['email'] ?? '';
+      avatar = AppUrls.imageUrl(reviewer['avatar']);
+    }
+    return ReviewModel(
+      id: json['_id']?.toString() ?? '',
+      userName: name,
+      userEmail: email,
+      userImageUrl: avatar,
+      rating: (json['rating'] ?? 0).toDouble(),
+      date: json['createdAt']?.toString() ?? '',
+      comment: json['comment']?.toString() ?? '',
+    );
+  }
+}
+
+class ReviewSummary {
+  final int totalReviews;
+  final double averageRating;
+  final Map<int, int> ratingDistribution;
+
+  ReviewSummary({
+    required this.totalReviews,
+    required this.averageRating,
+    required this.ratingDistribution,
+  });
+
+  factory ReviewSummary.fromJson(Map<String, dynamic> json) {
+    final dist = <int, int>{1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+    final raw = json['ratingDistribution'];
+    if (raw is Map) {
+      raw.forEach((k, v) {
+        final star = int.tryParse(k.toString());
+        if (star != null && star >= 1 && star <= 5) {
+          dist[star] = (v is num) ? v.toInt() : int.tryParse(v.toString()) ?? 0;
+        }
+      });
+    }
+    return ReviewSummary(
+      totalReviews: (json['totalReviews'] ?? 0) is num
+          ? (json['totalReviews'] as num).toInt()
+          : int.tryParse(json['totalReviews'].toString()) ?? 0,
+      averageRating: (json['averageRating'] ?? 0).toDouble(),
+      ratingDistribution: dist,
+    );
+  }
+
+  static ReviewSummary empty() => ReviewSummary(
+        totalReviews: 0,
+        averageRating: 0,
+        ratingDistribution: {1: 0, 2: 0, 3: 0, 4: 0, 5: 0},
+      );
 }
 
 class VenueModel {
@@ -160,8 +219,14 @@ class EventModel {
     
     // Handle external event price and rating
     final price = (eventData['price'] ?? eventData['ticketPrice'] ?? 0).toDouble();
-    final rating = (eventData['rating'] ?? 0).toDouble();
-    final reviewsCount = eventData['reviewCount'] ?? eventData['reviewsCount'] ?? 0;
+    // Prefer the `review` object from the detail endpoint, fall back to legacy fields.
+    final reviewBlock = (eventData['review'] ?? json['review']) as Map?;
+    final rating = (reviewBlock?['averageRating'] ?? eventData['rating'] ?? 0)
+        .toDouble();
+    final reviewsCount = reviewBlock?['totalReviews'] ??
+        eventData['reviewCount'] ??
+        eventData['reviewsCount'] ??
+        0;
     final city = json['location']?['city'] ?? eventData['location']?['city'] ?? eventData['city'] ?? eventData['destinationName'];
 
     return EventModel(

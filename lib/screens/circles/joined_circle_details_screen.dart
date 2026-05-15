@@ -76,7 +76,7 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
           ),
         ),
         actions: [
-          Obx(() => PopupMenuButton<String>(
+          PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, color: AppColors.primary, size: 24.sp),
             onSelected: (value) {
               final controller = Get.find<CircleController>();
@@ -148,7 +148,7 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                 ];
               }
             },
-          )),
+          ),
           SizedBox(width: 8.w),
         ],
       ),

@@ -3,6 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/app_messenger.dart';
+import '../../controllers/review_controller.dart';
 
 class WriteReviewScreen extends StatefulWidget {
   const WriteReviewScreen({Key? key}) : super(key: key);
@@ -12,7 +14,47 @@ class WriteReviewScreen extends StatefulWidget {
 }
 
 class _WriteReviewScreenState extends State<WriteReviewScreen> {
-  int _rating = 3;
+  int _rating = 5;
+  late final String _eventId;
+  late final ReviewController _controller;
+  final TextEditingController _commentController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _eventId = (Get.arguments is String) ? Get.arguments as String : '';
+    _controller = Get.isRegistered<ReviewController>(tag: _eventId)
+        ? Get.find<ReviewController>(tag: _eventId)
+        : Get.put(ReviewController(), tag: _eventId);
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final comment = _commentController.text.trim();
+    if (_eventId.isEmpty) {
+      AppMessenger.error('Missing event reference');
+      return;
+    }
+    if (comment.isEmpty) {
+      AppMessenger.error('Please enter a comment');
+      return;
+    }
+    if (_rating < 1 || _rating > 5) {
+      AppMessenger.error('Please select a rating');
+      return;
+    }
+    final ok = await _controller.submitReview(
+      eventId: _eventId,
+      rating: _rating,
+      comment: comment,
+    );
+    if (ok && mounted) Get.back(result: true);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,13 +73,17 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
         child: Column(
           children: [
             SizedBox(height: 20.h),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20.r),
-              child: Image.network(
-                "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3",
-                width: 200.w,
-                height: 200.w,
-                fit: BoxFit.cover,
+            Container(
+              width: 120.w,
+              height: 120.w,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              child: Icon(
+                Icons.rate_review_rounded,
+                size: 60.sp,
+                color: AppColors.primary,
               ),
             ),
             SizedBox(height: 32.h),
@@ -52,7 +98,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
             ),
             SizedBox(height: 16.h),
             Text(
-              "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore",
+              "Share your honest feedback so other guests know what to expect.",
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 14.sp,
@@ -62,17 +108,20 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
             SizedBox(height: 40.h),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(5, (index) => GestureDetector(
-                onTap: () => setState(() => _rating = index + 1),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4.w),
-                  child: Icon(
-                    Icons.star,
-                    color: index < _rating ? Colors.orange : Colors.grey[300],
-                    size: 40.sp,
+              children: List.generate(
+                5,
+                (index) => GestureDetector(
+                  onTap: () => setState(() => _rating = index + 1),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4.w),
+                    child: Icon(
+                      Icons.star,
+                      color: index < _rating ? Colors.orange : Colors.grey[300],
+                      size: 40.sp,
+                    ),
                   ),
                 ),
-              )),
+              ),
             ),
             SizedBox(height: 40.h),
             const Divider(),
@@ -84,10 +133,16 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                 borderRadius: BorderRadius.circular(16.r),
               ),
               child: TextField(
+                controller: _commentController,
                 maxLines: 4,
+                textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
-                  hintText: "The food is very tasty and in good condition. I like it very much 😍😍",
-                  hintStyle: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[600]),
+                  hintText:
+                      "What did you like? What could have been better? 😍",
+                  hintStyle: GoogleFonts.inter(
+                    fontSize: 14.sp,
+                    color: Colors.grey[600],
+                  ),
                   border: InputBorder.none,
                 ),
               ),
@@ -120,23 +175,34 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                 ),
                 SizedBox(width: 16.w),
                 Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Get.back(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      minimumSize: Size(double.infinity, 56.h),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30.r),
+                  child: Obx(
+                    () => ElevatedButton(
+                      onPressed: _controller.isSubmitting.value ? null : _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        minimumSize: Size(double.infinity, 56.h),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30.r),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      "Submit",
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16.sp,
-                      ),
+                      child: _controller.isSubmitting.value
+                          ? SizedBox(
+                              width: 22.w,
+                              height: 22.w,
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 3,
+                              ),
+                            )
+                          : Text(
+                              "Submit",
+                              style: GoogleFonts.inter(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16.sp,
+                              ),
+                            ),
                     ),
                   ),
                 ),

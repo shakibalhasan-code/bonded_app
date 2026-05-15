@@ -8,10 +8,10 @@ import '../services/api_service.dart';
 import '../services/shared_prefs_service.dart';
 import '../core/constants/app_endpoints.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
-import 'dart:io';
 
 import '../controllers/auth_controller.dart';
 
@@ -24,6 +24,7 @@ class ChatMessage {
   final bool isMe;
   final String? type;
   final String? mediaUrl;
+  final String? fileName;
   final String? localFilePath;
 
   ChatMessage({
@@ -35,8 +36,24 @@ class ChatMessage {
     required this.isMe,
     this.type,
     this.mediaUrl,
+    this.fileName,
     this.localFilePath,
   });
+
+  ChatMessage copyWith({String? localFilePath, String? fileName}) {
+    return ChatMessage(
+      id: id,
+      text: text,
+      senderName: senderName,
+      senderImage: senderImage,
+      timestamp: timestamp,
+      isMe: isMe,
+      type: type,
+      mediaUrl: mediaUrl,
+      fileName: fileName ?? this.fileName,
+      localFilePath: localFilePath ?? this.localFilePath,
+    );
+  }
 
   factory ChatMessage.fromJson(Map<String, dynamic> json, String currentUserId) {
     final senderData = json['sender'];
@@ -80,17 +97,40 @@ class ChatMessage {
       senderName = isOwn ? 'You' : 'User';
     }
 
+    // Resolve media: backend may return flat `mediaUrl` (legacy) OR a `media`
+    // array of `{url, type, fileName}` objects (newer/multi-attachment shape).
+    String? mediaUrl = json['mediaUrl']?.toString();
+    String? fileName = json['fileName']?.toString();
+    String? resolvedType = json['type']?.toString();
+    if (mediaUrl == null) {
+      final mediaList = json['media'];
+      if (mediaList is List && mediaList.isNotEmpty) {
+        final first = mediaList.first;
+        if (first is Map) {
+          mediaUrl = first['url']?.toString();
+          fileName ??= first['fileName']?.toString() ??
+              first['name']?.toString();
+          resolvedType ??= first['type']?.toString();
+        }
+      }
+    }
+    if (mediaUrl != null && fileName == null && resolvedType == 'file') {
+      final segs = Uri.tryParse(mediaUrl)?.pathSegments ?? const [];
+      fileName = segs.isNotEmpty ? segs.last : null;
+    }
+
     return ChatMessage(
-      id: json['_id'] ?? '',
-      text: json['content'] ?? '',
+      id: json['_id']?.toString() ?? '',
+      text: json['content']?.toString() ?? '',
       senderName: senderName,
       senderImage: senderImage,
       timestamp: json['createdAt'] != null
           ? DateTime.parse(json['createdAt']).toLocal()
           : DateTime.now(),
       isMe: isOwn,
-      type: json['type'],
-      mediaUrl: json['mediaUrl'],
+      type: resolvedType,
+      mediaUrl: mediaUrl,
+      fileName: fileName,
     );
   }
 }
@@ -348,79 +388,124 @@ class ChatController extends GetxController {
   Future<void> pickAndSendMedia(ImageSource source, {bool isVideo = false}) async {
     if (conversationId == null) return;
 
-    try {
-      final XFile? file = isVideo 
-          ? await _picker.pickVideo(source: source)
-          : await _picker.pickImage(source: source);
-      
-      if (file == null) return;
+    final XFile? picked = isVideo
+        ? await _picker.pickVideo(source: source)
+        : await _picker.pickImage(source: source);
+    if (picked == null) return;
 
-      final filePath = file.path;
-      final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
-      final currentUserId = _getCurrentUserId();
-      
-      // 1. Add optimistic local message
-      final tempMessage = ChatMessage(
-        id: tempId,
-        text: isVideo ? '[Video]' : '[Image]',
-        senderName: '',
-        senderImage: '',
-        timestamp: DateTime.now(),
-        isMe: true,
-        type: isVideo ? 'video' : 'image',
-        localFilePath: filePath,
-      );
-      messages.add(tempMessage);
-      _scrollToBottom();
-      
-      final mimeType = lookupMimeType(filePath) ?? (isVideo ? 'video/mp4' : 'image/jpeg');
+    await _uploadAttachment(
+      filePath: picked.path,
+      type: isVideo ? 'video' : 'image',
+    );
+  }
+
+  Future<void> pickAndSendFile() async {
+    if (conversationId == null) return;
+
+    final FilePickerResult? result = await FilePicker.pickFiles();
+    if (result == null || result.files.single.path == null) return;
+
+    await _uploadAttachment(
+      filePath: result.files.single.path!,
+      type: 'file',
+      fileName: result.files.single.name,
+    );
+  }
+
+  /// Uploads an attachment via multipart POST.
+  /// `type` decides the field name (`image` / `video` / `file`) and the
+  /// `type` value sent in the JSON `data` blob.
+  Future<void> _uploadAttachment({
+    required String filePath,
+    required String type,
+    String? fileName,
+  }) async {
+    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    final currentUserId = _getCurrentUserId();
+
+    String placeholder;
+    switch (type) {
+      case 'video':
+        placeholder = '[Video]';
+        break;
+      case 'file':
+        placeholder = '[File]';
+        break;
+      default:
+        placeholder = '[Image]';
+    }
+
+    final tempMessage = ChatMessage(
+      id: tempId,
+      text: placeholder,
+      senderName: '',
+      senderImage: '',
+      timestamp: DateTime.now(),
+      isMe: true,
+      type: type,
+      localFilePath: filePath,
+      fileName: fileName,
+    );
+    messages.add(tempMessage);
+    _scrollToBottom();
+
+    try {
+      final fallbackMime = type == 'video'
+          ? 'video/mp4'
+          : type == 'file'
+              ? 'application/octet-stream'
+              : 'image/jpeg';
+      final mimeType = lookupMimeType(filePath) ?? fallbackMime;
       final mimeParts = mimeType.split('/');
-      
-      final fileField = mimeParts.first == 'image' ? 'image' : 'media';
-      
+
       final multipartFile = await http.MultipartFile.fromPath(
-        fileField,
+        type, // 'image' | 'video' | 'file' — matches backend multer field
         filePath,
         contentType: MediaType(mimeParts.first, mimeParts.last),
+        filename: fileName,
       );
 
-      final endpoint = AppUrls.conversationMessages(conversationId!);
-      
       final response = await _apiService.multipartRequest(
         'POST',
-        endpoint,
+        AppUrls.conversationMessages(conversationId!),
         files: [multipartFile],
         fields: {
           'data': jsonEncode({
-            'content': isVideo ? '[Video]' : '[Image]',
-            'type': isVideo ? 'video' : 'image'
-          })
-        }
+            'content': placeholder,
+            'type': type,
+          }),
+        },
       );
 
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
-        final newMessage = ChatMessage.fromJson(data['data']['message'], currentUserId);
-        
-        final index = messages.indexWhere((m) => m.id == tempId);
-        if (index != -1) {
-          messages[index] = newMessage;
-          messages.refresh();
-        } else if (!messages.any((m) => m.id == newMessage.id)) {
-          messages.add(newMessage);
-          _scrollToBottom();
+        final msgJson = data['data']?['message'] ?? data['data'];
+        if (msgJson is Map) {
+          final newMessage = ChatMessage.fromJson(
+            Map<String, dynamic>.from(msgJson),
+            currentUserId,
+          )
+              // Keep the local preview so the bubble stays rendered even if
+              // the backend hasn't populated mediaUrl on this response yet.
+              .copyWith(localFilePath: filePath, fileName: fileName);
+
+          final index = messages.indexWhere((m) => m.id == tempId);
+          if (index != -1) {
+            messages[index] = newMessage;
+            messages.refresh();
+          } else if (!messages.any((m) => m.id == newMessage.id)) {
+            messages.add(newMessage);
+            _scrollToBottom();
+          }
         }
       } else {
         messages.removeWhere((m) => m.id == tempId);
-        Get.snackbar('Error', data['message'] ?? 'Failed to upload media');
+        Get.snackbar('Error', data['message'] ?? 'Failed to upload $type');
       }
     } catch (e) {
-      log('ChatController Media Upload Error: $e');
-      // If error occurs, we could optionally remove the temporary message here.
-      // But we don't have access to tempId outside try block easily. 
-      // Actually we do have it inside try block.
-      messages.removeWhere((m) => m.id.startsWith('temp_') && m.localFilePath != null);
-      Get.snackbar('Error', 'Failed to upload media');
+      log('ChatController upload error ($type): $e');
+      messages.removeWhere((m) => m.id == tempId);
+      Get.snackbar('Error', 'Failed to upload $type');
     }
   }
 

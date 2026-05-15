@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/user_model.dart';
 import '../../controllers/chat_controller.dart';
 import '../../core/theme/app_colors.dart';
@@ -240,7 +241,9 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
 
                       // Video attachment
-                      if (message.type == 'video' && (message.mediaUrl != null || message.localFilePath != null))
+                      if (message.type == 'video' &&
+                          (message.mediaUrl != null ||
+                              message.localFilePath != null))
                         Padding(
                           padding: EdgeInsets.only(
                             bottom: (message.text == '[Video]' ||
@@ -248,16 +251,42 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ? 0
                                 : 8.h,
                           ),
-                          child: VideoMessageBubble(
-                            videoUrl: message.localFilePath ?? AppUrls.imageUrl(message.mediaUrl!),
-                            isLocal: message.localFilePath != null,
-                            isMe: message.isMe,
+                          child: Builder(
+                            builder: (_) {
+                              final useLocal = message.localFilePath != null &&
+                                  (message.mediaUrl == null ||
+                                      message.id.startsWith('temp_'));
+                              final url = useLocal
+                                  ? message.localFilePath!
+                                  : AppUrls.imageUrl(message.mediaUrl);
+                              return VideoMessageBubble(
+                                key: ValueKey('vid_${message.id}_$url'),
+                                videoUrl: url,
+                                isLocal: useLocal,
+                                isMe: message.isMe,
+                              );
+                            },
                           ),
+                        ),
+
+                      // File attachment
+                      if (message.type == 'file' &&
+                          (message.mediaUrl != null ||
+                              message.localFilePath != null))
+                        Padding(
+                          padding: EdgeInsets.only(
+                            bottom: (message.text == '[File]' ||
+                                    message.text.isEmpty)
+                                ? 0
+                                : 8.h,
+                          ),
+                          child: _buildFileBubble(message),
                         ),
 
                       // Text content
                       if (message.text != '[Image]' &&
                           message.text != '[Video]' &&
+                          message.text != '[File]' &&
                           message.text.isNotEmpty)
                         Text(
                           message.text,
@@ -508,9 +537,94 @@ class _ChatScreenState extends State<ChatScreen> {
                     );
                   },
                 ),
+                _buildMediaOption(
+                  icon: Icons.insert_drive_file,
+                  label: "File",
+                  onTap: () {
+                    Get.back();
+                    controller.pickAndSendFile();
+                  },
+                ),
               ],
             ),
             SizedBox(height: 24.h),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFileBubble(ChatMessage message) {
+    final isTemp = message.id.startsWith('temp_');
+    final displayName = message.fileName ??
+        (message.mediaUrl != null
+            ? (Uri.tryParse(message.mediaUrl!)?.pathSegments.isNotEmpty == true
+                ? Uri.parse(message.mediaUrl!).pathSegments.last
+                : 'Attachment')
+            : 'Attachment');
+
+    Future<void> openFile() async {
+      if (isTemp || message.mediaUrl == null) return;
+      final uri = Uri.parse(AppUrls.imageUrl(message.mediaUrl));
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        Get.snackbar('Error', 'Unable to open file');
+      }
+    }
+
+    return GestureDetector(
+      onTap: openFile,
+      child: Container(
+        width: 220.w,
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+        decoration: BoxDecoration(
+          color: message.isMe
+              ? Colors.white.withOpacity(0.18)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(
+            color: message.isMe
+                ? Colors.white.withOpacity(0.35)
+                : Colors.grey[200]!,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.insert_drive_file,
+              color: message.isMe ? Colors.white : AppColors.primary,
+              size: 28.sp,
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontSize: 13.sp,
+                  fontWeight: FontWeight.w600,
+                  color: message.isMe ? Colors.white : const Color(0xFF1F2937),
+                ),
+              ),
+            ),
+            SizedBox(width: 8.w),
+            if (isTemp)
+              SizedBox(
+                width: 18.w,
+                height: 18.w,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: message.isMe ? Colors.white : AppColors.primary,
+                ),
+              )
+            else
+              Icon(
+                Icons.download_rounded,
+                color: message.isMe ? Colors.white : AppColors.primary,
+                size: 20.sp,
+              ),
           ],
         ),
       ),
