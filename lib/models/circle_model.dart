@@ -82,7 +82,7 @@ class CircleModel {
   // UI Support Fields (Computed or from API)
   final String image;
   final RxBool isJoined;
-  final bool isLocked;
+  final RxBool isLocked;
   final List<String> memberAvatars;
   final RxList<MemberModel> detailedMembers;
   final RxList<PostModel> posts;
@@ -114,7 +114,7 @@ class CircleModel {
     required this.updatedAt,
     this.image = 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&q=80',
     bool isJoinedValue = false,
-    this.isLocked = false,
+    bool isLockedValue = false,
     this.memberAvatars = const [],
     List<MemberModel>? members,
     List<PostModel>? postsList,
@@ -122,6 +122,7 @@ class CircleModel {
   }) : memberCount = memberCountValue.obs,
        postCount = postCountValue.obs,
        isJoined = isJoinedValue.obs,
+       isLocked = isLockedValue.obs,
        detailedMembers = (members ?? <MemberModel>[]).obs,
        posts = (postsList ?? <PostModel>[]).obs,
        events = (eventsList ?? <EventModel>[]).obs,
@@ -163,7 +164,7 @@ class CircleModel {
       updatedAt: DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()).toLocal(),
       image: AppUrls.imageUrl(json['image'] ?? json['coverImage'] ?? 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=800&q=80'),
       isJoinedValue: json['isJoined'] ?? false,
-      isLocked: json['isLocked'] ?? (json['joinStatus'] == 'lock'),
+      isLockedValue: json['isLocked'] ?? (json['joinStatus'] == 'lock'),
       memberAvatars: List<String>.from(json['memberAvatars'] ?? []),
       members: (json['members'] as List?)
               ?.map((m) => MemberModel.fromJson(m))
@@ -198,7 +199,7 @@ class CircleModel {
       'updatedAt': updatedAt.toIso8601String(),
       'image': image,
       'isJoined': isJoined.value,
-      'isLocked': isLocked,
+      'isLocked': isLocked.value,
       'memberAvatars': memberAvatars,
     };
   }

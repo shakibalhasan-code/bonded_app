@@ -401,25 +401,24 @@ class CircleController extends BaseController {
     try {
       final url = AppUrls.reactPost(id);
 
-      // Determine new state
-      final bool wasLiked = originalIsLiked;
-      final String nextType = specificType ?? (wasLiked ? "none" : "like");
+      // If specificType is provided, we use it. 
+      // If not, and it was liked, we send originalType to toggle it off.
+      // If not liked, we send 'like'.
+      final String typeToSend = specificType ?? (originalIsLiked ? originalType : "like");
 
-      http.Response response;
-      if (nextType == "none") {
-        response = await _apiService.delete(url);
-      } else {
-        response = await _apiService.post(url, {'reactionType': nextType});
-      }
-
+      final response = await _apiService.post(url, {'reactionType': typeToSend});
       final data = jsonDecode(response.body);
+
       if (data['success'] == true) {
-        reactionTypeObs.value = nextType;
-        if (nextType == "none") {
+        final action = data['data']['action'];
+        if (action == 'removed') {
+          reactionTypeObs.value = "none";
           isLikedObs.value = false;
           if (likesCountObs.value > 0) likesCountObs.value--;
         } else {
-          if (!isLikedObs.value) {
+          // 'created' or 'updated'
+          reactionTypeObs.value = typeToSend;
+          if (!originalIsLiked) {
             likesCountObs.value++;
           }
           isLikedObs.value = true;
@@ -447,20 +446,22 @@ class CircleController extends BaseController {
     try {
       final url = AppUrls.reactPost(post.id);
 
-      http.Response response;
-      if (type == "none") {
-        response = await _apiService.delete(url);
-      } else {
-        response = await _apiService.post(url, {'reactionType': type});
-      }
+      // If type is "none", we want to remove. 
+      // To remove, we must send the CURRENT reaction type via POST.
+      final String typeToSend = (type == "none") ? post.reactionType.value : type;
 
+      final response = await _apiService.post(url, {'reactionType': typeToSend});
       final data = jsonDecode(response.body);
+
       if (data['success'] == true) {
-        post.reactionType.value = type;
-        if (type == "none") {
+        final action = data['data']['action'];
+        if (action == 'removed') {
+          post.reactionType.value = "none";
           post.isLiked.value = false;
           if (post.likesCount.value > 0) post.likesCount.value--;
         } else {
+          // 'created' or 'updated'
+          post.reactionType.value = typeToSend;
           if (!post.isLiked.value) post.likesCount.value++;
           post.isLiked.value = true;
         }
@@ -500,6 +501,28 @@ class CircleController extends BaseController {
       Get.snackbar("Error", "Failed to share post");
     } finally {
       setLoading(false);
+    }
+  }
+
+  Future<void> fetchPostComments(PostModel post, {String? circleId}) async {
+    final String targetCircleId = circleId ?? post.circleId ?? "";
+    if (targetCircleId.isEmpty || post.id.isEmpty || post.id.startsWith('temp_')) {
+      return;
+    }
+    try {
+      final url = AppUrls.commentPost(targetCircleId, post.id);
+      final response = await _apiService.get(url);
+      final data = jsonDecode(response.body);
+      if (data['success'] == true && data['data'] is List) {
+        final List<dynamic> commentsJson = data['data'];
+        final fetched = commentsJson
+            .map((c) => CommentModel.fromJson(c))
+            .toList();
+        post.comments.assignAll(fetched);
+        post.commentsCount.value = fetched.length;
+      }
+    } catch (e) {
+      debugPrint("Error fetching post comments: $e");
     }
   }
 
@@ -696,7 +719,7 @@ class CircleController extends BaseController {
   Future<void> toggleLockCircle(CircleModel circle) async {
     try {
       setLoading(true);
-      final newStatus = circle.isLocked ? "unlock" : "lock";
+      final newStatus = circle.isLocked.value ? "unlock" : "lock";
       final url = '${AppUrls.circles}/${circle.id}/join-status';
       final response = await _apiService.patch(
         url,
@@ -705,10 +728,14 @@ class CircleController extends BaseController {
 
       final data = jsonDecode(response.body);
       if (data['success'] == true) {
-        // Refresh to update UI state
+        // Update local state reactively
+        circle.isLocked.value = !circle.isLocked.value;
+        
+        // Refresh lists to ensure sync
         fetchCircles(scope: 'created');
         fetchCircles(visibility: 'public');
         fetchCircles(visibility: 'private');
+        
         Get.snackbar("Success", "Circle status updated to $newStatus");
       } else {
         Get.snackbar(
@@ -1026,6 +1053,12 @@ class CircleController extends BaseController {
   }
 
   Future<void> joinCircle(CircleModel circle) async {
+    // Check if circle is locked and user is not owner
+    if (circle.isLocked.value && !circle.isOwner) {
+      _showLockedWarning();
+      return;
+    }
+
     if (circle.isPaid) {
       // Import BillingController at the top or access it via Get
       final billingController = Get.isRegistered<BillingController>()

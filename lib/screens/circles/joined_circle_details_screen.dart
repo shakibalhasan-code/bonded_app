@@ -76,7 +76,7 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
           ),
         ),
         actions: [
-          PopupMenuButton<String>(
+          Obx(() => PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, color: AppColors.primary, size: 24.sp),
             onSelected: (value) {
               final controller = Get.find<CircleController>();
@@ -121,10 +121,10 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                   // ),
                   _buildPopupItem(
                     'lock',
-                    circle.isLocked
+                    circle.isLocked.value
                         ? Icons.lock_open_outlined
                         : Icons.lock_outline,
-                    circle.isLocked ? "Unlock Circle" : "Lock Circle",
+                    circle.isLocked.value ? "Unlock Circle" : "Lock Circle",
                   ),
                   _buildPopupItem(
                     'add_member',
@@ -148,7 +148,7 @@ class _JoinedCircleDetailsScreenState extends State<JoinedCircleDetailsScreen> {
                 ];
               }
             },
-          ),
+          )),
           SizedBox(width: 8.w),
         ],
       ),

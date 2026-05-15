@@ -10,6 +10,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/home_models.dart';
 import '../../models/circle_model.dart';
@@ -146,17 +147,7 @@ class _CirclePostItemState extends State<CirclePostItem> {
               return Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
                 child: GestureDetector(
-                  onTap: () {
-                    // Navigate to circle to see all comments
-                    if (widget.circle != null) {
-                      Get.toNamed(
-                        widget.circle!.isJoined.value
-                            ? AppRoutes.JOINED_CIRCLE_DETAILS
-                            : AppRoutes.PUBLIC_CIRCLE_DETAILS,
-                        arguments: widget.circle,
-                      );
-                    }
-                  },
+                  onTap: () => _showAllCommentsSheet(controller),
                   child: Text(
                     "View all $total comments",
                     style: GoogleFonts.inter(
@@ -477,52 +468,66 @@ class _CirclePostItemState extends State<CirclePostItem> {
       padding: EdgeInsets.symmetric(horizontal: 20.w),
       child: Column(
         children: files.map((file) {
-          return Container(
-            margin: EdgeInsets.only(top: 8.h),
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8F9FA),
-              borderRadius: BorderRadius.circular(12.r),
-              border: Border.all(color: Colors.grey[200]!),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.insert_drive_file,
-                  color: AppColors.primary,
-                  size: 24.sp,
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Text(
-                    file.url.split('/').last,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 13.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textHeading,
+          return GestureDetector(
+            onTap: () => _openFile(file),
+            child: Container(
+              margin: EdgeInsets.only(top: 8.h),
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8F9FA),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.insert_drive_file,
+                    color: AppColors.primary,
+                    size: 24.sp,
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Text(
+                      file.url.split('/').last,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textHeading,
+                      ),
                     ),
                   ),
-                ),
-                if (file.isUploading)
-                  SizedBox(
-                    width: 20.sp,
-                    height: 20.sp,
-                    child: const CircularProgressIndicator(strokeWidth: 2),
-                  )
-                else
-                  Icon(
-                    Icons.download_rounded,
-                    color: Colors.grey[400],
-                    size: 20.sp,
-                  ),
-              ],
+                  if (file.isUploading)
+                    SizedBox(
+                      width: 20.sp,
+                      height: 20.sp,
+                      child: const CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    Icon(
+                      Icons.download_rounded,
+                      color: AppColors.primary,
+                      size: 20.sp,
+                    ),
+                ],
+              ),
             ),
           );
         }).toList(),
       ),
     );
+  }
+
+  Future<void> _openFile(MediaModel file) async {
+    if (file.isUploading) return;
+    final uri = Uri.parse(file.fullUrl);
+    final canOpen = await canLaunchUrl(uri);
+    if (canOpen) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      Get.snackbar("Error", "Unable to open file");
+    }
   }
 
   Widget _buildStatsRow() {
@@ -919,6 +924,289 @@ class _CirclePostItemState extends State<CirclePostItem> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showAllCommentsSheet(CircleController controller) {
+    final TextEditingController sheetCommentController = TextEditingController();
+    File? sheetImage;
+    File? sheetVideo;
+    File? sheetFile;
+    final RxBool isLoading = true.obs;
+
+    controller.fetchPostComments(
+      widget.post,
+      circleId: widget.circle?.id,
+    ).whenComplete(() => isLoading.value = false);
+
+    Get.bottomSheet(
+      isScrollControlled: true,
+      Container(
+        height: 0.85.sh,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: StatefulBuilder(
+          builder: (context, setSheetState) {
+            Future<void> pickSheetImage() async {
+              final XFile? image = await _picker.pickImage(
+                source: ImageSource.gallery,
+              );
+              if (image != null) {
+                setSheetState(() {
+                  sheetImage = File(image.path);
+                  sheetVideo = null;
+                  sheetFile = null;
+                });
+              }
+            }
+
+            Future<void> pickSheetVideo() async {
+              final XFile? video = await _picker.pickVideo(
+                source: ImageSource.gallery,
+              );
+              if (video != null) {
+                setSheetState(() {
+                  sheetVideo = File(video.path);
+                  sheetImage = null;
+                  sheetFile = null;
+                });
+              }
+            }
+
+            Future<void> pickSheetFile() async {
+              final result = await FilePicker.pickFiles();
+              if (result != null && result.files.single.path != null) {
+                setSheetState(() {
+                  sheetFile = File(result.files.single.path!);
+                  sheetImage = null;
+                  sheetVideo = null;
+                });
+              }
+            }
+
+            return Column(
+              children: [
+                Container(
+                  margin: EdgeInsets.only(top: 12.h),
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 20.w,
+                    vertical: 12.h,
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        "Comments",
+                        style: GoogleFonts.inter(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF1B0B3B),
+                        ),
+                      ),
+                      const Spacer(),
+                      Obx(
+                        () => Text(
+                          "${widget.post.commentsCount.value}",
+                          style: GoogleFonts.inter(
+                            fontSize: 13.sp,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: Obx(() {
+                    if (isLoading.value && widget.post.comments.isEmpty) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+                    if (widget.post.comments.isEmpty) {
+                      return Center(
+                        child: Text(
+                          "No comments yet",
+                          style: GoogleFonts.inter(
+                            fontSize: 13.sp,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      );
+                    }
+                    return ListView.builder(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20.w,
+                        vertical: 12.h,
+                      ),
+                      itemCount: widget.post.comments.length,
+                      itemBuilder: (context, index) {
+                        return CircleCommentItem(
+                          comment: widget.post.comments[index],
+                          circle: widget.circle,
+                          post: widget.post,
+                        );
+                      },
+                    );
+                  }),
+                ),
+                if (sheetImage != null ||
+                    sheetVideo != null ||
+                    sheetFile != null)
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 20.w,
+                      vertical: 8.h,
+                    ),
+                    child: Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12.r),
+                          child: sheetImage != null
+                              ? Image.file(
+                                  sheetImage!,
+                                  height: 80.h,
+                                  width: 80.w,
+                                  fit: BoxFit.cover,
+                                )
+                              : Container(
+                                  height: 80.h,
+                                  width: 80.w,
+                                  color: Colors.black12,
+                                  child: Icon(
+                                    sheetVideo != null
+                                        ? Icons.videocam
+                                        : Icons.insert_drive_file,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                        ),
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: GestureDetector(
+                            onTap: () => setSheetState(() {
+                              sheetImage = null;
+                              sheetVideo = null;
+                              sheetFile = null;
+                            }),
+                            child: Container(
+                              padding: EdgeInsets.all(2.w),
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.close,
+                                size: 16.sp,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                Padding(
+                  padding: EdgeInsets.only(
+                    left: 16.w,
+                    right: 16.w,
+                    top: 8.h,
+                    bottom: MediaQuery.of(context).viewInsets.bottom + 12.h,
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: pickSheetImage,
+                        icon: Icon(
+                          Icons.image_outlined,
+                          color: Colors.grey[600],
+                          size: 22.sp,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: pickSheetVideo,
+                        icon: Icon(
+                          Icons.videocam_outlined,
+                          color: Colors.grey[600],
+                          size: 22.sp,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: pickSheetFile,
+                        icon: Icon(
+                          Icons.attach_file,
+                          color: Colors.grey[600],
+                          size: 22.sp,
+                        ),
+                      ),
+                      Expanded(
+                        child: TextField(
+                          controller: sheetCommentController,
+                          style: GoogleFonts.inter(fontSize: 13.sp),
+                          decoration: InputDecoration(
+                            hintText: "Write a comment...",
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16.w,
+                              vertical: 12.h,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20.r),
+                              borderSide: BorderSide(color: Colors.grey[200]!),
+                            ),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          final text = sheetCommentController.text.trim();
+                          if (text.isEmpty &&
+                              sheetImage == null &&
+                              sheetVideo == null &&
+                              sheetFile == null) {
+                            return;
+                          }
+                          controller.addCommentToPost(
+                            circle: widget.circle,
+                            post: widget.post,
+                            content: text,
+                            imageFile: sheetImage,
+                            videoFile: sheetVideo,
+                            anyFile: sheetFile,
+                          );
+                          sheetCommentController.clear();
+                          setSheetState(() {
+                            sheetImage = null;
+                            sheetVideo = null;
+                            sheetFile = null;
+                          });
+                        },
+                        icon: Icon(
+                          Icons.send,
+                          color: AppColors.primary,
+                          size: 22.sp,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
     );
   }
 

@@ -174,7 +174,7 @@ class EventDetailsScreen extends StatelessWidget {
                   ),
                   Text(
                     currentEvent.price != null && currentEvent.price! > 0
-                        ? "\$${currentEvent.price!.toStringAsFixed(2)}"
+                        ? "${currentEvent.price!.toStringAsFixed(0)}\$"
                         : "FREE",
                     style: GoogleFonts.inter(
                       fontSize: 18.sp,

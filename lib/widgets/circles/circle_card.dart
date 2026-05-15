@@ -78,23 +78,44 @@ class CircleCard extends StatelessWidget {
                     },
                   ),
                 ),
-                if (circle.isLocked)
-                  Positioned(
-                    top: 16.h,
-                    left: 16.w,
-                    child: Container(
-                      padding: EdgeInsets.all(8.w),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.8),
-                        shape: BoxShape.circle,
+                Obx(() => circle.isLocked.value
+                  ? Positioned(
+                      top: 16.h,
+                      left: 16.w,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(12.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                            )
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.lock_outline,
+                              color: Colors.amber[700],
+                              size: 16.sp,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              "Locked",
+                              style: GoogleFonts.inter(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.amber[900],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      child: Icon(
-                        Icons.lock_outline,
-                        color: AppColors.primary,
-                        size: 20.sp,
-                      ),
-                    ),
-                  ),
+                    )
+                  : const SizedBox.shrink()),
                 Positioned(
                   top: 8.h,
                   right: 8.w,
@@ -143,10 +164,38 @@ class CircleCard extends StatelessWidget {
                     children: circle.tags.map((tag) => _buildTag(tag)).toList(),
                   ),
                   SizedBox(height: 16.h),
-                  if (circle.isLocked)
-                    _buildUnlockAction()
-                  else if (!circle.isJoined.value && !circle.isOwner)
-                    Row(
+                  Obx(() {
+                    if (circle.isJoined.value || circle.isOwner) {
+                      return const SizedBox.shrink();
+                    }
+
+                    if (circle.isLocked.value) {
+                      return Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.symmetric(vertical: 14.h),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.lock_outline, color: Colors.grey[400], size: 18.sp),
+                            SizedBox(width: 8.w),
+                            Text(
+                              "This Circle is Locked",
+                              style: GoogleFonts.inter(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return Row(
                       children: [
                         Expanded(
                           child: AppButton(
@@ -158,7 +207,7 @@ class CircleCard extends StatelessWidget {
                         if (circle.isPaid) ...[
                           SizedBox(width: 12.w),
                           Text(
-                            "\$${circle.price.toStringAsFixed(2)}",
+                            "${circle.price.toStringAsFixed(0)}\$",
                             style: GoogleFonts.inter(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w700,
@@ -167,7 +216,8 @@ class CircleCard extends StatelessWidget {
                           ),
                         ],
                       ],
-                    ),
+                    );
+                  }),
                 ],
               ),
             ),
@@ -261,31 +311,8 @@ class CircleCard extends StatelessWidget {
     );
   }
 
-  Widget _buildUnlockAction() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        SizedBox(
-          width: 150.w,
-          child: AppButton(
-            text: "Unlock Circle",
-            onPressed: () => Get.toNamed(AppRoutes.SUBSCRIPTION_PLAN),
-          ),
-        ),
-        Text(
-          "Price: ${circle.price ?? '\$4.99'}",
-          style: GoogleFonts.inter(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textHeading,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildCircleMenu(BuildContext context) {
-    return PopupMenuButton<String>(
+    return Obx(() => PopupMenuButton<String>(
       offset: const Offset(0, 40),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       icon: Container(
@@ -335,7 +362,7 @@ class CircleCard extends StatelessWidget {
             const PopupMenuDivider(),
             _buildMenuItem('delete', Icons.delete_outline, "Delete Circle"),
             const PopupMenuDivider(),
-            _buildMenuItem('lock', circle.isLocked ? Icons.lock_open_outlined : Icons.lock_outline, circle.isLocked ? "Unlock Circle" : "Lock Circle"),
+            _buildMenuItem('lock', circle.isLocked.value ? Icons.lock_open_outlined : Icons.lock_outline, circle.isLocked.value ? "Unlock Circle" : "Lock Circle"),
             const PopupMenuDivider(),
             _buildMenuItem('add_member', Icons.person_add_outlined, "Add Member"),
           ];
@@ -347,7 +374,7 @@ class CircleCard extends StatelessWidget {
           ];
         }
       },
-    );
+    ));
   }
 
   PopupMenuItem<String> _buildMenuItem(

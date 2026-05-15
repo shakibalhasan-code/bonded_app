@@ -12,6 +12,10 @@ import '../core/constants/billing_config.dart';
 import '../services/ios_iap_service.dart';
 import '../widgets/profile/verification_success_dialog.dart';
 import '../core/routes/app_routes.dart';
+import 'auth_controller.dart';
+import 'home_controller.dart';
+import 'circle_controller.dart';
+import 'event_controller.dart';
 
 class SubscriptionController extends GetxController {
   final _api = ApiService();
@@ -100,6 +104,8 @@ class SubscriptionController extends GetxController {
       final data = jsonDecode(response.body);
 
       if (data['success'] == true) {
+        // Refresh all data so the app knows the user is now Host Pro
+        await _refreshAllData();
         _showSuccessDialog();
       } else {
         Get.snackbar(
@@ -110,6 +116,36 @@ class SubscriptionController extends GetxController {
     } catch (e) {
       debugPrint('[SubscriptionController] Backend verify error: $e');
       Get.snackbar('Error', 'Failed to verify purchase.');
+    }
+  }
+
+  Future<void> _refreshAllData() async {
+    try {
+      // 1. Refresh profile
+      if (Get.isRegistered<AuthController>()) {
+        await Get.find<AuthController>().fetchUserProfile();
+      }
+
+      // 2. Refresh home data
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().fetchHomeData();
+      }
+
+      // 3. Refresh circles
+      if (Get.isRegistered<CircleController>()) {
+        final circleController = Get.find<CircleController>();
+        circleController.fetchCircles(visibility: 'public');
+        circleController.fetchCircles(visibility: 'private');
+        circleController.fetchCircles(scope: 'created');
+        circleController.fetchCircles(scope: 'joined');
+      }
+
+      // 4. Refresh events
+      if (Get.isRegistered<EventController>()) {
+        Get.find<EventController>().fetchEvents();
+      }
+    } catch (e) {
+      debugPrint('[SubscriptionController] Error refreshing data: $e');
     }
   }
 

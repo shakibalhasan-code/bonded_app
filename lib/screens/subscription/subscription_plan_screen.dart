@@ -18,28 +18,26 @@ class SubscriptionPlanScreen extends StatelessWidget {
         'name': 'Free',
         'price': '\$0.00',
         'features': [
-          'Join up to 2 circles',
-          'Join 2 events per month',
-          'Create free events only',
-          'Create free circles only',
-          'Basic filters',
-          'Send 2 friend requests/day',
-          'Message mutual matches',
-          'View event highlights',
-          'Basic visibility',
+          'Join and explore **Circles**',
+          'Discover and attend **Events**',
+          'Create your own events (limited – 3 active events)',
+          'Create private circles (limited – 3 private circles)',
+          'Connect and bond with others',
+          'Earn from your events',
+          'Standard event visibility',
+          'Standard payout schedule',
         ],
       },
       {
         'name': 'Host Pro',
         'price': null, // loaded from App Store
         'features': [
-          'Unlimited event creation',
-          'Lower platform fee (e.g. 12%)',
-          'Advanced event tools',
-          'Circle moderation & monetization',
-          'Event analytics',
-          'Priority placement',
-          'Early access to Bonded features',
+          '**Everything in Free**',
+          'Higher visibility across the app',
+          'Host Pro” badge on your profile',
+          'Create **unlimited events**',
+          'Create and manage more circles',
+          '**Priority payouts** for in-person events(faster than Free users)',
         ],
       },
     ];
@@ -270,14 +268,7 @@ class _SubscriptionCard extends StatelessWidget {
                             ),
                             SizedBox(width: 8.w),
                             Expanded(
-                              child: Text(
-                                feature,
-                                style: GoogleFonts.inter(
-                                  fontSize: 13.sp,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.grey[700],
-                                ),
-                              ),
+                              child: _buildFeatureText(feature),
                             ),
                           ],
                         ),
@@ -289,6 +280,47 @@ class _SubscriptionCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildFeatureText(String text) {
+    final parts = text.split('**');
+    if (parts.length == 1) {
+      return Text(
+        text,
+        style: GoogleFonts.inter(
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w500,
+          color: Colors.grey[700],
+        ),
+      );
+    }
+
+    List<TextSpan> spans = [];
+    for (int i = 0; i < parts.length; i++) {
+      if (i % 2 == 1) {
+        spans.add(TextSpan(
+          text: parts[i],
+          style: GoogleFonts.inter(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w700,
+            color: Colors.grey[800],
+          ),
+        ));
+      } else {
+        spans.add(TextSpan(
+          text: parts[i],
+          style: GoogleFonts.inter(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[700],
+          ),
+        ));
+      }
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
     );
   }
 }

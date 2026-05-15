@@ -512,7 +512,9 @@ class EventScreen extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      "\$${event.price?.toStringAsFixed(2) ?? '0.00'}",
+                      event.price != null && event.price! > 0
+                          ? "${event.price!.toStringAsFixed(0)}\$"
+                          : "FREE",
                       style: GoogleFonts.inter(
                         fontSize: 20.sp,
                         fontWeight: FontWeight.w800,

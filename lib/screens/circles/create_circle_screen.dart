@@ -424,7 +424,7 @@ class _CreateCircleScreenState extends State<CreateCircleScreen> {
                             return DropdownMenuItem<Map<String, dynamic>>(
                               value: product,
                               child: Text(
-                                "$price $currency",
+                                "${price.toStringAsFixed(0)}\$",
                                 style: GoogleFonts.inter(
                                   fontSize: 14.sp,
                                   fontWeight: FontWeight.w600,

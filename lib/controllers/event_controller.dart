@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'package:bonded_app/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -130,6 +133,7 @@ class EventController extends GetxController {
       isLoading.value = true;
       final response = await _apiService.post(AppUrls.stripeOnboard, {});
       final data = jsonDecode(response.body);
+
       if (data['success'] == true) {
         final onboardingUrl = data['data']['onboardingUrl'];
         if (onboardingUrl != null) {
@@ -149,13 +153,94 @@ class EventController extends GetxController {
             Get.snackbar('Error', 'Could not launch onboarding URL: $e');
           }
         }
+      } else {
+        // Show logical error message in AlertDialog as requested
+        final String message =
+            data['message'] ?? 'Failed to generate onboarding link';
+        _showErrorDialog(message);
       }
     } catch (e) {
       debugPrint("Error connecting stripe: $e");
-      Get.snackbar('Error', 'Failed to generate onboarding link');
+      _showErrorDialog('Failed to connect to Stripe. Please try again later.');
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void _showErrorDialog(String message) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
+        child: Container(
+          padding: EdgeInsets.all(24.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20.r),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: EdgeInsets.all(16.w),
+                decoration: BoxDecoration(
+                  color: Colors.red[50],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.red[400],
+                  size: 40.sp,
+                ),
+              ),
+              SizedBox(height: 20.h),
+              Text(
+                "Notice",
+                style: GoogleFonts.inter(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.grey[900],
+                ),
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 14.sp,
+                  color: Colors.grey[600],
+                  height: 1.5,
+                ),
+              ),
+              SizedBox(height: 24.h),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Get.back(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    "Got it",
+                    style: GoogleFonts.inter(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   final RxBool isFilterApplied = false.obs;
@@ -205,12 +290,15 @@ class EventController extends GetxController {
         if (selectedDate.value != null) {
           final dateStr = DateFormat('dd/MM/yyyy').format(selectedDate.value!);
           queryParams['startDate'] = dateStr;
-          queryParams['endDate'] = DateFormat('dd/MM/yyyy').format(selectedDate.value!.add(const Duration(days: 30)));
+          queryParams['endDate'] = DateFormat(
+            'dd/MM/yyyy',
+          ).format(selectedDate.value!.add(const Duration(days: 30)));
         }
 
         // Add Time Filters
         if (selectedTime.value != null) {
-          final timeStr = "${selectedTime.value!.hour.toString().padLeft(2, '0')}:${selectedTime.value!.minute.toString().padLeft(2, '0')}";
+          final timeStr =
+              "${selectedTime.value!.hour.toString().padLeft(2, '0')}:${selectedTime.value!.minute.toString().padLeft(2, '0')}";
           queryParams['startTime'] = timeStr;
           queryParams['endTime'] = "23:59"; // Default end time
         }

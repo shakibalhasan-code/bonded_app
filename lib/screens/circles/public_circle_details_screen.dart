@@ -28,6 +28,28 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
   final List<String> tabs = ["Circle Feed", "Circle Events", "Circle Members"];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final dynamic args = Get.arguments;
+      final CircleModel? circle = args is CircleModel 
+          ? args 
+          : (args is Map<String, dynamic> ? CircleModel.fromJson(args) : null);
+      
+      if (circle != null) {
+        final controller = Get.find<CircleController>();
+        controller.fetchCircleMembers(circle);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final dynamic args = Get.arguments;
     final CircleModel circle = args is CircleModel 
@@ -148,7 +170,7 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
                   ),
                 ),
                 Text(
-                  "\$${circle.price ?? "5.00"}",
+                  "${circle.price.toStringAsFixed(0)}\$",
                   style: GoogleFonts.inter(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w700,
@@ -260,11 +282,12 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
             SizedBox(height: 8.h),
 
             // Members List
-            CustomSearchField(
+            Obx(() => CustomSearchField(
               controller: searchController,
               hintText: "Search members...",
               onChanged: (val) => searchQuery.value = val,
-            ),
+              onClear: () => searchQuery.value = "",
+            )),
             SizedBox(height: 16.h),
             Obx(() {
               final query = searchQuery.value.toLowerCase();
@@ -275,6 +298,21 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
                         m.role.toLowerCase().contains(query),
                   )
                   .toList();
+
+              if (filtered.isEmpty && query.isNotEmpty) {
+                return Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20.h),
+                  child: Center(
+                    child: Text(
+                      "No members found matching '$query'",
+                      style: GoogleFonts.inter(
+                        fontSize: 14.sp,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ),
+                );
+              }
 
               return ListView.builder(
                 shrinkWrap: true,
@@ -289,26 +327,32 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
             SizedBox(height: 40.h),
 
             // Join Button
-            ElevatedButton(
-              onPressed: () => Get.find<CircleController>().joinCircle(circle),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                minimumSize: Size(double.infinity, 56.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30.r),
+            Obx(() {
+              final isLocked = circle.isLocked.value;
+              return ElevatedButton(
+                onPressed: isLocked ? null : () => Get.find<CircleController>().joinCircle(circle),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isLocked ? Colors.grey[400] : AppColors.primary,
+                  minimumSize: Size(double.infinity, 56.h),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.r),
+                  ),
+                  elevation: 0,
                 ),
-              ),
-              child: Text(
-                circle.isPaid
-                    ? "Join Circle (\$${circle.price.toStringAsFixed(2)})"
-                    : "Join Circle",
-                style: GoogleFonts.inter(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                child: Text(
+                  isLocked 
+                      ? "This Circle is Locked"
+                      : (circle.isPaid
+                          ? "Join Circle (${circle.price.toStringAsFixed(0)}\$)"
+                          : "Join Circle"),
+                  style: GoogleFonts.inter(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-            ),
+              );
+            }),
             SizedBox(height: 40.h),
           ],
         ),
@@ -360,7 +404,7 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
           ),
         ),
         actions: [
-          PopupMenuButton<String>(
+          Obx(() => PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, color: AppColors.primary, size: 24.sp),
             onSelected: (value) {
               final controller = Get.find<CircleController>();
@@ -400,7 +444,11 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
                     Icons.delete_outline,
                     "Delete Circle",
                   ),
-                  _buildPopupItem('lock', Icons.lock_outline, "Lock Circle"),
+                  _buildPopupItem(
+                    'lock', 
+                    circle.isLocked.value ? Icons.lock_open_outlined : Icons.lock_outline, 
+                    circle.isLocked.value ? "Unlock Circle" : "Lock Circle"
+                  ),
                   _buildPopupItem(
                     'add_member',
                     Icons.person_add_outlined,
@@ -422,7 +470,7 @@ class _PublicCircleDetailsScreenState extends State<PublicCircleDetailsScreen> {
                 ];
               }
             },
-          ),
+          )),
           SizedBox(width: 8.w),
         ],
       ),

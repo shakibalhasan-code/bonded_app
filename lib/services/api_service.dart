@@ -134,6 +134,7 @@ class ApiService {
 
     if (response.statusCode == 401 &&
         endpoint != AppUrls.refreshAccessToken &&
+        endpoint != AppUrls.changePassword &&
         endpoint != AppUrls.login) {
       final success = await _refreshAccessToken();
       if (success) {
